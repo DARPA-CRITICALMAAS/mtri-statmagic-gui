@@ -1,0 +1,8 @@
+[general]
+name=StatMaGIC
+description=This plugin does stuff.
+version=0.0
+qgisMinimumVersion=3.0
+author=Alexander Mueller
+email=ajmuelle@mtu.edu
+icon=barChart.png
