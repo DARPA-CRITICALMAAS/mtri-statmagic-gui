@@ -4,7 +4,6 @@ from PyQt5.QtGui import QIcon
 import time
 from pydevd import settrace
 
-settrace(host='localhost', port=5678, stdoutToServer=True, stderrToServer=True)
 pass
 
 class StatMaGICPlugin:
@@ -13,8 +12,9 @@ class StatMaGICPlugin:
         self.iface = iface
 
     def initGui(self):
-        icon = str(Path(__file__) / 'barChart.png')
-        self.action = QAction(QIcon(icon), 'StatMaGIC', self.iface.mainWindow())
+        iconPath = Path(__file__).parent / "icon.png"
+        icon = QIcon(str(iconPath))
+        self.action = QAction(icon, 'StatMaGIC', self.iface.mainWindow())
         self.iface.addToolBarIcon(self.action)
         self.action.triggered.connect(self.run)
 
@@ -24,3 +24,5 @@ class StatMaGICPlugin:
 
     def run(self):
         self.iface.messageBar().pushMessage('Magic executed successfully.')
+        settrace(host='localhost', port=5678, stdoutToServer=True, stderrToServer=True)
+        pass
