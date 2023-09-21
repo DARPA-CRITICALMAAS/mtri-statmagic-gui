@@ -14,7 +14,9 @@ class StatMaGICPlugin:
 
     def initGui(self):
         icon = str(Path(__file__) / 'barChart.png')
-        self.add_action()
+        self.action = QAction(QIcon(icon), 'StatMaGIC', self.iface.mainWindow())
+        self.iface.addToolBarIcon(self.action)
+        self.action.triggered.connect(self.run)
 
     def unload(self):
         self.iface.removeToolBarIcon(self.action)
