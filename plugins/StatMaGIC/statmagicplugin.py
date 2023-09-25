@@ -17,6 +17,7 @@ def boundingBoxToOffsets(bbox, geot):
     row2 = int((bbox[2] - geot[3]) / geot[5]) + 1
     return [row1, row2, col1, col2]
 
+
 def geotFromOffsets(row_offset, col_offset, geot):
     new_geot = [geot[0] + (col_offset * geot[1]),
                 geot[1],
@@ -41,7 +42,7 @@ def gdalSave(prefix, array2write, bittype, geotransform, projection, descs=()):
     else:
         sizeX, sizeY, sizeZ = array2write.shape[2], array2write.shape[1], array2write.shape[0]
         print(f"sizeX, sizeY, sizeZ = {sizeX}, {sizeY}, {sizeZ}")
-        gtr_ds = gdal.GetDriverByName("GTiff").Create("/home/ajmuelle/statmagic/test.tif", sizeX, sizeY, sizeZ, bittype)
+        gtr_ds = gdal.GetDriverByName("GTiff").Create(tfile[1], sizeX, sizeY, sizeZ, bittype)
         gtr_ds.SetGeoTransform(geotransform)
         gtr_ds.SetProjection(projection)
         print(descs)
@@ -96,12 +97,11 @@ class StatMaGICPlugin:
 
         dat = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)
 
-        mean = np.expand_dims(((dat[0, :, :] + dat[1, :, :] + dat[2, :, :]) / 3).astype("uint8"), axis=0)
-        # grey = np.vstack([mean, mean, mean])
+        mean = ((dat[0, :, :] + dat[1, :, :] + dat[2, :, :]) / 3).astype("uint8")
 
         # settrace(host='localhost', port=5678, stdoutToServer=True, stderrToServer=True)
         savedFilename = gdalSave("grey", mean, gdal.GDT_Byte, geot, r_proj)
-        message = f"temp file saved to {savedFilename}"
+        message = f"greyscale output saved to {savedFilename}"
         self.iface.messageBar().pushMessage(message)
         print(message)
 
