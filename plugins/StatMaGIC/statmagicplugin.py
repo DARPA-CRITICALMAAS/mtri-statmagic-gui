@@ -6,7 +6,7 @@ import time
 import numpy as np
 from osgeo import gdal
 
-from .utils import gdalSave, geotFromOffsets, boundingBoxToOffsets
+
 
 from .dockwidget import StatMaGICDockWidget
 
@@ -108,27 +108,9 @@ class StatMaGICPlugin:
         # remove the toolbar
         del self.toolbar
 
-    def getDataAsArray(self):
+    def getSelectedLayer(self):
         selectedLayer = self.iface.layerTreeView().selectedLayers()[0]
-        r_ds = gdal.Open(selectedLayer.source())
-        geot = r_ds.GetGeoTransform()
-        cellres = geot[1]
-        nodata = r_ds.GetRasterBand(1).GetNoDataValue()
-        r_proj = r_ds.GetProjection()
-        rsizeX, rsizeY = r_ds.RasterXSize, r_ds.RasterYSize
-
-        bb = self.canvas.extent()
-        bb.asWktCoordinates()
-        bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
-
-        offsets = boundingBoxToOffsets(bbc, geot)
-        new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
-        geot = new_geot
-
-        sizeX = int(((bbc[2] - bbc[0]) / cellres) + 1)
-        sizeY = int(((bbc[3] - bbc[1]) / cellres) + 1)
-
-        data = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)
+        return selectedLayer
 
     def run(self):
         if not self.pluginIsActive:

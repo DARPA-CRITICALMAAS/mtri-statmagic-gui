@@ -20,6 +20,32 @@ def geotFromOffsets(row_offset, col_offset, geot):
     return new_geot
 
 
+def getSelectionAsArray(selectedLayer, extent):
+    r_ds = gdal.Open(selectedLayer.source())
+    geot = r_ds.GetGeoTransform()
+    cellres = geot[1]
+    # TODO: these unused variables are probably necessary in some other context
+    #       figure out what that is, and put them there
+    nodata = r_ds.GetRasterBand(1).GetNoDataValue()
+    r_proj = r_ds.GetProjection()
+    rsizeX, rsizeY = r_ds.RasterXSize, r_ds.RasterYSize
+
+    bb = extent
+    bb.asWktCoordinates()
+    bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
+
+    offsets = boundingBoxToOffsets(bbc, geot)
+    new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
+    geot = new_geot
+
+    sizeX = int(((bbc[2] - bbc[0]) / cellres) + 1)
+    sizeY = int(((bbc[3] - bbc[1]) / cellres) + 1)
+
+    data = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)
+
+    return data
+
+
 def gdalSave(prefix, array2write, bittype, geotransform, projection, descs=()):
     tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
     tfile = tempfile.mkstemp(dir=tfol, suffix='.tif', prefix=prefix)
