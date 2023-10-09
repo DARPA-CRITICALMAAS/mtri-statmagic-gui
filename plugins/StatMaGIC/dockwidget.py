@@ -14,30 +14,47 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         super(StatMaGICDockWidget, self).__init__(parent)
         self.setObjectName("StatMaGICDockWidget")
         self.dockWidgetContents = QtWidgets.QWidget(self)
-        self.dockWidgetContents.setObjectName("dockWidgetContents")
         self.gridLayout = QtWidgets.QGridLayout(self.dockWidgetContents)
-        self.gridLayout.setObjectName("gridLayout")
         self.label = QtWidgets.QLabel(self.dockWidgetContents)
-        self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
 
         # create tab container
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
         self.tabWidget.setGeometry(QRect(10, 60, 391, 511))
-        self.tabWidget.setObjectName("tabWidget")
 
-        self.addTab("Unsupervised")
-        self.addTab("Supervised")
+        Unsupervised_tab = self.addTab("Unsupervised")
+        Supervised_tab = self.addTab("Supervised")
+
+        self.MakeTempLayer = QtWidgets.QPushButton(Unsupervised_tab)
+        self.MakeTempLayer.setGeometry(QRect(262, 10, 121, 25))
 
         self.setWidget(self.dockWidgetContents)
+
+        self.setAllObjectNames()
         pass
+
+    def getTab(self, item) -> QtWidgets.QWidget:
+        if isinstance(item, int):
+            return self.tabWidget.widget(item)
+        else:
+            return self.tabWidget.findChild(QtWidgets.QWidget, item)
 
     def addTab(self, tabName):
         newTab = QtWidgets.QWidget()
         newTab.setObjectName(tabName)
         self.tabWidget.addTab(newTab, "")
         self.tabWidget.setTabText(self.tabWidget.indexOf(newTab), tabName)
-        setattr(self, tabName, newTab)
+        return newTab
+
+    def setAllObjectNames(self):
+        for objName in dir(self):
+            if not objName.startswith("__"):
+                try:
+                    subObject = self.__getattr__(objName)
+                    if subObject.objectName() == "":
+                        subObject.setObjectName(objName)
+                except AttributeError:
+                    pass
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
