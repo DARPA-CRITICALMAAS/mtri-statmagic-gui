@@ -4,6 +4,8 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 from pathlib import Path
 from osgeo import gdal
 
+from .utils import getSelectionAsArray, gdalSave
+
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
@@ -12,6 +14,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def __init__(self, parent=None):
         """Constructor."""
         super(StatMaGICDockWidget, self).__init__(parent)
+        self.iface = parent.iface
+        self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
         self.dockWidgetContents = QtWidgets.QWidget(self)
         self.gridLayout = QtWidgets.QGridLayout(self.dockWidgetContents)
@@ -27,6 +31,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
         self.MakeTempLayer = QtWidgets.QPushButton(Unsupervised_tab)
         self.MakeTempLayer.setGeometry(QRect(262, 10, 121, 25))
+        self.MakeTempLayer.setText("Make Train Layer")
+        self.MakeTempLayer.clicked.connect(self.greyscale)
 
         self.setWidget(self.dockWidgetContents)
 
@@ -54,7 +60,18 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
                     if subObject.objectName() == "":
                         subObject.setObjectName(objName)
                 except AttributeError:
-                    pass
+                    continue
+
+    def greyscale(self):
+        selectedLayer = self.iface.layerTreeView().selectedLayers()[0]
+        extent = self.canvas.extent()
+        data, geot, r_proj = getSelectionAsArray(selectedLayer, extent)
+
+        mean = ((data[0, :, :] + data[1, :, :] + data[2, :, :]) / 3).astype("uint8")
+
+        savedFilename = gdalSave("grey", mean, gdal.GDT_Byte, geot, r_proj)
+        message = f"greyscale output saved to {savedFilename}"
+        self.iface.messageBar().pushMessage(message)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

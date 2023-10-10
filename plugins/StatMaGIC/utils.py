@@ -43,7 +43,7 @@ def getSelectionAsArray(selectedLayer, extent):
 
     data = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)
 
-    return data
+    return data, geot, r_proj
 
 
 def gdalSave(prefix, array2write, bittype, geotransform, projection, descs=()):

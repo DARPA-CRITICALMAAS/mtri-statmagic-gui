@@ -1,5 +1,5 @@
 from pathlib import Path
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 import time
@@ -17,9 +17,10 @@ except ConnectionRefusedError:
     pass
 
 
-class StatMaGICPlugin:
+class StatMaGICPlugin(QWidget):
 
     def __init__(self, iface):
+        super(StatMaGICPlugin, self).__init__(None)
         self.iface = iface
         self.canvas = self.iface.mapCanvas()
 
@@ -98,7 +99,7 @@ class StatMaGICPlugin:
         self.add_action(iconPath,
                         text="StatMaGIC",
                         callback=self.run,
-                        parent=self.iface.mainWindow())
+                        parent=self.iface)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -116,17 +117,10 @@ class StatMaGICPlugin:
         if not self.pluginIsActive:
             self.pluginIsActive = True
             if self.dockWidget is None:
-                self.dockWidget = StatMaGICDockWidget()
+                self.dockWidget = StatMaGICDockWidget(self)
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget)
             self.dockWidget.closingPlugin.connect(self.onClosePlugin)
             self.dockWidget.show()
-        #
-        # mean = ((dat[0, :, :] + dat[1, :, :] + dat[2, :, :]) / 3).astype("uint8")
-        #
-        #
-        # savedFilename = gdalSave("grey", mean, gdal.GDT_Byte, geot, r_proj)
-        # message = f"greyscale output saved to {savedFilename}"
-        # self.iface.messageBar().pushMessage(message)
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockWidget is closed"""
