@@ -1,4 +1,4 @@
-from qgis.PyQt import QtGui, QtWidgets
+from qgis.PyQt import QtGui, QtWidgets, QtCore
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from pathlib import Path
@@ -18,21 +18,40 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
         self.dockWidgetContents = QtWidgets.QWidget(self)
-        self.gridLayout = QtWidgets.QGridLayout(self.dockWidgetContents)
-        self.label = QtWidgets.QLabel(self.dockWidgetContents)
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
 
         # create tab container
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
         self.tabWidget.setGeometry(QRect(10, 60, 391, 511))
 
-        Unsupervised_tab = self.addTab("Unsupervised")
-        Supervised_tab = self.addTab("Supervised")
+        # create tabs
+        mineral_tab = self.addTab("Mineral Assessment")
+        geochemistry_tab = self.addTab("Geo Chemistry")
+        geology_tab = self.addTab("Geology")
 
-        self.MakeTempLayer = QtWidgets.QPushButton(Unsupervised_tab)
-        self.MakeTempLayer.setGeometry(QRect(262, 10, 121, 25))
-        self.MakeTempLayer.setText("Make Train Layer")
-        self.MakeTempLayer.clicked.connect(self.greyscale)
+        # who
+        nameInput = self.addTextInput(mineral_tab, "Investigator Name")
+
+        # what
+        mineralBox = self.addComboBox(mineral_tab, "Mineral of Interest:", ["Aluminum", "Copper", "Silicon"])
+        studyAreaBox = self.addComboBox(mineral_tab, "Define Study Area:", ["Draw Rectangle", "Inherit from Layer", "Canvas Extent"])
+        # select resolution
+        #   data storage calculator
+        # outputs : json, template raster, data pointer list (empty)
+
+        # self.MakeTempLayer = QtWidgets.QPushButton(mineral_tab)
+        # self.MakeTempLayer.setGeometry(QRect(5, 100, 121, 55))
+        # self.MakeTempLayer.setText("Make Train Layer")
+        # self.MakeTempLayer.clicked.connect(self.display)
+
+        # geochemistry
+        #   soil
+        #   mineral
+        #   rock
+        # geology
+
+        self.PrintBox = QtWidgets.QLineEdit(self.dockWidgetContents)
+        self.PrintBox.setGeometry(QRect(10, 578, 231, 41))
+        self.PrintBox.setFrame(True)
 
         self.setWidget(self.dockWidgetContents)
 
@@ -46,11 +65,56 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
             return self.tabWidget.findChild(QtWidgets.QWidget, item)
 
     def addTab(self, tabName):
+        # create tab
         newTab = QtWidgets.QWidget()
         newTab.setObjectName(tabName)
+
+        # set layout such that each subcomponent is arranged vertically
+        tabLayout = QtWidgets.QVBoxLayout()
+        tabLayout.setSpacing(0)
+        tabLayout.setAlignment(QtCore.Qt.AlignTop)
+        newTab.setLayout(tabLayout)
+
+        # add tab to reference objects and return
         self.tabWidget.addTab(newTab, "")
         self.tabWidget.setTabText(self.tabWidget.indexOf(newTab), tabName)
         return newTab
+
+    def addLabel(self, layout, text):
+        label = QtWidgets.QLabel()
+        label.setText(text)
+        label.setMinimumWidth(label.fontMetrics().width(label.text()))
+        layout.addWidget(label)
+
+    def addToParentLayout(self, layout, parent):
+        widget = QtWidgets.QWidget(parent)
+        widget.setLayout(layout)
+        parent.layout().addWidget(widget)
+        return widget
+
+    def addTextInput(self, parent, text):
+        layout = QtWidgets.QHBoxLayout()
+
+        self.addLabel(layout, text)
+
+        # TODO: make the QLineEdit object expand width to fill parent
+        inputBox = QtWidgets.QLineEdit()
+        layout.addWidget(inputBox)
+
+        return self.addToParentLayout(layout, parent)
+
+    def addComboBox(self, parent, text, items, default=None):
+        layout = QtWidgets.QHBoxLayout()
+
+        self.addLabel(layout, text)
+
+        # TODO: make the QComboBox object expand width to fill parent
+        inputBox = QtWidgets.QComboBox()
+        inputBox.addItems(items)
+        # TODO: figure out how to set default selection
+        layout.addWidget(inputBox)
+
+        return self.addToParentLayout(layout, parent)
 
     def setAllObjectNames(self):
         for objName in dir(self):
@@ -61,6 +125,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
                         subObject.setObjectName(objName)
                 except AttributeError:
                     continue
+
+    def display(self):
+        self.iface.messageBar().pushMessage(self.PrintBox.displayText())
 
     def greyscale(self):
         selectedLayer = self.iface.layerTreeView().selectedLayers()[0]
