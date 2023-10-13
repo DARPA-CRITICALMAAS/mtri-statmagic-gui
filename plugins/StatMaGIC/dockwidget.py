@@ -29,19 +29,20 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         geology_tab = self.addTab("Geology")
 
         # who
-        nameInput = self.addTextInput(mineral_tab, "Investigator Name")
+        self.nameInput = self.addTextInput(mineral_tab, "Investigator Name")
 
         # what
-        mineralBox = self.addComboBox(mineral_tab, "Mineral of Interest:", ["Aluminum", "Copper", "Silicon"])
-        studyAreaBox = self.addComboBox(mineral_tab, "Define Study Area:", ["Draw Rectangle", "Inherit from Layer", "Canvas Extent"])
+        self.mineralBox = self.addComboBox(mineral_tab, "Mineral of Interest:", ["Aluminum", "Copper", "Silicon"])
+        self.studyAreaBox = self.addComboBox(mineral_tab, "Define Study Area:", ["Draw Rectangle", "Inherit from Layer", "Canvas Extent"])
         # select resolution
+        self.xSpinBox, self.ySpinBox = self.addDoubleSpinBox(mineral_tab, "Resolution:", 1280, 720)
         #   data storage calculator
         # outputs : json, template raster, data pointer list (empty)
 
-        # self.MakeTempLayer = QtWidgets.QPushButton(mineral_tab)
-        # self.MakeTempLayer.setGeometry(QRect(5, 100, 121, 55))
-        # self.MakeTempLayer.setText("Make Train Layer")
-        # self.MakeTempLayer.clicked.connect(self.display)
+        self.mineralRunButton = QtWidgets.QPushButton(mineral_tab)
+        self.mineralRunButton.setText("Run Mineral\nAssessment")
+        self.mineralRunButton.setGeometry(QRect(300, 400, 80, 33))
+        self.mineralRunButton.clicked.connect(self.display)
 
         # geochemistry
         #   soil
@@ -90,7 +91,25 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         widget = QtWidgets.QWidget(parent)
         widget.setLayout(layout)
         parent.layout().addWidget(widget)
-        return widget
+
+    def addDoubleSpinBox(self, parent, name, x, y, maxResX=1920, maxResY=1080):
+        layout = QtWidgets.QHBoxLayout()
+
+        self.addLabel(layout, name)
+
+        xSpinBox = QtWidgets.QSpinBox()
+        ySpinBox = QtWidgets.QSpinBox()
+        xSpinBox.setMaximum(maxResX)
+        ySpinBox.setMaximum(maxResY)
+        xSpinBox.setValue(x)
+        ySpinBox.setValue(y)
+
+        layout.addWidget(xSpinBox)
+        layout.addWidget(ySpinBox)
+
+        self.addToParentLayout(layout, parent)
+
+        return xSpinBox, ySpinBox
 
     def addTextInput(self, parent, text):
         layout = QtWidgets.QHBoxLayout()
@@ -101,7 +120,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         inputBox = QtWidgets.QLineEdit()
         layout.addWidget(inputBox)
 
-        return self.addToParentLayout(layout, parent)
+        self.addToParentLayout(layout, parent)
+
+        return inputBox
 
     def addComboBox(self, parent, text, items, default=None):
         layout = QtWidgets.QHBoxLayout()
@@ -109,12 +130,14 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.addLabel(layout, text)
 
         # TODO: make the QComboBox object expand width to fill parent
-        inputBox = QtWidgets.QComboBox()
-        inputBox.addItems(items)
+        comboBox = QtWidgets.QComboBox()
+        comboBox.addItems(items)
         # TODO: figure out how to set default selection
-        layout.addWidget(inputBox)
+        layout.addWidget(comboBox)
 
-        return self.addToParentLayout(layout, parent)
+        self.addToParentLayout(layout, parent)
+
+        return comboBox
 
     def setAllObjectNames(self):
         for objName in dir(self):
@@ -127,7 +150,11 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
                     continue
 
     def display(self):
-        self.iface.messageBar().pushMessage(self.PrintBox.displayText())
+        message = (f"{self.nameInput.displayText()} wants to assess "
+                   f"{self.mineralBox.currentText()} in the area defined by "
+                   f"{self.studyAreaBox.currentText()} at resolution "
+                   f"{self.xSpinBox.value()} x {self.ySpinBox.value()}.")
+        self.iface.messageBar().pushMessage(message)
 
     def greyscale(self):
         selectedLayer = self.iface.layerTreeView().selectedLayers()[0]
