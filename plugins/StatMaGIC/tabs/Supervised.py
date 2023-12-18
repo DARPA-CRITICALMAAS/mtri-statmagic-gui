@@ -12,11 +12,16 @@ from PyQt5.QtWidgets import QFileDialog
 from qgis import processing
 from qgis.core import QgsProject
 
+from statmagic_backend.math.ai import make_fullConfMat
+from statmagic_backend.math.sampling import balancedSamples,dropSelectedBandsforSupClass, randomSample
+from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, calc_array_mode
+from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
+
 from .TabBase import TabBase
+from ..fileops import gdalSave
 from ..gui_helpers import *
-from ..helperFuncs import make_fullConfMat, getTrainingDataFromFeatures, rasterBandDescAslist, bandSelToList, \
-    dropSelectedBandsforSupClass, balancedSamples, randomSample, extractBands, boundingBoxToOffsets, geotFromOffsets, \
-    extractBandsInBounds, gdalSave, addLayerSymbolMutliClassGroup, addRFconfLayer, calc_array_mode
+from ..layerops import addLayerSymbolMutliClassGroup, addRFconfLayer, rasterBandDescAslist, bandSelToList, \
+    getTrainingDataFromFeatures
 
 
 class SupervisedTab(TabBase):

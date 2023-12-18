@@ -5,10 +5,12 @@ from osgeo import gdal
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject
 
+from statmagic_backend.dev.threshold_inference import threshold_inference
+
 from .TabBase import TabBase
-from ..dev.threshold_inference import threshold_inference
+from ..fileops import gdalSave1
 from ..gui_helpers import *
-from ..helperFuncs import gdalSave1, addRFconfLayer, addVectorLayer
+from ..layerops import addRFconfLayer, addVectorLayer
 
 
 class PredictionsTab(TabBase):

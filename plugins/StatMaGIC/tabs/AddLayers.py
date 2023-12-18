@@ -1,17 +1,18 @@
 from pathlib import Path
 
 import geopandas as gpd
+from shapely import box
+
+from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_tiles, process_tiles, \
+    dissolve_vector_files_by_property
+from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_rasters, add_matched_arrays_to_data_raster
 
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsVectorLayer
-from shapely import box
 
 from .TabBase import TabBase
-from ..dev.macrostrat.transform import get_tiles_for_ll_bounds, download_tiles, process_tiles, \
-    dissolve_vector_files_by_property
-from ..dev.match_stack_raster_tools import match_and_stack_rasters, add_matched_arrays_to_data_raster
 from ..gui_helpers import *
-from ..helperFuncs import resampling_dict
+from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
 
 

@@ -7,12 +7,17 @@ from PyQt5.QtWidgets import QTableWidgetItem, QFileDialog
 from osgeo import gdal
 from qgis._core import QgsProject
 
+from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, RasMatcha, sdMatchSomeInStack, RasBoreMatch
+from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
+from statmagic_backend.math.sampling import label_count
+
 from .TabBase import TabBase
+from ..fileops import gdalSave
 from ..gui_helpers import *
-from ..helperFuncs import ExtractRasterValuesFromSelectedFeature, rasterBandDescAslist, doClassIDfield, RasMatcha, \
-    gdalSave, addLayerSymbol, makeTempLayer, multispec_scatter, getTrainingDataFromFeatures, label_count, bandSelToList, \
-    bands2indices, extractBands, sdMatchSomeInStack, boundingBoxToOffsets, geotFromOffsets, extractBandsInBounds, \
-    addLayerSymbolGroup, createClassCoverageList, createCrossClassList, addLayerSymbolMutliClassGroup, RasBoreMatch
+from ..layerops import ExtractRasterValuesFromSelectedFeature, rasterBandDescAslist, doClassIDfield, makeTempLayer, \
+    addLayerSymbol, getTrainingDataFromFeatures, bandSelToList, bands2indices, addLayerSymbolGroup, \
+    createClassCoverageList, createCrossClassList, addLayerSymbolMutliClassGroup
+from ..plotting import multispec_scatter
 
 
 class LabelsTab(TabBase):

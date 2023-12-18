@@ -9,11 +9,15 @@ from sklearn import svm
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsMapLayerProxyModel, QgsFieldProxyModel
 
+from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
+from statmagic_backend.extract.raster import extractBands, extractBandsInBounds
+from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
+
 from .TabBase import TabBase
-from ..dev.rasterize_training_data import training_vector_rasterize
+from ..fileops import gdalSave
 from ..gui_helpers import *
-from ..helperFuncs import bandSelToList, extractBands, boundingBoxToOffsets, geotFromOffsets, extractBandsInBounds, \
-    gdalSave, addRFconfLayer, makePCAplot
+from ..layerops import addRFconfLayer, bandSelToList
+from ..plotting import makePCAplot
 
 
 class TrainingPointsTab(TabBase):

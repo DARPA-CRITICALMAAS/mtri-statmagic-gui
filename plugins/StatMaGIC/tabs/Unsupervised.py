@@ -7,12 +7,16 @@ from sklearn.preprocessing import StandardScaler
 from PyQt5 import QtCore, QtWidgets
 from qgis.core import QgsProject
 
+from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, placeLabels_inRaster, \
+    getFullRasterDict, getCanvasRasterDict
+from statmagic_backend.geo.transform import boundingBoxToOffsets
+from statmagic_backend.math.clustering import unpack_fullK, soft_clustering_weights, doPCA_kmeans, clusterDataInMask
+from statmagic_backend.math.sampling import dropSelectedBandsforSupClass, balancedSamples
+
 from .TabBase import TabBase
+from ..fileops import gdalSave, kosher
 from ..gui_helpers import *
-from ..helperFuncs import bandSelToList, extractBands, boundingBoxToOffsets, extractBandsInBounds, unpack_fullK, \
-    placeLabels_inRaster, gdalSave, addLayerSymbolMutliClassGroup, soft_clustering_weights, getFullRasterDict, \
-    rasterBandDescAslist, getCanvasRasterDict, kosher, doPCA_kmeans, clusterDataInMask, getTrainingDataFromFeatures, \
-    dropSelectedBandsforSupClass, balancedSamples
+from ..layerops import bandSelToList, addLayerSymbolMutliClassGroup, rasterBandDescAslist, getTrainingDataFromFeatures
 
 
 class UnsupervisedTab(TabBase):

@@ -1,11 +1,12 @@
 from pathlib import Path
 
+from statmagic_backend.geo_chem.link_black_shales_db import prep_black_shales
+from statmagic_backend.dev.simple_CT_point_interpolation import interpolate_gdf_value
+
 from PyQt5 import QtWidgets
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer
 
 from .TabBase import TabBase
-from ..dev.geo_chem.link_black_shales_db import prep_black_shales
-from ..dev.simple_CT_point_interpolation import interpolate_gdf_value
 from ..gui_helpers import *
 
 

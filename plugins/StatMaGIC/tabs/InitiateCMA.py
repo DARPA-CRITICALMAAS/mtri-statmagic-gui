@@ -7,12 +7,13 @@ import geopandas as gpd
 import rasterio as rio
 from shapely.geometry import box
 
+from statmagic_backend.dev.template_raster_user_input import print_memory_allocation_from_resolution_bounds, \
+    create_template_raster_from_bounds_and_resolution
+
 from PyQt5 import QtWidgets
 from qgis.gui import QgsProjectionSelectionWidget
 
 from .TabBase import TabBase
-from ..dev.template_raster_user_input import print_memory_allocation_from_resolution_bounds, \
-    create_template_raster_from_bounds_and_resolution
 from ..gui_helpers import *
 
 
