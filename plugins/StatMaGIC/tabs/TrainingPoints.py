@@ -72,7 +72,7 @@ class TrainingPointsTab(TabBase):
         self.generate_plot_button_2 = addButton(bottomFrame, "Plot PCA", self.runPCAplot)
 
         plotForm = QtWidgets.QFormLayout(bottomFrame)
-        self.plt_axis_3, self.plt_axis_4 = addTwoSpinBoxesToForm(plotForm, "PCA Dim", "x-axis", "y-axis", 1, 2,
+        self.plt_axis_1, self.plt_axis_2 = addTwoSpinBoxesToForm(plotForm, "PCA Dim", "x-axis", "y-axis", 1, 2,
                                                                  dtype=int, minX=1, maxX=10, minY=2, maxY=10)
         addWidgetFromLayoutAndAddToParent(plotForm, bottomFrame)
 

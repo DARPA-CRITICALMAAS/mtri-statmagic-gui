@@ -45,16 +45,16 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.topLayout = QtWidgets.QHBoxLayout()
         self.topWidget = addWidgetFromLayout(self.topLayout, self.dockWidgetContents)
 
-        self.comboBox_raster = addQgsMapLayerComboBox(self.topWidget, "Raster Layer")
-        self.comboBox_vector = addQgsMapLayerComboBox(self.topWidget, "Polygon Layer")
-
-        self.comboBox_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.comboBox_vector.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-
-        (
-            self.ClusterWholeExtentBox,
-            self.UseBandSelectionBox
-        ) = addTwoCheckboxes(self.topWidget, "Whole Raster", "Use Selected Bands Only")
+        # self.comboBox_raster = addQgsMapLayerComboBox(self.topWidget, "Raster Layer")
+        # self.comboBox_vector = addQgsMapLayerComboBox(self.topWidget, "Polygon Layer")
+        #
+        # self.comboBox_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        # self.comboBox_vector.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        #
+        # (
+        #     self.ClusterWholeExtentBox,
+        #     self.UseBandSelectionBox
+        # ) = addTwoCheckboxes(self.topWidget, "Whole Raster", "Use Selected Bands Only")
 
         addToParentLayout(self.topWidget)
 

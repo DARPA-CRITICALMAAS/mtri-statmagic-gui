@@ -49,6 +49,7 @@ class InitiateCMATab(TabBase):
         middleFormLayout = QtWidgets.QFormLayout()
 
         self.proj_dir_input = QgsFileWidget()
+        self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.template_input = QgsMapLayerComboBox()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
 
@@ -63,8 +64,8 @@ class InitiateCMATab(TabBase):
         spinBoxWidget = QtWidgets.QWidget(middleFrame)
         spinBoxWidget.setLayout(QtWidgets.QHBoxLayout())
 
-        addSpinBox(spinBoxWidget, "Pixel Size:", dtype=float, value=100, max=5000, step=50)
-        addSpinBox(spinBoxWidget, "Buffer:", dtype=float, value=0, max=1000000, step=25)
+        self.pixel_size_input = addSpinBox(spinBoxWidget, "Pixel Size:", dtype=float, value=100, max=5000, step=50)
+        self.buffer_dist_spinBox = addSpinBox(spinBoxWidget, "Buffer:", dtype=float, value=0, max=1000000, step=25)
 
         addToParentLayout(spinBoxWidget)
         addToParentLayout(middleFrame)

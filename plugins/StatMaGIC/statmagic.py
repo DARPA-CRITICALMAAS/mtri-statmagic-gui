@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 /***************************************************************************
  StatMaGIC
@@ -25,7 +25,7 @@ from .statmagic_dockwidget import StatMaGICDockWidget
 try:
     import pydevd_pycharm
     pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
-except ConnectionRefusedError:
+except (ImportError, ConnectionRefusedError):
     pass
 
 
