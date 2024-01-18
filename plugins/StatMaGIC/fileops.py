@@ -76,3 +76,12 @@ def kosher(obj, path):
     outfile = open(path, 'wb')
     pickle.dump(obj, outfile)
     outfile.close()
+
+
+def path_mkdir(path):
+    try:
+        path.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        print("Folder is already there")
+    else:
+        print("Folder was created")

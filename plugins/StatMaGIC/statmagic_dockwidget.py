@@ -67,12 +67,12 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.initiateCMA_tab        = InitiateCMATab(self, self.tabWidget)
         self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
         self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
-        self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
-        self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
+        # self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
+        # self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
-        self.labels_tab             = LabelsTab(self, self.tabWidget)
-        self.unsupervised_tab       = UnsupervisedTab(self, self.tabWidget)
-        self.supervised_tab         = SupervisedTab(self, self.tabWidget)
+        # self.labels_tab             = LabelsTab(self, self.tabWidget)
+        # self.unsupervised_tab       = UnsupervisedTab(self, self.tabWidget)
+        # self.supervised_tab         = SupervisedTab(self, self.tabWidget)
 
         # add tabs to parent
         addToParentLayout(self.tabWidget)

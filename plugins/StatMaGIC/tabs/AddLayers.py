@@ -14,6 +14,7 @@ from .TabBase import TabBase
 from ..gui_helpers import *
 from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
+from ..fileops import path_mkdir
 
 
 class AddLayersTab(TabBase):
@@ -90,7 +91,12 @@ class AddLayersTab(TabBase):
         # TODO: Make this folder in the project folder
         # TODO: have the zoom level accessible
 
-        processing_dir = Path('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_output')
+
+        # processing_dir = Path('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_output')
+        processing_dir = Path(self.parent.meta_data['project_path']) / 'macrostrat'
+        path_mkdir(processing_dir)
+
+
         output_path = str(processing_dir / "dissovle_macrostrat.json")
         m1 = 'querying the Macrostrat Tile Server'
         self.iface.messageBar().pushMessage(m1)
@@ -106,11 +112,15 @@ class AddLayersTab(TabBase):
         js_paths = process_tiles(mapbox_tiles, tile_indices, processing_dir, "units", 4096)
         m4 = 'dissolving tiles'
         self.iface.messageBar().pushMessage(m4)
-        # TODO: put this output in the project folder
+        # TODO: Figure out why this is crashing and not being caught in the debugger.
+        # Also a note that referencing self. in the debug console also crashes, but the folder on line 96 does
+        # get created
+        # TODO: Somethign off with the function. Another argumnet needed after 'map_id' to specifying which geometries.
         dissolve_vector_files_by_property(
             js_paths,
             'map_id',
             output_path,
+            ['Polygon', 'MultiPolygon'],
             **bounds
         )
 

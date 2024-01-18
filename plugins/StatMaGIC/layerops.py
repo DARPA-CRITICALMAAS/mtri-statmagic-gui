@@ -13,7 +13,8 @@ from PyQt5.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, QgsFeatureRequest, \
     QgsColorRampShader, QgsPalettedRasterRenderer, QgsField, QgsFields, QgsVectorFileWriter, \
-    QgsWkbTypes, QgsCoordinateTransformContext, QgsCoordinateReferenceSystem
+    QgsWkbTypes, QgsCoordinateTransformContext, QgsCoordinateReferenceSystem, QgsMapLayerFactory, \
+    QgsDataSourceUri, QgsMapLayerType
 
 from .constants import returnColorMap, getRGBvals
 
@@ -287,3 +288,23 @@ def rasterBandDescAslist(rasterpath):
     for rb in range(1, RasterDataSet.RasterCount+1, 1):
         descs.append(RasterDataSet.GetRasterBand(rb).GetDescription())
     return descs
+
+
+def add_macrostrat_vectortilemap_to_project():
+    url = 'https://dev.macrostrat.org/tiles/carto/{z}/{x}/{y}'
+    options = QgsMapLayerFactory.LayerOptions(
+        QgsCoordinateTransformContext())
+    ds = QgsDataSourceUri()
+    ds.setParam("type", "xyz")
+    ds.setParam("url", url)
+    ds.setParam("zmax", "14")
+    ds.setParam("zmin", "0")
+    ds.setParam('http-header:referer', '')
+    ml = QgsMapLayerFactory.createLayer(ds.encodedUri().data().decode(),
+                                        'Macrostrat Carto',
+                                        QgsMapLayerType.VectorTileLayer, options)
+    ml.setProviderType('xyzvectortiles')
+    # Todo package this qml file up with the plugin
+    ml.loadNamedStyle('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_style.qml')
+    # QgsProject.instance().addMapLayer(ml)
+    return ml
