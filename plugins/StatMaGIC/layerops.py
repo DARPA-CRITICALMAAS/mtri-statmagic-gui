@@ -1,6 +1,7 @@
 """ Functions that handle raster/vector layers and depend on QGIS gui components. """
 import itertools
 import tempfile
+from pathlib import Path
 
 import numpy as np
 from osgeo import gdal, ogr, osr
@@ -304,8 +305,9 @@ def add_macrostrat_vectortilemap_to_project():
                                         'Macrostrat Carto',
                                         QgsMapLayerType.VectorTileLayer, options)
     ml.setProviderType('xyzvectortiles')
-    # Todo package this qml file up with the plugin. Set path to references plugin dir
-    ml.loadNamedStyle('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_style.qml')
+
+    thisdir = Path(__file__).parent
+    ml.loadNamedStyle(str(thisdir / "macrostrat_style.qml"))
     # QgsProject.instance().addMapLayer(ml)
     return ml
 
