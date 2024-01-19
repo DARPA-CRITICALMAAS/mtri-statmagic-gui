@@ -304,7 +304,48 @@ def add_macrostrat_vectortilemap_to_project():
                                         'Macrostrat Carto',
                                         QgsMapLayerType.VectorTileLayer, options)
     ml.setProviderType('xyzvectortiles')
-    # Todo package this qml file up with the plugin
+    # Todo package this qml file up with the plugin. Set path to references plugin dir
     ml.loadNamedStyle('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_style.qml')
     # QgsProject.instance().addMapLayer(ml)
     return ml
+
+def return_selected_macrostrat_features_as_qgsLayer():
+    # Make sure the Macrostrat Layer is selected
+    layer = QgsProject.instance().mapLayersByName('Macrostrat Carto')[0]
+    feats = layer.selectedFeatures()
+    # layer CRS
+    crs = layer.crs()
+    # The geometries (Might need to parse the Geometry Types (LineString, Polygon)
+    geoms = [feat.geometry() for feat in feats]
+    # And the attributes
+    attrs = [feat.attributeMap() for feat in feats]
+    # Separate the Lines from the Polygons
+    lineIndices, polygonIndices = [], []
+    for idx, geom in enumerate(geoms):
+        geoType = QgsWkbTypes.displayString(geom.wkbType())
+        if geoType == 'LineString':
+            lineIndices.append(idx)
+        elif geoType == 'Polygon' or geoType == 'MultiPolygon':
+            polygonIndices.append(idx)
+        else:
+            pass
+    if len(lineIndices) > 0 and len(polygonIndices) > 0:
+        lines = make_qgsVectorLayer_from_indices(lineIndices, geoms, attrs, crs, "Faults")
+        polys = make_qgsVectorLayer_from_indices(polygonIndices, geoms, attrs, crs, "Polygons")
+        return [lines, polys]
+    elif len(lineIndices) == 0 and len(polygonIndices) > 0:
+        polys = make_qgsVectorLayer_from_indices(polygonIndices, geoms, attrs, crs, "Polygons")
+        return [polys]
+    elif len(lineIndices) > 0 and len(polygonIndices) == 0:
+        lines = make_qgsVectorLayer_from_indices(lineIndices, geoms, attrs, crs, "Faults")
+        return [lines]
+    else:
+        pass
+
+
+def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
+    import geopandas as gpd
+    geo = [geoms[i] for i in indices]
+    attr = [attrs[i] for i in indices]
+    gdf = gpd.GeoDataFrame(data=attr, geometry=geo, crs=crs.toWkt())
+    return QgsVectorLayer(gdf.to_json(), f"Selected Macrostrat {name}", "ogr")

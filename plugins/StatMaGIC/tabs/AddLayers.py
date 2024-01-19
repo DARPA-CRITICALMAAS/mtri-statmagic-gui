@@ -15,6 +15,7 @@ from ..gui_helpers import *
 from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
 from ..fileops import path_mkdir
+from ..layerops import  add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
 
 
 class AddLayersTab(TabBase):
@@ -31,7 +32,9 @@ class AddLayersTab(TabBase):
         self.num_threads_resamp_spinBox = addSpinBox(stackWidget, "# Threads:", value=1, max=32)
         addToParentLayout(stackWidget)
 
-        self.macrostrat_button = addButton(self, "Grab Macrostrat Tile Data", self.grab_macrostrat_data_in_bounds, align="Right")
+        self.macrostrat_button = addButton(self, "Pull Macrostrat Tile \n Data in Bounds", self.grab_macrostrat_data_in_bounds, align="Right")
+        self.macrostrat_streamButton = addButton(self, 'Load Macrostrat Vector Tiles', self.load_macrostrat_tile_server, align="Left")
+        self.macrostrat_returnSelected = addButton(self, 'Return Selected MacroStrat', self.add_selected_macrostrat_to_proj, align="Right")
 
         # initialize lists to hold stuff later
         self.pathlist = []
@@ -128,6 +131,15 @@ class AddLayersTab(TabBase):
         self.iface.messageBar().pushMessage(m5)
         vlayer = QgsVectorLayer(output_path, "Macrostat_vectors", "ogr")
         QgsProject.instance().addMapLayer(vlayer)
+
+    def load_macrostrat_tile_server(self):
+        macrostrat_qgs_layer = add_macrostrat_vectortilemap_to_project()
+        QgsProject.instance().addMapLayer(macrostrat_qgs_layer)
+
+    def add_selected_macrostrat_to_proj(self):
+        qgs_layer_list = return_selected_macrostrat_features_as_qgsLayer()
+        for l in qgs_layer_list:
+            QgsProject.instance().addMapLayer(l)
 
     def refreshList(self, elem):
         self.listWidget.addItem(elem)
