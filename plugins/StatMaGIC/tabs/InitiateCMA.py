@@ -11,7 +11,7 @@ from statmagic_backend.dev.template_raster_user_input import print_memory_alloca
     create_template_raster_from_bounds_and_resolution
 
 from PyQt5 import QtWidgets
-from qgis.gui import QgsProjectionSelectionWidget
+from qgis.gui import QgsProjectionSelectionWidget, QgsExtentWidget
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -50,7 +50,9 @@ class InitiateCMATab(TabBase):
 
         self.proj_dir_input = QgsFileWidget()
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
-        self.template_input = QgsMapLayerComboBox()
+        # self.template_input = QgsMapLayerComboBox()
+        # self.template_input = QgsExtentGroupBox()
+        self.template_input = QgsExtentWidget()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
 
         addFormItem(middleFormLayout, "Select Project Directory:", self.proj_dir_input)
