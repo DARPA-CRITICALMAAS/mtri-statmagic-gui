@@ -122,8 +122,8 @@ class AddLayersTab(TabBase):
         dissolve_vector_files_by_property(
             js_paths,
             'map_id',
-            output_path,
             ['Polygon', 'MultiPolygon'],
+            output_path,
             **bounds
         )
 
