@@ -11,7 +11,7 @@ from statmagic_backend.dev.template_raster_user_input import print_memory_alloca
     create_template_raster_from_bounds_and_resolution
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QFileInfo
 from qgis.gui import QgsProjectionSelectionWidget, QgsExtentWidget
 from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem
 
@@ -108,6 +108,7 @@ class InitiateCMATab(TabBase):
         proj_path = Path(input_path, 'CMA_' + cma_mineral)
         # Turned to true for dev. TODO this should be turned off once stable
         proj_path.mkdir(exist_ok=True)
+        qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgs")
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
 
@@ -139,7 +140,8 @@ class InitiateCMATab(TabBase):
 
         meta_dict = {'username': username, 'mineral': cma_mineral, 'comments': comments, 'date_initiated': today,
                      'project_path': str(proj_path), 'project_CRS': str(new_crs), 'project_bounds': str(bounds),
-                     'template_path': template_output_path, 'data_raster_path': data_raster_path}
+                     'template_path': template_output_path, 'data_raster_path': data_raster_path,
+                     'qgis_project_file': qgis_proj_file}
 
         with open(Path(proj_path, 'project_metadata.json'), 'w') as f:
             json.dump(meta_dict, f)
@@ -150,6 +152,8 @@ class InitiateCMATab(TabBase):
         qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(qgs_data_raster)
         QgsProject.instance().setCrs(box_crs)
+        QgsProject.instance().setFileName(qgis_proj_file)
+        QgsProject.instance().write()
         # QTimer.singleShot(10, set_project_crs(box_crs))
         self.iface.messageBar().pushMessage(message)
 
@@ -185,6 +189,8 @@ class InitiateCMATab(TabBase):
         proj_path = self.resume_json_file_input.filePath()
         with open(Path(proj_path), 'r') as f:
             self.parent.meta_data = json.loads(f.read())
+        qgis_proj_file = self.parent.meta_data["qgis_project_file"]
+        QgsProject.instance().read(qgis_proj_file)
         message = f"Project files loaded from: {proj_path}"
         qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(qgs_data_raster)
