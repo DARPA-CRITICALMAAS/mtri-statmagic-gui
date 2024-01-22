@@ -8,20 +8,16 @@ from statmagic_backend.dev.match_stack_raster_tools import drop_selected_layers_
 
 class RasterBandSelectionDialog(QDialog):
 
-    def __init__(self, iface, raster_layer):
-        self.iface = iface
+    def __init__(self, parent, raster_layer):
+        self.iface = parent.iface
         self.raster_layer = raster_layer
         QDialog.__init__(self)
         self.setGeometry(500, 300, 500, 300)
         # Create an instance of the widget wrapper class
-        self.list_widget = CustomCheckableListWidget(self)
+        self.list_widget = CustomCheckableListWidget(parent)
         band_list = []
         for b in range(self.raster_layer.bandCount()):
             band_list.append(self.raster_layer.bandName(b))
-        # Call set_items() method and pass your list of feature attributes
-        # self.list_widget.set_items([str(f.attributes()[2]) for f in iface.activeLayer().getFeatures()])
-        # Todo How to reference the raster in Inspect_Raster_Layer comboBox
-        # Best way to return the list back to
         self.list_widget.set_items(band_list)
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.list_widget)
@@ -125,7 +121,7 @@ class CustomCheckableListWidget(QWidget):
     def run_drop_layers(self):
         # Todo Return just the band indices for dropping
         bandlist = self.return_checked_items()
-        drop_selected_layers_from_raster(self.parent.metadata['data_raster_path'], bandlist)
+        drop_selected_layers_from_raster(self.parent.parent.metadata['data_raster_path'], bandlist)
 
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.run_drop_layers)

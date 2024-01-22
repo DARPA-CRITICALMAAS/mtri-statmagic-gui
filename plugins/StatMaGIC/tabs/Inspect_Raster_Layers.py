@@ -13,6 +13,7 @@ class InspectLayersTab(TabBase):
         super().__init__(parent, tabWidget, "Inspect DataCube Layers")
 
         self.parent = parent
+        self.iface = self.parent.iface
 
         ##### TOP FRAME - Insepetion options#####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
