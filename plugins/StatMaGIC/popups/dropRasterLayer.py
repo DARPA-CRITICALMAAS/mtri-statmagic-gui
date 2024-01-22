@@ -113,13 +113,12 @@ class CustomCheckableListWidget(QWidget):
         selection = []
         for i in range(self.lw.count()):
             item = self.lw.item(i)
-            if item.checkState() == Qt.Checked:
+            if item.checkState() == Qt.Unchecked:
                 selection.append(item.text())
         selection.sort()
         return selection
 
     def run_drop_layers(self):
-        # Todo Return just the band indices for dropping
         bandlist = self.return_checked_items()
         drop_selected_layers_from_raster(self.parent.parent.metadata['data_raster_path'], bandlist)
 

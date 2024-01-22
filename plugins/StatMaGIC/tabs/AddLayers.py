@@ -134,7 +134,9 @@ class AddLayersTab(TabBase):
 
     def load_macrostrat_tile_server(self):
         macrostrat_qgs_layer = add_macrostrat_vectortilemap_to_project()
+        QgsProject.instance().setCrs(macrostrat_qgs_layer.crs())
         QgsProject.instance().addMapLayer(macrostrat_qgs_layer)
+
 
     def add_selected_macrostrat_to_proj(self):
         qgs_layer_list = return_selected_macrostrat_features_as_qgsLayer()

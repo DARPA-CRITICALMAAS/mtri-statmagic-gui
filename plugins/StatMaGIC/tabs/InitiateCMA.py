@@ -128,6 +128,8 @@ class InitiateCMATab(TabBase):
         box_crs = self.mQgsProjectionSelectionWidget.crs()
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
+        # Todo: make so that it can choose between total bounds or shape
+        # Will have to create an array mask for the shape option
         bounds = gdf.to_crs(new_crs).total_bounds
 
         geom = box(*bounds)

@@ -350,6 +350,7 @@ def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
     geo = [geoms[i] for i in indices]
     attr = [attrs[i] for i in indices]
     gdf = gpd.GeoDataFrame(data=attr, geometry=geo, crs=crs.toWkt())
+    # Todo: Should this be projected to the project CRS?
     return QgsVectorLayer(gdf.to_json(), f"Selected Macrostrat {name}", "ogr")
 
 def set_project_crs(QgsRef):
