@@ -351,3 +351,6 @@ def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
     attr = [attrs[i] for i in indices]
     gdf = gpd.GeoDataFrame(data=attr, geometry=geo, crs=crs.toWkt())
     return QgsVectorLayer(gdf.to_json(), f"Selected Macrostrat {name}", "ogr")
+
+def set_project_crs(QgsRef):
+    QgsProject.instance().setCrs(QgsRef)

@@ -11,11 +11,14 @@ from statmagic_backend.dev.template_raster_user_input import print_memory_alloca
     create_template_raster_from_bounds_and_resolution
 
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QTimer
 from qgis.gui import QgsProjectionSelectionWidget, QgsExtentWidget
-from qgis.core import QgsRasterLayer, QgsProject
+from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem
+
 
 from .TabBase import TabBase
 from ..gui_helpers import *
+from ..layerops import set_project_crs
 
 
 class InitiateCMATab(TabBase):
@@ -122,7 +125,6 @@ class InitiateCMATab(TabBase):
             fp = datastr
             gdf = gpd.read_file(fp)
 
-        # Todo: Use this to define the project CRS
         box_crs = self.mQgsProjectionSelectionWidget.crs()
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
@@ -147,7 +149,8 @@ class InitiateCMATab(TabBase):
         message = f"Project files saved to: {proj_path}"
         qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(qgs_data_raster)
-        QgsProject.setCrs(box_crs)
+        QgsProject.instance().setCrs(box_crs)
+        # QTimer.singleShot(10, set_project_crs(box_crs))
         self.iface.messageBar().pushMessage(message)
 
     def print_estimated_size(self):
@@ -185,4 +188,6 @@ class InitiateCMATab(TabBase):
         message = f"Project files loaded from: {proj_path}"
         qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(qgs_data_raster)
+        crs = QgsCoordinateReferenceSystem(self.parent.meta_data['project_CRS'])
+        QgsProject.instance().setCrs(crs)
         self.iface.messageBar().pushMessage(message)
