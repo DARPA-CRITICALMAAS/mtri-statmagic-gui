@@ -17,7 +17,7 @@ class RasterBandSelectionDialog(QDialog):
         self.list_widget = CustomCheckableListWidget(parent)
         band_list = []
         for b in range(self.raster_layer.bandCount()):
-            band_list.append(self.raster_layer.bandName(b))
+            band_list.append(self.raster_layer.bandName(b+1))
         self.list_widget.set_items(band_list)
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.list_widget)
