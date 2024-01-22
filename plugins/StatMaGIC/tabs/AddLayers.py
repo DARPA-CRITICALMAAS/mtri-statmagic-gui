@@ -15,7 +15,7 @@ from ..gui_helpers import *
 from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
 from ..fileops import path_mkdir
-from ..layerops import  add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
+from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
 
 
 class AddLayersTab(TabBase):

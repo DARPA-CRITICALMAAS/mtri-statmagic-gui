@@ -83,5 +83,4 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.close()
 
     def cancel(self):
-        print('canceled')
         self.close()

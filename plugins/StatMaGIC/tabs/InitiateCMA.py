@@ -12,6 +12,7 @@ from statmagic_backend.dev.template_raster_user_input import print_memory_alloca
 
 from PyQt5 import QtWidgets
 from qgis.gui import QgsProjectionSelectionWidget, QgsExtentWidget
+from qgis.core import QgsRasterLayer, QgsProject
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -50,9 +51,9 @@ class InitiateCMATab(TabBase):
 
         self.proj_dir_input = QgsFileWidget()
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
-        # self.template_input = QgsMapLayerComboBox()
+        self.template_input = QgsMapLayerComboBox()
         # self.template_input = QgsExtentGroupBox()
-        self.template_input = QgsExtentWidget()
+        # self.template_input = QgsExtentWidget()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
 
         addFormItem(middleFormLayout, "Select Project Directory:", self.proj_dir_input)
@@ -121,6 +122,7 @@ class InitiateCMATab(TabBase):
             fp = datastr
             gdf = gpd.read_file(fp)
 
+        # Todo: Use this to define the project CRS
         box_crs = self.mQgsProjectionSelectionWidget.crs()
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
@@ -141,6 +143,12 @@ class InitiateCMATab(TabBase):
             json.dump(meta_dict, f)
 
         self.parent.meta_data = meta_dict
+
+        message = f"Project files saved to: {proj_path}"
+        qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        QgsProject.instance().addMapLayer(qgs_data_raster)
+        QgsProject.setCrs(box_crs)
+        self.iface.messageBar().pushMessage(message)
 
     def print_estimated_size(self):
         selectedLayer = self.template_input.currentLayer()
@@ -174,6 +182,7 @@ class InitiateCMATab(TabBase):
         proj_path = self.resume_json_file_input.filePath()
         with open(Path(proj_path), 'r') as f:
             self.parent.meta_data = json.loads(f.read())
-
         message = f"Project files loaded from: {proj_path}"
+        qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        QgsProject.instance().addMapLayer(qgs_data_raster)
         self.iface.messageBar().pushMessage(message)

@@ -12,6 +12,7 @@ from .tabs.ProximityLayers import ProximityLayersTab
 from .tabs.Supervised import SupervisedTab
 from .tabs.TrainingPoints import TrainingPointsTab
 from .tabs.Unsupervised import UnsupervisedTab
+from .tabs.Inspect_Raster_Layers import InspectLayersTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
@@ -66,6 +67,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         # populate tabs
         self.initiateCMA_tab        = InitiateCMATab(self, self.tabWidget)
         self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
+        self.InspectLayersTab       = InspectLayersTab(self, self.tabWidget)
         self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
         # self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
         # self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
