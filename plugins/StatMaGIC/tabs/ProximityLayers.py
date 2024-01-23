@@ -40,7 +40,7 @@ class ProximityLayersTab(TabBase):
 
     def distance_to_features_raster(self):
         selectedLayer = self.proximity_layer_box.currentLayer()
-        withSelected = self.withSelectedcheckBox_prox.isChecked()
+        withSelected = self.withSelectedCheckBox_prox.isChecked()
 
         # TODO Need to deal with the geometries outside of the template extent.
         #      May still want the distance from a feature even if it is outside the extent.

@@ -1,10 +1,12 @@
 
-# Found at https://gis.stackexchange.com/questions/446174/filtering-qgscheckablecombobox-items-in-pyqgis
+# Edited this Found at https://gis.stackexchange.com/questions/446174/filtering-qgscheckablecombobox-items-in-pyqgis
 from qgis.PyQt.QtWidgets import QDialog, QWidget, QVBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu, QAction
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QDialogButtonBox
 from statmagic_backend.dev.match_stack_raster_tools import drop_selected_layers_from_raster
+from qgis.core import QgsRasterLayer, QgsProject
+
 
 class RasterBandSelectionDialog(QDialog):
 
@@ -120,8 +122,14 @@ class CustomCheckableListWidget(QWidget):
 
     def run_drop_layers(self):
         bandlist = self.return_checked_items()
+        # Todo: fix parent reference correctly
         drop_selected_layers_from_raster(self.parent.parent.metadata['data_raster_path'], bandlist)
 
+        QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
+        self.iface.mapCanvas().refreshAllLayers()
+        data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        QgsProject.instance().addMapLayer(data_raster)
+        
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.run_drop_layers)
         self.buttonBox.rejected.connect(self.cancel)
@@ -129,6 +137,3 @@ class CustomCheckableListWidget(QWidget):
     def cancel(self):
         print('canceled')
         self.close()
-#
-# dlg = TestDialog(iface)
-# dlg.show()

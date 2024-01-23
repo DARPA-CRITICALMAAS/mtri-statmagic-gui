@@ -194,8 +194,9 @@ class InitiateCMATab(TabBase):
         qgis_proj_file = self.parent.meta_data["qgis_project_file"]
         QgsProject.instance().read(qgis_proj_file)
         message = f"Project files loaded from: {proj_path}"
-        qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
-        QgsProject.instance().addMapLayer(qgs_data_raster)
-        crs = QgsCoordinateReferenceSystem(self.parent.meta_data['project_CRS'])
-        QgsProject.instance().setCrs(crs)
+        # These shouldn't have to be here with the new project saving and reloading
+        # qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        # QgsProject.instance().addMapLayer(qgs_data_raster)
+        # crs = QgsCoordinateReferenceSystem(self.parent.meta_data['project_CRS'])
+        # QgsProject.instance().setCrs(crs)
         self.iface.messageBar().pushMessage(message)

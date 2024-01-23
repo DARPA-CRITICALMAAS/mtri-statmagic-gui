@@ -8,7 +8,7 @@ from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_ti
 from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_rasters, add_matched_arrays_to_data_raster
 
 from PyQt5 import QtWidgets
-from qgis.core import QgsProject, QgsVectorLayer
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -68,6 +68,12 @@ class AddLayersTab(TabBase):
         self.listWidget.clear()
 
         message = "Layers appended to the raster data stack"
+        QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
+        self.iface.mapCanvas().refreshAllLayers()
+        data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        QgsProject.instance().addMapLayer(data_raster)
+
+
         self.iface.messageBar().pushMessage(message)
 
     def grab_macrostrat_data_in_bounds(self):
