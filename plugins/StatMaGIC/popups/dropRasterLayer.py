@@ -11,12 +11,13 @@ from qgis.core import QgsRasterLayer, QgsProject
 class RasterBandSelectionDialog(QDialog):
 
     def __init__(self, parent, raster_layer):
+        self.parent = parent
         self.iface = parent.iface
         self.raster_layer = raster_layer
         QDialog.__init__(self)
         self.setGeometry(500, 300, 500, 300)
         # Create an instance of the widget wrapper class
-        self.list_widget = CustomCheckableListWidget(parent)
+        self.list_widget = CustomCheckableListWidget(self)
         band_list = []
         for b in range(self.raster_layer.bandCount()):
             band_list.append(self.raster_layer.bandName(b+1))
@@ -26,11 +27,9 @@ class RasterBandSelectionDialog(QDialog):
 
 
 class CustomCheckableListWidget(QWidget):
-    '''
-    Copy and paste this class into your PyQGIS project/ plugin
-    '''
 
     def __init__(self, parent=None):
+        super().__init__()
         self.parent = parent
         QDialog.__init__(self)
         self.layout = QVBoxLayout(self)
@@ -127,6 +126,7 @@ class CustomCheckableListWidget(QWidget):
         # self.iface.mapCanvas().refreshAllLayers()
         data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(data_raster)
+        self.cancel()
 
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.run_drop_layers)
@@ -135,4 +135,4 @@ class CustomCheckableListWidget(QWidget):
     def cancel(self):
         # Todo: this closes the CustomCheckableListWidget but should close the RasterBandSelectionDialog
         # Todo: Close the Dialog after run_drop_layers
-        self.close()
+        self.parent.close()

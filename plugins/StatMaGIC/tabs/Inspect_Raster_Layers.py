@@ -53,5 +53,5 @@ class InspectLayersTab(TabBase):
 
 
     def popup_drop_layer_dialogue(self):
-        popup = RasterBandSelectionDialog(self, raster_layer=self.comboBox.currentLayer())
+        popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
         popup.exec_()
