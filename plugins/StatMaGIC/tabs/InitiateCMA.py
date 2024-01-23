@@ -108,7 +108,7 @@ class InitiateCMATab(TabBase):
         proj_path = Path(input_path, 'CMA_' + cma_mineral)
         # Turned to true for dev. TODO this should be turned off once stable
         proj_path.mkdir(exist_ok=True)
-        qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgs")
+        qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgz")
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
 

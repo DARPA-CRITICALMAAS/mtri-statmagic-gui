@@ -129,7 +129,7 @@ class CustomCheckableListWidget(QWidget):
         self.iface.mapCanvas().refreshAllLayers()
         data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(data_raster)
-        
+
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.run_drop_layers)
         self.buttonBox.rejected.connect(self.cancel)

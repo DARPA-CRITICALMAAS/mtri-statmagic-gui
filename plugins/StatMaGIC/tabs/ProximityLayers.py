@@ -32,8 +32,8 @@ class ProximityLayersTab(TabBase):
     def populate_comboboxes(self):
         rasterize_layer = self.proximity_layer_box.currentLayer()
         if rasterize_layer:
-            self.proximity_layer_box.layerChanged.connect(self.attribute_rasterize_field.setLayer)
             self.attribute_rasterize_field.setLayer(rasterize_layer)
+            self.proximity_layer_box.layerChanged.connect(self.attribute_rasterize_field.setLayer)
             self.attribute_rasterize_field.setFilters(QgsFieldProxyModel.Numeric)
 
         self.parent.initiateCMA_tab.mQgsProjectionSelectionWidget.setCrs(QgsCoordinateReferenceSystem('ESRI:102008'))

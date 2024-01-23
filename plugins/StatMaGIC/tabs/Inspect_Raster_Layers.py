@@ -47,8 +47,9 @@ class InspectLayersTab(TabBase):
     def populate_comboboxes(self):
         raster_layer = self.comboBox.currentLayer()
         if raster_layer:
-            self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
             self.rasterBandBox.setLayer(raster_layer)
+            self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
+
 
 
     def popup_drop_layer_dialogue(self):
