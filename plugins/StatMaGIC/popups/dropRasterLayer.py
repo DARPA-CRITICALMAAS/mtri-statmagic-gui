@@ -123,7 +123,7 @@ class CustomCheckableListWidget(QWidget):
     def run_drop_layers(self):
         bandlist = self.return_checked_items()
         # Todo: fix parent reference correctly
-        drop_selected_layers_from_raster(self.parent.parent.metadata['data_raster_path'], bandlist)
+        drop_selected_layers_from_raster(self.parent.parent.meta_data['data_raster_path'], bandlist)
 
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
         self.iface.mapCanvas().refreshAllLayers()
