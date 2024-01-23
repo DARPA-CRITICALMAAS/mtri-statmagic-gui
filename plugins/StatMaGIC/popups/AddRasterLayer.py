@@ -61,12 +61,10 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.buttonBox.rejected.connect(self.cancel)
 
     def returnLayerInfo(self):
-        print('clicked accept')
         currentfile = self.comboBox.currentLayer()
         filepath = self.fileInput.filePath()
         method = self.samplingBox.currentText()
         description = self.descriptionBox.text()
-        print(filepath)
 
         if currentfile:
             file_source = currentfile.source()

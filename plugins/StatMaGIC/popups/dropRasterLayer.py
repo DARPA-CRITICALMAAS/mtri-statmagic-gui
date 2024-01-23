@@ -122,12 +122,10 @@ class CustomCheckableListWidget(QWidget):
 
     def run_drop_layers(self):
         bandlist = self.return_checked_items()
-        # Todo: fix parent reference correctly
         drop_selected_layers_from_raster(self.parent.parent.meta_data['data_raster_path'], bandlist)
-
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
-        self.iface.mapCanvas().refreshAllLayers()
-        data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        # self.iface.mapCanvas().refreshAllLayers()
+        data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(data_raster)
 
     def signals_connection(self):
@@ -135,5 +133,6 @@ class CustomCheckableListWidget(QWidget):
         self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
-        print('canceled')
+        # Todo: this closes the CustomCheckableListWidget but should close the RasterBandSelectionDialog
+        # Todo: Close the Dialog after run_drop_layers
         self.close()
