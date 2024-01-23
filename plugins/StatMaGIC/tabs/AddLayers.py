@@ -59,6 +59,7 @@ class AddLayersTab(TabBase):
         method_list = self.methodlist
         description_list = self.desclist
 
+        # Todo: Need to be able to handle multiband inputs
         # turn method string to resampling type using the dictionary in helperFuncs
         riomethod_list = [resampling_dict.get(m, m) for m in method_list]
 

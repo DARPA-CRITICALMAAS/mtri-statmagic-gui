@@ -31,6 +31,11 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.samplingBox = QtWidgets.QComboBox(self)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
+        # Todo: Is there a way to have the descriptionBox inherit the band description of a raster once it's selected in
+        # the fileInput or comboBox
+
+        # Todo: Need to be able to handle multiband inputs
+
         self.samplingBox.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
 
         label1 = QtWidgets.QLabel('Get from loaded layer:')
