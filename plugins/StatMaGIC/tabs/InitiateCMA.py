@@ -178,9 +178,12 @@ class InitiateCMATab(TabBase):
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
 
-        bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
+        # bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
+        extent = selectedLayer.extent()
+        geom = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
+        
 
-        geom = box(*bounds)
+        # geom = box(*bounds)
         geom = geom.buffer(buffer_distance)
         bounds = gpd.GeoSeries(geom).total_bounds
 

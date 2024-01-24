@@ -58,7 +58,8 @@ class TrainingPointsTab(TabBase):
 
         self.training_buffer_dist = addSpinBoxToForm(formLayout, "Buffer Points (units of template CRS):",
                                                      dtype=float, value=0, max=1000000, step=25)
-        self.trainingFieldComboBox = addFormItem(formLayout, "Use Field for Raster Values:", QgsFieldComboBox())
+        self.trainingFieldComboBox = QgsFieldComboBox()
+        addFormItem(formLayout, "Use Field for Raster Values:", self.trainingFieldComboBox)
 
         addWidgetFromLayoutAndAddToParent(formLayout, middleFrame)
 
