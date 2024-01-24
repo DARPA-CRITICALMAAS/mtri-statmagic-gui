@@ -1,4 +1,8 @@
-{"Geophysical LAB":  "https://www.sciencebase.gov/catalog/file/get/61da068cd34ed7929400b5a2?f=__disk__f0%2F34%2F04%2Ff034041e46d7925f9d59aad45914fba9313ee09e",
-  "Gravity and Derivatives": "https://www.sciencebase.gov/catalog/file/get/619a9f02d34eb622f692f96c?f=__disk__c0%2Ff0%2F32%2Fc0f0323686873afba85e7f09480d063b51378a73",
-
+{"Geophysics LAB":  "/home/jagraham/Documents/Local_work/statMagic/McCafferty_Zn-Pb_Data/[Geophysical Data] Depth to lithosphere-asthenosphere boundary GeoTIFF grids for the United States, Canada, and Australia/GeophysicsLAB_USCanada/GeophysicsLAB_USCanada.tif",
+  "Moho": "/home/jagraham/Documents/Local_work/statMagic/McCafferty_Zn-Pb_Data/[Geophysical Data] Depth to Moho GeoTIFF grids for the United States, Canada, and Australia/GeophysicsMoho_USCanada/USCanada_Moho.tif",
+  "Geophysics Gravity HGM": "/home/jagraham/Documents/Local_work/statMagic/McCafferty_Zn-Pb_Data/[Geophysical Data] Gravity and related derivative GeoTIFF grids and data for the United States and Canada/GeophysicsGravity_HGM_USCanada/GeophysicsGravity_HGM_USCanada.tif",
+  "Geophysics Gravity Up30km HGM": "/home/jagraham/Documents/Local_work/statMagic/McCafferty_Zn-Pb_Data/[Geophysical Data] Gravity and related derivative GeoTIFF grids and data for the United States and Canada/GeophysicsGravity_Up30km_HGM_USCanada/GeophysicsGravity_Up30km_HGM_USCanada.tif",
+  "Geophysics Gravity": "/home/jagraham/Documents/Local_work/statMagic/McCafferty_Zn-Pb_Data/[Geophysical Data] Gravity and related derivative GeoTIFF grids and data for the United States and Canada/GeophysicsGravity_USCanada/GeophysicsGravity_USCanada.tif",
+  "Isostatic Gravity": "/home/jagraham/Documents/Local_work/statMagic/isograv_ta3/US_IsostaticGravity_WGS84.tif",
+  "Isostatic Gravity HGM": "/home/jagraham/Documents/Local_work/statMagic/isograv_ta3/US_IsostaticGravity_HGM_WGS84.tif"
 }

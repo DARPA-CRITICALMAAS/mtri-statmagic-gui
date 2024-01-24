@@ -51,7 +51,9 @@ class RasterizationTab(TabBase):
         # self.vector_field_input.setLayer(self.vector_layer_input.currentLayer())
         self.vector_field_input.setFilters(QgsFieldProxyModel.Numeric)
         label5 = QLabel("Use Selected Features:")
+        label5.setToolTip("Will only consider selected features for analysis")
         self.with_selected_check_mid = QCheckBox()
+        self.with_selected_check_mid.setToolTip("Will only consider selected features for analysis")
 
         self.run_rasterize_numField_button = QPushButton()
         self.run_rasterize_numField_button.setText('Create Proximity Raster')
