@@ -13,7 +13,7 @@ from statmagic_backend.dev.template_raster_user_input import print_memory_alloca
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer, QFileInfo
 from qgis.gui import QgsProjectionSelectionWidget, QgsExtentWidget
-from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem
+from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem, QgsCoordinateTransform, QgsCoordinateTransformContext
 
 
 from .TabBase import TabBase
@@ -163,27 +163,29 @@ class InitiateCMATab(TabBase):
         selectedLayer = self.template_input.currentLayer()
         # TODO Deterimine if it's a raster or vector. Repeat for make template as well
         # TODO have the abiity to get the draw rectangle function
-        datastr = selectedLayer.source()
+
         pixel_size = self.pixel_size_input.value()
         buffer_distance = self.buffer_dist_spinBox.value()
+        box_crs = self.mQgsProjectionSelectionWidget.crs()
 
+        datastr = selectedLayer.source()
         try:
             # This will be the case for geopackages, but not shapefile or geojson
             fp, layername = datastr.split('|')
         except ValueError:
             fp = datastr
-
-        # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine
-        box_crs = self.mQgsProjectionSelectionWidget.crs()
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
+        bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
+        geom = box(*bounds)
 
-        # bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
-        extent = selectedLayer.extent()
-        geom = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
-        
+        # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine
 
-        # geom = box(*bounds)
+        layer_crs = selectedLayer.crs()
+        xform = QgsCoordinateTransform(layer_crs, box_crs, QgsCoordinateTransformContext())
+        extent = xform.transform(selectedLayer.extent())
+        geomX = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
+
         geom = geom.buffer(buffer_distance)
         bounds = gpd.GeoSeries(geom).total_bounds
 
