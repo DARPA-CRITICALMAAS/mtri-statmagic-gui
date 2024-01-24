@@ -176,15 +176,13 @@ class InitiateCMATab(TabBase):
             fp = datastr
         input_crsWkt = box_crs.toWkt()
         new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
-        bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
-        geom = box(*bounds)
 
         # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine
 
         layer_crs = selectedLayer.crs()
         xform = QgsCoordinateTransform(layer_crs, box_crs, QgsCoordinateTransformContext())
         extent = xform.transform(selectedLayer.extent())
-        geomX = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
+        geom = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
 
         geom = geom.buffer(buffer_distance)
         bounds = gpd.GeoSeries(geom).total_bounds
