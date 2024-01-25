@@ -27,8 +27,6 @@ class InspectLayersTab(TabBase):
 
         addFormItem(topFormLayout, "Raster / DataCube:", self.comboBox)
         addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
-        # self.rasterProps = QgsRasterLayerProperties(self)
-        # self.rasterHist = QgsRasterHistogramWidget(self)
 
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
