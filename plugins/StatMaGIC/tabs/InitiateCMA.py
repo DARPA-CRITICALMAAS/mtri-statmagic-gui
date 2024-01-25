@@ -168,29 +168,65 @@ class InitiateCMATab(TabBase):
         buffer_distance = self.buffer_dist_spinBox.value()
         box_crs = self.mQgsProjectionSelectionWidget.crs()
 
+        # This just gets the filename
         datastr = selectedLayer.source()
         try:
             # This will be the case for geopackages, but not shapefile or geojson
             fp, layername = datastr.split('|')
         except ValueError:
             fp = datastr
-        input_crsWkt = box_crs.toWkt()
-        new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
-        bounds = gpd.read_file(fp).to_crs(new_crs).total_bounds
-        geom = box(*bounds)
 
-        # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine
+        # Define the CRSs
+        dst_crs = box_crs.authid()
+        src_crs = selectedLayer.crs().authid()
 
-        layer_crs = selectedLayer.crs()
-        xform = QgsCoordinateTransform(layer_crs, box_crs, QgsCoordinateTransformContext())
-        extent = xform.transform(selectedLayer.extent())
-        geomX = box(extent.xMinimum(), extent.xMaximum(), extent.yMinimum(), extent.yMaximum())
+        # bounds was the giving the correct answer the original way. So what does this do different than the ways below??
+        bounds = gpd.read_file(fp).to_crs(dst_crs).total_bounds
 
-        geom = geom.buffer(buffer_distance)
-        bounds = gpd.GeoSeries(geom).total_bounds
+        # Going through without chaining the reproject
+        # reading with geopandas. This is what was taking a long time if input contains complicated geometries
+        gbounds_src = gpd.read_file(fp).total_bounds
+        # bounds was the giving the correct answer the original way
+
+        bbox_src = box(*gbounds_src)
+        # convert to geoseries for projection methods
+        ggeoseries = gpd.GeoSeries(bbox_src).set_crs(src_crs)
+        ggeoseries_dst = ggeoseries.to_crs(dst_crs)
+        # A buffer if needed would go here
+        if buffer_distance > 0:
+            geom_series1 = ggeoseries_dst.buffer(buffer_distance)
+        else:
+            geom_series1 = ggeoseries_dst
+        gbounds1 = geom_series1.total_bounds
+
+
+        # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine - Old Comment
+        # This is using the qgsVectorLayer extent and build in pyqgis reproject
+        qRect_extent_src = selectedLayer.extent()
+        xform = QgsCoordinateTransform(selectedLayer.crs(), box_crs, QgsProject.instance())
+        qRect_extent_dst = xform.transformBoundingBox(qRect_extent_src)
+        # you can see here the qRect_extent_dst is will match gbounds1 and not bounds. So what is happening??
+
+        # Here trying to do get the qgsRect to a geopandas polygon in source crs, then project with geopandas
+        qbox_src = box(qRect_extent_src.xMinimum(), qRect_extent_src.yMinimum(), qRect_extent_src.xMaximum(), qRect_extent_src.yMaximum())
+        gs_src = gpd.GeoSeries(qbox_src).set_crs(src_crs)
+        gs_dst = gs_src.to_crs(dst_crs)
+        if buffer_distance > 0:
+            geom_series2 = gs_dst.buffer(buffer_distance)
+        else:
+            geom_series2 = gs_dst
+        # Why is this different than bounds???
+        gbounds2 = geom_series2.total_bounds
+
 
         memstring = print_memory_allocation_from_resolution_bounds(bounds, pixel_size)
         self.iface.messageBar().pushMessage(memstring)
+
+        memstring1 = print_memory_allocation_from_resolution_bounds(gbounds1, pixel_size)
+        self.iface.messageBar().pushMessage(memstring1)
+
+        memstring2 = print_memory_allocation_from_resolution_bounds(gbounds2, pixel_size)
+        self.iface.messageBar().pushMessage(memstring2)
 
     def set_project_json(self):
         proj_path = self.resume_json_file_input.filePath()
