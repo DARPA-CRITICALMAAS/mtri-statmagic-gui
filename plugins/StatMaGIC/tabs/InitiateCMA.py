@@ -218,7 +218,6 @@ class InitiateCMATab(TabBase):
         # Why is this different than bounds???
         gbounds2 = geom_series2.total_bounds
 
-
         memstring = print_memory_allocation_from_resolution_bounds(bounds, pixel_size)
         self.iface.messageBar().pushMessage(memstring)
 
