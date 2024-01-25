@@ -153,6 +153,7 @@ class InitiateCMATab(TabBase):
         message = f"Project files saved to: {proj_path}"
         qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(qgs_data_raster)
+        QgsProject.instance().layerTreeRoot().findLayer(qgs_data_raster.id()).setItemVisibilityChecked(False)
         QgsProject.instance().setCrs(box_crs)
         QgsProject.instance().setFileName(qgis_proj_file)
         QgsProject.instance().write()
