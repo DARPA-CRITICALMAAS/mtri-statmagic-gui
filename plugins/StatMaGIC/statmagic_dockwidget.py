@@ -71,7 +71,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.InspectLayersTab       = InspectLayersTab(self, self.tabWidget)
         # self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
         self.rasterize_tab          = RasterizationTab(self, self.tabWidget)
-        # self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
+        self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
         self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
         # self.labels_tab             = LabelsTab(self, self.tabWidget)
