@@ -67,6 +67,9 @@ class AddLayersTab(TabBase):
         add_matched_arrays_to_data_raster(data_raster_path, resampled_arrays, description_list)
 
         self.listWidget.clear()
+        self.pathlist.clear()
+        self.methodlist.clear()
+        self.desclist.clear()
 
         message = "Layers appended to the raster data stack"
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
