@@ -7,8 +7,9 @@ from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_ti
     dissolve_vector_files_by_property
 from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_rasters, add_matched_arrays_to_data_raster
 
-from PyQt5 import QtWidgets
+
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
+from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -20,21 +21,92 @@ from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_
 
 class AddLayersTab(TabBase):
     def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Add Layers")
+        super().__init__(parent, tabWidget, "Add Layers Redo")
 
         self.parent = parent
+        self.iface = self.parent.iface
 
-        self.addLayerButton = addButton(self, "Add Layer to List", self.addLayerDialog, align="Left")
-        self.listWidget = addListWidget(self)
+        # #### TOP FRAME - Macrostrat Tools ####
+        topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
 
-        stackWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self)
-        self.add_rasters_to_stack_button = addButton(stackWidget, "Add List to Raster Stack", self.process_add_raster_list)
-        self.num_threads_resamp_spinBox = addSpinBox(stackWidget, "# Threads:", value=1, max=32)
-        addToParentLayout(stackWidget)
+        topFrameLabel = addLabel(topLayout, "Access MacroStrat")
+        makeLabelBig(topFrameLabel)
+        topFormLayout = QGridLayout()
+        # topFormLayout.setColumnStretch(1, 3)
+        # topFormLayout.setColumnStretch(1, 3)
 
-        self.macrostrat_button = addButton(self, "Pull Macrostrat Tile \n Data in Bounds", self.grab_macrostrat_data_in_bounds, align="Right")
-        self.macrostrat_streamButton = addButton(self, 'Load Macrostrat Vector Tiles', self.load_macrostrat_tile_server, align="Left")
-        self.macrostrat_returnSelected = addButton(self, 'Return Selected MacroStrat', self.add_selected_macrostrat_to_proj, align="Right")
+        self.addMSbutton = QPushButton()
+        self.addMSbutton.setText('Add Macrostrat \n Tile Stream')
+        self.addMSbutton.clicked.connect(self.load_macrostrat_tile_server)
+        self.addMSbutton.setToolTip('Adds the Macrostrat Tile Service to the current QGIS project')
+
+        # Todo: Make this text dynamic by reading the current zoom level
+        # possibly get help here https://gist.github.com/ThomasG77/7c2ecd106091a335a2138dcd82565db8
+        self.zoomLevelLabel = QLabel('Current zoom level is _')
+
+        self.returnSelectedButton = QPushButton()
+        self.returnSelectedButton.setText('Return Selected \n Macrostrat Features')
+        self.returnSelectedButton.clicked.connect(self.add_selected_macrostrat_to_proj)
+        self.returnSelectedButton.setToolTip('Downloads the selected Macrostrat Polygons \n and Faults to a temporary layer')
+
+        self.pullMsInBounds = QPushButton()
+        self.pullMsInBounds.setText('Download All Macrostrat \n In Canvas Bounds')
+        self.pullMsInBounds.clicked.connect(self.grab_macrostrat_data_in_bounds)
+        self.pullMsInBounds.setToolTip('This function will download full tiles includign all features within the bounds of the canvas. \n Depending on the zoom level and extent this may take some time')
+
+        self.chooseZoomLabel = QLabel('Select Zoom \nLevel For Download')
+
+        self.selectZoomBox = QComboBox()
+        self.selectZoomBox.addItems([str(x+1) for x in range(7)])
+        self.selectZoomBox.setToolTip('The zoom level at which features will be downloaded. ')
+
+        topFormLayout.addWidget(self.addMSbutton, 0, 0)
+        topFormLayout.addWidget(self.zoomLevelLabel, 0, 1)
+        topFormLayout.addWidget(self.returnSelectedButton, 0, 2)
+        topFormLayout.addWidget(self.pullMsInBounds, 1, 0)
+        topFormLayout.addWidget(self.chooseZoomLabel, 1, 1)
+        topFormLayout.addWidget(self.selectZoomBox, 1, 2)
+
+
+        addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
+        addToParentLayout(topFrame)
+
+        #### Bottom Frame - Adding Layers Options
+        bottomFrame, bottomLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
+        bottomFrameLabel = addLabel(bottomLayout, "Add Layers To DataCube")
+        makeLabelBig(bottomFrameLabel)
+        bottomFormLayout = QVBoxLayout()
+
+        self.addLayerButton = QPushButton()
+        self.addLayerButton.setText('Open Add Layer Dialog')
+        self.addLayerButton.clicked.connect(self.addLayerDialog)
+        self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
+
+        self.addLayerList = QListWidget()
+
+        self.processAddLayerButton = QPushButton()
+        self.processAddLayerButton.setText('Add List of Layers to DataCube')
+        self.processAddLayerButton.clicked.connect(self.addLayerDialog)
+        self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
+
+        bottomFormLayout.addWidget(self.addLayerButton)
+        bottomFormLayout.addWidget(self.addLayerList)
+        bottomFormLayout.addWidget(self.processAddLayerButton)
+
+        addWidgetFromLayoutAndAddToParent(bottomFormLayout, bottomFrame)
+        addToParentLayout(bottomFrame)
+
+        # self.addLayerButton = addButton(self, "Add Layer to List", self.addLayerDialog, align="Left")
+        # self.listWidget = addListWidget(self)
+        #
+        # stackWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self)
+        # self.add_rasters_to_stack_button = addButton(stackWidget, "Add List to Raster Stack", self.process_add_raster_list)
+        # self.num_threads_resamp_spinBox = addSpinBox(stackWidget, "# Threads:", value=1, max=32)
+        # addToParentLayout(stackWidget)
+        #
+        # self.macrostrat_button = addButton(self, "Pull Macrostrat Tile \n Data in Bounds", self.grab_macrostrat_data_in_bounds, align="Right")
+        # self.macrostrat_streamButton = addButton(self, 'Load Macrostrat Vector Tiles', self.load_macrostrat_tile_server, align="Left")
+        # self.macrostrat_returnSelected = addButton(self, 'Return Selected MacroStrat', self.add_selected_macrostrat_to_proj, align="Right")
 
         # initialize lists to hold stuff later
         self.pathlist = []
@@ -81,6 +153,7 @@ class AddLayersTab(TabBase):
         self.iface.messageBar().pushMessage(message)
 
     def grab_macrostrat_data_in_bounds(self):
+        zoomlevel = int(self.selectZoomBox.currentText())
         bb = self.canvas.extent()
         bb.asWktCoordinates()
         crs_epsg = self.canvas.mapSettings().destinationCrs().authid()
@@ -114,7 +187,7 @@ class AddLayersTab(TabBase):
         m1 = 'querying the Macrostrat Tile Server'
         self.iface.messageBar().pushMessage(m1)
 
-        tile_indices = get_tiles_for_ll_bounds(**bounds)
+        tile_indices = get_tiles_for_ll_bounds(**bounds, zoom_level=zoomlevel)
         m2 = f'retrieved {len(m1)} tiles'
         self.iface.messageBar().pushMessage(m2)
 
@@ -125,10 +198,7 @@ class AddLayersTab(TabBase):
         js_paths = process_tiles(mapbox_tiles, tile_indices, processing_dir, "units", 4096)
         m4 = 'dissolving tiles'
         self.iface.messageBar().pushMessage(m4)
-        # TODO: Figure out why this is crashing and not being caught in the debugger.
-        # Also a note that referencing self. in the debug console also crashes, but the folder on line 96 does
-        # get created
-        # TODO: Somethign off with the function. Another argumnet needed after 'map_id' to specifying which geometries.
+        # TODO: Return Faults (Polyline) also. Separate file
         dissolve_vector_files_by_property(
             js_paths,
             'map_id',
@@ -146,7 +216,6 @@ class AddLayersTab(TabBase):
         macrostrat_qgs_layer = add_macrostrat_vectortilemap_to_project()
         QgsProject.instance().setCrs(macrostrat_qgs_layer.crs())
         QgsProject.instance().addMapLayer(macrostrat_qgs_layer)
-
 
     def add_selected_macrostrat_to_proj(self):
         qgs_layer_list = return_selected_macrostrat_features_as_qgsLayer()

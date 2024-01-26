@@ -82,14 +82,14 @@ class CustomCheckableListWidget(QWidget):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress and obj == self.lw.viewport():
-            if event.button() == Qt.LeftButton:
+            if event.addMSbutton() == Qt.LeftButton:
                 clicked_item = self.lw.itemAt(event.pos())
                 if clicked_item.checkState() == Qt.Checked:
                     clicked_item.setCheckState(Qt.Unchecked)
                 else:
                     clicked_item.setCheckState(Qt.Checked)
                 self.update_items()
-            elif event.button() == Qt.RightButton:
+            elif event.addMSbutton() == Qt.RightButton:
                 self.context_menu.exec(QCursor.pos())
             return True
         return False
