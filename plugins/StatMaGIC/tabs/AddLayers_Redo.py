@@ -67,7 +67,6 @@ class AddLayersTab(TabBase):
         topFormLayout.addWidget(self.chooseZoomLabel, 1, 1)
         topFormLayout.addWidget(self.selectZoomBox, 1, 2)
 
-
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
 

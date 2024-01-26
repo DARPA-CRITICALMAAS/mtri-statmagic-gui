@@ -19,6 +19,7 @@ from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem, 
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..layerops import set_project_crs
+from ..popups.ChooseProjExtentDialog import ChooseExtent
 
 
 class InitiateCMATab(TabBase):
@@ -55,14 +56,17 @@ class InitiateCMATab(TabBase):
         self.proj_dir_input = QgsFileWidget()
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.template_input = QgsMapLayerComboBox()
-        # self.template_input = QgsExtentGroupBox()
-        # self.template_input = QgsExtentWidget()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
+
+        self.chooseExtentOptions = QtWidgets.QPushButton()
+        self.chooseExtentOptions.setText('Open Extent Selection Menu')
+        self.chooseExtentOptions.clicked.connect(self.chooseExtentDialog)
+        self.chooseExtentOptions.setToolTip('Opens Menu with options for selected an extent')
 
         addFormItem(middleFormLayout, "Select Project Directory:", self.proj_dir_input)
         addFormItem(middleFormLayout, "Select Project Bounds:", self.template_input)
         addFormItem(middleFormLayout, "Select Project CRS:", self.mQgsProjectionSelectionWidget)
-
+        addFormItem(middleFormLayout, "Choose Project Bounds", self.chooseExtentOptions)
         addWidgetFromLayoutAndAddToParent(middleFormLayout, middleFrame)
 
         # two labeled spin boxes in one row can't be added to a form layout
@@ -96,6 +100,10 @@ class InitiateCMATab(TabBase):
         self.resume_jsonProj_button = addButton(bottomFrame, "Set Project", self.set_project_json)
 
         addToParentLayout(bottomFrame)
+
+    def chooseExtentDialog(self):
+        popup = ChooseExtent(self)
+        popup.exec_()
 
     def initiate_CMA_workflow(self):
         # Retrieve metadata inputs
