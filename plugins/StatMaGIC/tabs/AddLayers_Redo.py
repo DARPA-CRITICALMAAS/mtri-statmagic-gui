@@ -9,7 +9,7 @@ from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_raste
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox
+from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -21,7 +21,7 @@ from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_
 
 class AddLayersTab(TabBase):
     def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Add Layers Redo")
+        super().__init__(parent, tabWidget, "Add Layers")
 
         self.parent = parent
         self.iface = self.parent.iface
@@ -88,6 +88,10 @@ class AddLayersTab(TabBase):
         self.processAddLayerButton.clicked.connect(self.process_add_raster_list)
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
 
+        self.num_core_label = QLabel('Number of Cores for Processing:')
+
+        veryBottomFormLayout = QHBoxLayout()
+
         # Add the spinBox for num threads
         self.num_threads_resamp_spinBox = QSpinBox()
         self.num_threads_resamp_spinBox.setMaximum(32)
@@ -99,9 +103,12 @@ class AddLayersTab(TabBase):
         bottomFormLayout.addWidget(self.addLayerButton)
         bottomFormLayout.addWidget(self.addLayerList)
         bottomFormLayout.addWidget(self.processAddLayerButton)
-        bottomFormLayout.addWidget(self.num_threads_resamp_spinBox)
+
+        veryBottomFormLayout.addWidget(self.num_core_label)
+        veryBottomFormLayout.addWidget(self.num_threads_resamp_spinBox)
 
         addWidgetFromLayoutAndAddToParent(bottomFormLayout, bottomFrame)
+        addWidgetFromLayoutAndAddToParent(veryBottomFormLayout, bottomFrame)
         addToParentLayout(bottomFrame)
 
         # initialize lists to hold stuff later
@@ -138,7 +145,7 @@ class AddLayersTab(TabBase):
         resampled_arrays = match_and_stack_rasters(template_path, input_raster_list, riomethod_list, num_threads=num_threads)
         add_matched_arrays_to_data_raster(data_raster_path, resampled_arrays, description_list)
 
-        self.listWidget.clear()
+        self.addLayerList.clear()
         self.pathlist.clear()
         self.methodlist.clear()
         self.desclist.clear()
