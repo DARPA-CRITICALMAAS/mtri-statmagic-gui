@@ -3,18 +3,18 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 from qgis.core import QgsMapLayerProxyModel
 
 from .gui_helpers import *
-# from .tabs.AddLayers_Old import AddLayersTab
 from .tabs.Geochemistry import GeochemistryTab
-from .tabs.InitiateCMA import InitiateCMATab
-from .tabs.Labels import LabelsTab
+from .tabs.InitiateCMA_redo import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
-from .tabs.ProximityLayers import ProximityLayersTab
-from .tabs.Supervised import SupervisedTab
 from .tabs.TrainingPoints import TrainingPointsTab
-from .tabs.Unsupervised import UnsupervisedTab
 from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
 from .tabs.AddLayers_Redo import AddLayersTab
+
+from .tabs.Labels import LabelsTab
+from .tabs.Unsupervised import UnsupervisedTab
+from .tabs.ProximityLayers import ProximityLayersTab
+from .tabs.Supervised import SupervisedTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):

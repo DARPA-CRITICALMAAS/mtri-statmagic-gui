@@ -36,7 +36,6 @@ class ProximityLayersTab(TabBase):
             self.proximity_layer_box.layerChanged.connect(self.attribute_rasterize_field.setLayer)
             self.attribute_rasterize_field.setFilters(QgsFieldProxyModel.Numeric)
 
-        self.parent.initiateCMA_tab.mQgsProjectionSelectionWidget.setCrs(QgsCoordinateReferenceSystem('ESRI:102008'))
 
     def distance_to_features_raster(self):
         selectedLayer = self.proximity_layer_box.currentLayer()
