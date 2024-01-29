@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QCheckBox, QPushButton, QLabel
 from qgis.core import QgsProject, QgsFieldProxyModel, QgsMapLayerProxyModel, QgsRasterLayer
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 
-from statmagic_backend.dev.proximity_raster import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
+from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -56,7 +56,7 @@ class RasterizationTab(TabBase):
         self.with_selected_check_mid.setToolTip("Will only consider selected features for analysis")
 
         self.run_rasterize_numField_button = QPushButton()
-        self.run_rasterize_numField_button.setText('Create Proximity Raster')
+        self.run_rasterize_numField_button.setText('Rasterize Chosen Attribute')
         self.run_rasterize_numField_button.clicked.connect(self.rasterize_numeric_field)
         midFormLayout.addRow(label3, self.vector_layer_input)
         midFormLayout.addRow(label4, self.vector_field_input)
@@ -64,7 +64,6 @@ class RasterizationTab(TabBase):
         midFormLayout.addWidget(self.run_rasterize_numField_button)
         addWidgetFromLayoutAndAddToParent(midFormLayout, midFrame)
         addToParentLayout(midFrame)
-
 
 
     def distance_to_features_raster(self):

@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from qgis.core import QgsRasterLayer, QgsProject, QgsFieldProxyModel, QgsCoordinateReferenceSystem
 
-from statmagic_backend.dev.proximity_raster import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
+from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
 
 from .TabBase import TabBase
 from ..gui_helpers import *
