@@ -9,7 +9,7 @@ from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_raste
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -85,27 +85,24 @@ class AddLayersTab(TabBase):
 
         self.processAddLayerButton = QPushButton()
         self.processAddLayerButton.setText('Add List of Layers to DataCube')
-        self.processAddLayerButton.clicked.connect(self.addLayerDialog)
+        self.processAddLayerButton.clicked.connect(self.process_add_raster_list)
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
+
+        # Add the spinBox for num threads
+        self.num_threads_resamp_spinBox = QSpinBox()
+        self.num_threads_resamp_spinBox.setMaximum(32)
+        self.num_threads_resamp_spinBox.setMinimum(1)
+        self.num_threads_resamp_spinBox.setSingleStep(1)
+        self.num_threads_resamp_spinBox.setValue(1)
+
 
         bottomFormLayout.addWidget(self.addLayerButton)
         bottomFormLayout.addWidget(self.addLayerList)
         bottomFormLayout.addWidget(self.processAddLayerButton)
+        bottomFormLayout.addWidget(self.num_threads_resamp_spinBox)
 
         addWidgetFromLayoutAndAddToParent(bottomFormLayout, bottomFrame)
         addToParentLayout(bottomFrame)
-
-        # self.addLayerButton = addButton(self, "Add Layer to List", self.addLayerDialog, align="Left")
-        # self.listWidget = addListWidget(self)
-        #
-        # stackWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self)
-        # self.add_rasters_to_stack_button = addButton(stackWidget, "Add List to Raster Stack", self.process_add_raster_list)
-        # self.num_threads_resamp_spinBox = addSpinBox(stackWidget, "# Threads:", value=1, max=32)
-        # addToParentLayout(stackWidget)
-        #
-        # self.macrostrat_button = addButton(self, "Pull Macrostrat Tile \n Data in Bounds", self.grab_macrostrat_data_in_bounds, align="Right")
-        # self.macrostrat_streamButton = addButton(self, 'Load Macrostrat Vector Tiles', self.load_macrostrat_tile_server, align="Left")
-        # self.macrostrat_returnSelected = addButton(self, 'Return Selected MacroStrat', self.add_selected_macrostrat_to_proj, align="Right")
 
         # initialize lists to hold stuff later
         self.pathlist = []
@@ -126,6 +123,10 @@ class AddLayersTab(TabBase):
             return
 
         num_threads = self.num_threads_resamp_spinBox.value()
+        # 0 is not accepted by sklearn. -1 is the value to use all available cores
+        if num_threads == 0:
+            num_threads = -1
+
         input_raster_list = self.pathlist
         method_list = self.methodlist
         description_list = self.desclist
@@ -222,4 +223,4 @@ class AddLayersTab(TabBase):
             QgsProject.instance().addMapLayer(l)
 
     def refreshList(self, elem):
-        self.listWidget.addItem(elem)
+        self.addLayerList.addItem(elem)

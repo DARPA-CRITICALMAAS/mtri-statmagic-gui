@@ -4,7 +4,6 @@ from datetime import date
 from pathlib import Path
 
 import geopandas as gpd
-import rasterio as rio
 from shapely.geometry import box
 
 from statmagic_backend.dev.template_raster_user_input import print_memory_allocation_from_resolution_bounds, \
@@ -26,6 +25,9 @@ class InitiateCMATab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Initiate CMA")
         self.parent = parent
+        self.extent_gdf = None
+        # Maybe this should be set from the project crs to start??
+        self.src_crs = None
 
         ##### TOP FRAME #####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
@@ -111,45 +113,31 @@ class InitiateCMATab(TabBase):
         cma_mineral = self.CMA_mineralLineEdit.text()
         comments = self.CommentsText.toPlainText()
         input_path = self.proj_dir_input.filePath()
+        box_crs = self.mQgsProjectionSelectionWidget.crs()
+        pixel_size = self.pixel_size_input.value()
+        buffer_distance = self.buffer_dist_spinBox.value()
+
         today = date.today().isoformat()
 
         proj_path = Path(input_path, 'CMA_' + cma_mineral)
-        # Turned to true for dev. TODO this should be turned off once stable
+        # Turned to true for dev. TODO Raise flag of some kind if overwriting
         proj_path.mkdir(exist_ok=True)
         qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgz")
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
+        dst_crs = box_crs.authid()
 
-        # Retrieve template creation inputs
-        selectedLayer = self.template_input.currentLayer()
-        datastr = selectedLayer.source()
-        pixel_size = self.pixel_size_input.value()
-        buffer_distance = self.buffer_dist_spinBox.value()
+        self.extent_gdf.to_crs(dst_crs, inplace=True)
+        if buffer_distance > 0:
+            self.extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+        bounds = self.extent_gdf.total_bounds
 
-        try:
-            # This will be the case for geopackages, but not shapefile or geojson
-            fp, layername = datastr.split('|')
-            gdf = gpd.read_file(fp, layername=layername.split('=')[1])
-        except ValueError:
-            fp = datastr
-            gdf = gpd.read_file(fp)
-
-        box_crs = self.mQgsProjectionSelectionWidget.crs()
-        input_crsWkt = box_crs.toWkt()
-        new_crs = rio.crs.CRS.from_wkt(input_crsWkt)
-        # Todo: make so that it can choose between total bounds or shape
-        # Will have to create an array mask for the shape option
-        bounds = gdf.to_crs(new_crs).total_bounds
-
-        geom = box(*bounds)
-        geom = geom.buffer(buffer_distance)
-        bounds = gpd.GeoSeries(geom).total_bounds
-        create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=new_crs, pixel_size=pixel_size,
-                                                          output_path=template_output_path)
+        create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
+                                                          output_path=template_output_path, clipping_gdf=self.extent_gdf)
         shutil.copy(template_output_path, data_raster_path)
 
         meta_dict = {'username': username, 'mineral': cma_mineral, 'comments': comments, 'date_initiated': today,
-                     'project_path': str(proj_path), 'project_CRS': str(new_crs), 'project_bounds': str(bounds),
+                     'project_path': str(proj_path), 'project_CRS': str(dst_crs), 'project_bounds': str(bounds),
                      'template_path': template_output_path, 'data_raster_path': data_raster_path,
                      'qgis_project_file': qgis_proj_file}
 
@@ -170,9 +158,6 @@ class InitiateCMATab(TabBase):
 
     def print_estimated_size(self):
         selectedLayer = self.template_input.currentLayer()
-        # TODO Deterimine if it's a raster or vector. Repeat for make template as well
-        # TODO have the abiity to get the draw rectangle function
-
         pixel_size = self.pixel_size_input.value()
         buffer_distance = self.buffer_dist_spinBox.value()
         box_crs = self.mQgsProjectionSelectionWidget.crs()
