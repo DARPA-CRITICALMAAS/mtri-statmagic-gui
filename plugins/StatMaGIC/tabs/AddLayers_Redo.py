@@ -9,12 +9,14 @@ from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_raste
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout
+from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy
+from qgis.gui import QgsFileWidget
 
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
+from ..popups.addLayersFromExisting import RasterBandSelectionDialog
 from ..fileops import path_mkdir
 from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
 
@@ -74,20 +76,48 @@ class AddLayersTab(TabBase):
         bottomFrame, bottomLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         bottomFrameLabel = addLabel(bottomLayout, "Add Layers To DataCube")
         makeLabelBig(bottomFrameLabel)
+
+        AddLayerButtonsLayout = QGridLayout()
+
+
+
+        self.addfromCubeButton = QPushButton()
+        self.addfromCubeButton.setText('Choose Layers From \n An existing Raster')
+        self.addfromCubeButton.clicked.connect(self.chooseLayersFromCubeDialog)
+        self.addfromCubeButton.setToolTip('Opens up a new window with options to select layers to add from a existing  dataset.')
+
+        self.dataCubeFile = QgsFileWidget()
+        self.dataCubeFile.setFilePath('/home/jagraham/Documents/Local_work/statMagic/test_data/NA_output_noNan.tif')
+        self.dataCubeFile.setToolTip('Choose an existing raster to select layers from')
+
+
+        AddLayerButtonsLayout.addWidget(self.addfromCubeButton, 0, 0)
+        AddLayerButtonsLayout.addWidget(self.dataCubeFile, 0, 1)
+
+
         bottomFormLayout = QVBoxLayout()
 
+        # Add Layer Button
         self.addLayerButton = QPushButton()
-        self.addLayerButton.setText('Open Add Layer Dialog')
+        self.addLayerButton.setText('Open Add Layer Dialog And Add To List')
         self.addLayerButton.clicked.connect(self.addLayerDialog)
         self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
 
+        # Layer List
         self.addLayerList = QListWidget()
+        self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
 
+        # Process List Button
         self.processAddLayerButton = QPushButton()
         self.processAddLayerButton.setText('Add List of Layers to DataCube')
         self.processAddLayerButton.clicked.connect(self.process_add_raster_list)
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
 
+        bottomFormLayout.addWidget(self.addLayerButton)
+        bottomFormLayout.addWidget(self.addLayerList)
+        bottomFormLayout.addWidget(self.processAddLayerButton)
+
+        # Core Count Selection
         self.num_core_label = QLabel('Number of Cores for Processing:')
 
         veryBottomFormLayout = QHBoxLayout()
@@ -99,14 +129,10 @@ class AddLayersTab(TabBase):
         self.num_threads_resamp_spinBox.setSingleStep(1)
         self.num_threads_resamp_spinBox.setValue(1)
 
-
-        bottomFormLayout.addWidget(self.addLayerButton)
-        bottomFormLayout.addWidget(self.addLayerList)
-        bottomFormLayout.addWidget(self.processAddLayerButton)
-
         veryBottomFormLayout.addWidget(self.num_core_label)
         veryBottomFormLayout.addWidget(self.num_threads_resamp_spinBox)
 
+        addWidgetFromLayoutAndAddToParent(AddLayerButtonsLayout, bottomFrame)
         addWidgetFromLayoutAndAddToParent(bottomFormLayout, bottomFrame)
         addWidgetFromLayoutAndAddToParent(veryBottomFormLayout, bottomFrame)
         addToParentLayout(bottomFrame)
@@ -120,6 +146,10 @@ class AddLayersTab(TabBase):
         popup = AddRasterLayer(self)
         popup.exec_()
 
+    def chooseLayersFromCubeDialog(self):
+        popup = RasterBandSelectionDialog(self.parent, self.dataCubeFile.filePath())
+        popup.exec_()
+
     def process_add_raster_list(self):
         try:
             template_path = self.parent.meta_data['template_path']
@@ -130,9 +160,6 @@ class AddLayersTab(TabBase):
             return
 
         num_threads = self.num_threads_resamp_spinBox.value()
-        # 0 is not accepted by sklearn. -1 is the value to use all available cores
-        if num_threads == 0:
-            num_threads = -1
 
         input_raster_list = self.pathlist
         method_list = self.methodlist

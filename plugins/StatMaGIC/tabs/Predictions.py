@@ -28,10 +28,11 @@ class PredictionsTab(TabBase):
 
         formLayout = QtWidgets.QFormLayout()
 
-        self.uncert_thresh_box = addSpinBoxToForm(formLayout, "Uncertainty Threshold",
-                                                  dtype=float, value=0.5, max=1, step=0.05)
+
         self.probability_thresh_box = addSpinBoxToForm(formLayout, "Probability Threshold",
                                                        dtype=float, value=0.5, max=1, step=0.05)
+        self.uncert_thresh_box = addSpinBoxToForm(formLayout, "Uncertainty Threshold",
+                                                  dtype=float, value=0.5, max=1, step=0.05)
         self.remove_hanging_check = addCheckboxToForm(formLayout, "Remove Hanging Pixels", isChecked=True)
         self.to_poly_check = addCheckboxToForm(formLayout, "Convert to Polygon Layer", isChecked=True)
         self.threshold_inference_button = addButtonToForm(formLayout, "Generate Filtered Layer", self.threshold_inference)

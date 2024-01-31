@@ -1,19 +1,21 @@
-
+import rasterio.enums
 # Edited this Found at https://gis.stackexchange.com/questions/446174/filtering-qgscheckablecombobox-items-in-pyqgis
 from qgis.PyQt.QtWidgets import QDialog, QWidget, QVBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu, QAction
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QDialogButtonBox
-from statmagic_backend.dev.match_stack_raster_tools import drop_selected_layers_from_raster
+from PyQt5.QtWidgets import QDialogButtonBox, QComboBox, QSpinBox
+from statmagic_backend.dev.match_stack_raster_tools import add_selected_bands_from_source_raster_to_data_raster
 from qgis.core import QgsRasterLayer, QgsProject
+
 
 
 class RasterBandSelectionDialog(QDialog):
 
-    def __init__(self, parent, raster_layer):
+    def __init__(self, parent, raster_layer_path):
         self.parent = parent
         self.iface = parent.iface
-        self.raster_layer = raster_layer
+        self.raster_layer_path = raster_layer_path
+        self.raster_layer = QgsRasterLayer(raster_layer_path)
         QDialog.__init__(self)
         self.setGeometry(500, 300, 500, 300)
         # Create an instance of the widget wrapper class
@@ -39,10 +41,20 @@ class CustomCheckableListWidget(QWidget):
         self.items_le.setReadOnly(True)
         self.lw = QListWidget(self)
         self.lw.setMinimumHeight(100)
+        self.samplingBox = QComboBox(self)
+        self.samplingBox.addItems(['nearest', 'bilinear', 'cubic'])
+        # Add the spinBox for num threads
+        self.num_threads_resamp_spinBox = QSpinBox()
+        self.num_threads_resamp_spinBox.setMaximum(32)
+        self.num_threads_resamp_spinBox.setMinimum(1)
+        self.num_threads_resamp_spinBox.setSingleStep(1)
+        self.num_threads_resamp_spinBox.setValue(1)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.layout.addWidget(self.filter_le)
         self.layout.addWidget(self.items_le)
         self.layout.addWidget(self.lw)
+        self.layout.addWidget(self.samplingBox)
+        self.layout.addWidget(self.num_threads_resamp_spinBox)
         self.layout.addWidget(self.buttonBox)
 
         self.lw.viewport().installEventFilter(self)
@@ -114,14 +126,21 @@ class CustomCheckableListWidget(QWidget):
         selection = []
         for i in range(self.lw.count()):
             item = self.lw.item(i)
-            if item.checkState() == Qt.Unchecked:
+            if item.checkState() == Qt.Checked:
                 selection.append(item.text())
         selection.sort()
         return selection
 
-    def run_drop_layers(self):
+    def run_add_layers(self):
         bandlist = self.return_checked_items()
-        drop_selected_layers_from_raster(self.parent.parent.meta_data['data_raster_path'], bandlist)
+        # Todo: Fix the bug in resampling. Hardcoded for demo
+        method = rasterio.enums.Resampling.nearest
+        # method = self.samplingBox.currentText()
+        num_threads = self.num_threads_resamp_spinBox.value()
+
+        add_selected_bands_from_source_raster_to_data_raster(self.parent.parent.meta_data['data_raster_path'],
+                                                             self.parent.raster_layer_path, bandlist, method, num_threads)
+
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
         # self.iface.mapCanvas().refreshAllLayers()
         data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
@@ -129,7 +148,7 @@ class CustomCheckableListWidget(QWidget):
         self.cancel()
 
     def signals_connection(self):
-        self.buttonBox.accepted.connect(self.run_drop_layers)
+        self.buttonBox.accepted.connect(self.run_add_layers)
         self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
