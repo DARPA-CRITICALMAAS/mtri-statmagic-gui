@@ -6,7 +6,7 @@ import numpy as np
 # TODO: use matplotlib_importer from pythonforge instead?
 import matplotlib
 import pandas as pd
-from statmagic_backend.math.clustering import unpack_fullK
+from statmagic_backend.maths.clustering import unpack_fullK
 
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt

@@ -7,7 +7,7 @@ import numpy as np
 from osgeo import gdal, ogr, osr
 
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
-from statmagic_backend.math.sampling import randomSample
+from statmagic_backend.maths.sampling import randomSample
 from statmagic_backend.utils import polytextreplace
 
 from PyQt5.QtCore import QVariant

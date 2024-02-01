@@ -10,8 +10,8 @@ from qgis.core import QgsProject
 from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, placeLabels_inRaster, \
     getFullRasterDict, getCanvasRasterDict
 from statmagic_backend.geo.transform import boundingBoxToOffsets
-from statmagic_backend.math.clustering import unpack_fullK, soft_clustering_weights, doPCA_kmeans, clusterDataInMask
-from statmagic_backend.math.sampling import dropSelectedBandsforSupClass, balancedSamples
+from statmagic_backend.maths.clustering import unpack_fullK, soft_clustering_weights, doPCA_kmeans, clusterDataInMask
+from statmagic_backend.maths.sampling import dropSelectedBandsforSupClass, balancedSamples
 
 from .TabBase import TabBase
 from ..fileops import gdalSave, kosher

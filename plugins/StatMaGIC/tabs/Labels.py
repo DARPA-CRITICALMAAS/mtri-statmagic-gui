@@ -9,7 +9,7 @@ from qgis._core import QgsProject
 
 from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, RasMatcha, sdMatchSomeInStack, RasBoreMatch
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
-from statmagic_backend.math.sampling import label_count
+from statmagic_backend.maths.sampling import label_count
 
 from .TabBase import TabBase
 from ..fileops import gdalSave
