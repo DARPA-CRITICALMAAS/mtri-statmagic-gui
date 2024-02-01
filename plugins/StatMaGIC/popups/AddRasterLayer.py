@@ -1,10 +1,10 @@
-import os
 
 from PyQt5.QtWidgets import QDialogButtonBox
 from qgis.PyQt import QtGui, QtWidgets
 from qgis.PyQt.QtCore import pyqtSignal
 from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox, QgsFileWidget
+from ..layerops import rasterBandDescAslist
 
 
 class AddRasterLayer(QtWidgets.QDialog):
@@ -29,12 +29,8 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.fileInput = QgsFileWidget(self)
         self.descriptionBox = QtWidgets.QLineEdit(self)
         self.samplingBox = QtWidgets.QComboBox(self)
+        self.inheritDescriptCheck = QtWidgets.QCheckBox(self)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-
-        # Todo: Is there a way to have the descriptionBox inherit the band description of a raster once it's selected in
-        # the fileInput or comboBox
-
-        # Todo: Need to be able to handle multiband inputs
 
         self.samplingBox.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
 
@@ -42,7 +38,8 @@ class AddRasterLayer(QtWidgets.QDialog):
         label2 = QtWidgets.QLabel('Get from file path:')
         label3 = QtWidgets.QLabel('Select resampling method:')
         label4 = QtWidgets.QLabel('Add text description for band name:')
-        label5 = QtWidgets.QLabel('Confirm Selection:')
+        label5 = QtWidgets.QLabel('Inherit already defined band descriptions')
+        label6 = QtWidgets.QLabel('Confirm Selection:')
 
         layout.addWidget(label1)
         layout.addWidget(self.comboBox)
@@ -53,6 +50,8 @@ class AddRasterLayer(QtWidgets.QDialog):
         layout.addWidget(label4)
         layout.addWidget(self.descriptionBox)
         layout.addWidget(label5)
+        layout.addWidget(self.inheritDescriptCheck)
+        layout.addWidget(label6)
         layout.addWidget(self.buttonBox)
 
         self.comboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -69,7 +68,7 @@ class AddRasterLayer(QtWidgets.QDialog):
         currentfile = self.comboBox.currentLayer()
         filepath = self.fileInput.filePath()
         method = self.samplingBox.currentText()
-        description = self.descriptionBox.text()
+        inheritDesc = self.inheritDescriptCheck.isChecked()
 
         if currentfile:
             file_source = currentfile.source()
@@ -78,9 +77,16 @@ class AddRasterLayer(QtWidgets.QDialog):
         else:
             print('No selection made')
 
+        if inheritDesc:
+            description = rasterBandDescAslist(file_source)
+            self.parent.desclist.extend(description)
+        else:
+            description = self.descriptionBox.text()
+            self.parent.desclist.append(description)
+
         self.parent.pathlist.append(file_source)
         self.parent.methodlist.append(method)
-        self.parent.desclist.append(description)
+
 
         self.parent.refreshList(file_source)
         self.close()
