@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QCheckBox, QPushButton, QLabel
+from PyQt5.QtWidgets import QCheckBox, QPushButton, QLabel, QSpinBox
 from qgis.core import QgsProject, QgsFieldProxyModel, QgsMapLayerProxyModel, QgsRasterLayer
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
+
 
 from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
 
@@ -65,6 +66,55 @@ class RasterizationTab(TabBase):
         addWidgetFromLayoutAndAddToParent(midFormLayout, midFrame)
         addToParentLayout(midFrame)
 
+        # NEXT FRAME - Rasterize Training Points
+        tpFrame, tpLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
+        tpFrameLabel = addLabel(midLayout, "Rasterize Training Points")
+        makeLabelBig(tpFrameLabel)
+        tpGridLayout = QtWidgets.QGridLayout()
+
+        label10 = QLabel('Select Point \n Data Layer:')
+        label20 = QLabel('Value Field:')
+        label30 = QLabel('Buffer Points')
+        label40 = QLabel('With Selected Points')
+
+        self.training_point_layer_box = QgsMapLayerComboBox()
+        self.training_field_box = QgsFieldComboBox()
+        self.training_buffer_box = QSpinBox()
+        self.with_selected_training = QCheckBox()
+        self.rasterize_training_button = QPushButton()
+
+        self.training_point_layer_box.layerChanged.connect(self.training_field_box.setLayer)
+        self.training_field_box.setFilters(QgsFieldProxyModel.Numeric)
+        self.rasterize_training_button.clicked.connect(self.rasterize_training)
+        self.rasterize_training_button.setText('Rasterize\n Training Points')
+
+        """
+        So in lay.addWidget(widget, 2, 0, 1, 3) it means that "widget" 
+        will be placed at position 2x0 and will occupy 1 row and 3 columns.
+        """
+        tpGridLayout.addWidget(label10, 0, 0)
+        tpGridLayout.addWidget(self.training_point_layer_box, 0, 1)
+        tpGridLayout.addWidget(label40, 0, 2)
+        tpGridLayout.addWidget(self.with_selected_training, 0, 3)
+        tpGridLayout.addWidget(label20, 1, 0)
+        tpGridLayout.addWidget(self.training_field_box, 1, 1)
+        tpGridLayout.addWidget(label30, 2, 0)
+        tpGridLayout.addWidget(self.training_buffer_box, 2, 1)
+        tpGridLayout.addWidget(label40, 3, 0)
+        tpGridLayout.addWidget(self.rasterize_training_button, 1, 2, 2, 2)
+
+        tpGridLayout.setColumnStretch(0, 0)
+        tpGridLayout.setColumnStretch(1, 2)
+        tpGridLayout.setColumnStretch(2, 1)
+        tpGridLayout.setColumnStretch(3, 1)
+
+        addWidgetFromLayoutAndAddToParent(tpGridLayout, tpFrame)
+        addToParentLayout(tpFrame)
+
+
+
+
+
 
     def distance_to_features_raster(self):
         selectedLayer = self.proximity_layer_box.currentLayer()
@@ -92,6 +142,9 @@ class RasterizationTab(TabBase):
         QgsProject.instance().addMapLayer(res)
 
         self.iface.messageBar().pushMessage(message)
+
+    def rasterize_training(self):
+        return
 
 
 
