@@ -25,6 +25,7 @@ class InitiateCMATab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Initiate CMA")
         self.parent = parent
+        self.iface = self.parent.iface
         self.extent_gdf = None
         # Maybe this should be set from the project crs to start??
         self.src_crs = None
