@@ -6,6 +6,7 @@ from qgis.core import QgsMapLayerProxyModel
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..popups.dropRasterLayer import RasterBandSelectionDialog
+from ..popups.simplePlotExample import SimpleQtPlot
 
 
 class InspectLayersTab(TabBase):
@@ -43,6 +44,7 @@ class InspectLayersTab(TabBase):
 
         self.populate_comboboxes()
 
+        self.simple_plot_button = addButton(self, "Simple Plot", self.popup_make_simple_plot)
 
     def populate_comboboxes(self):
         raster_layer = self.comboBox.currentLayer()
@@ -50,8 +52,10 @@ class InspectLayersTab(TabBase):
             # self.rasterBandBox.setLayer(raster_layer)
             self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
 
-
-
     def popup_drop_layer_dialogue(self):
         popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
+        popup.exec_()
+
+    def popup_make_simple_plot(self):
+        popup = SimpleQtPlot(self.parent)
         popup.exec_()
