@@ -23,6 +23,7 @@ class AddLayersTab(TabBase):
         super().__init__(parent, tabWidget, "Add Layers")
 
         self.parent = parent
+        self.iface = self.parent.iface
 
         self.addLayerButton = addButton(self, "Add Layer to List", self.addLayerDialog, align="Left")
         self.listWidget = addListWidget(self)

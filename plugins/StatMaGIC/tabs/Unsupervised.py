@@ -41,7 +41,7 @@ class UnsupervisedTab(TabBase):
         topFrame2, topLayout2 = addFrame(self, "HBox", "NoFrame", "Plain", 3)
 
         self.PCAbox = addCheckbox(topFrame2, "Standardize and PCA", isChecked=True)
-        addEmptyFrame(topLayout2)    # force space between checkbox and button
+        addEmptyFrame(topLayout2)    # force space between checkbox and addMSbutton
         self.RunKmeansButton = addButton(topFrame2, "Run Kmeans", self.selectKmeansData)
 
         addToParentLayout(topFrame2)

@@ -28,8 +28,6 @@ class InspectLayersTab(TabBase):
 
         addFormItem(topFormLayout, "Raster / DataCube:", self.comboBox)
         addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
-        # self.rasterProps = QgsRasterLayerProperties(self)
-        # self.rasterHist = QgsRasterHistogramWidget(self)
 
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
@@ -49,7 +47,7 @@ class InspectLayersTab(TabBase):
     def populate_comboboxes(self):
         raster_layer = self.comboBox.currentLayer()
         if raster_layer:
-            # self.rasterBandBox.setLayer(raster_layer)
+            self.rasterBandBox.setLayer(raster_layer)
             self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
 
     def popup_drop_layer_dialogue(self):

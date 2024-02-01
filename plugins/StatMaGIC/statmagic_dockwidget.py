@@ -3,17 +3,18 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 from qgis.core import QgsMapLayerProxyModel
 
 from .gui_helpers import *
-from .tabs.AddLayers import AddLayersTab
 from .tabs.Geochemistry import GeochemistryTab
-from .tabs.InitiateCMA import InitiateCMATab
-from .tabs.Labels import LabelsTab
+from .tabs.InitiateCMA_redo import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
-from .tabs.ProximityLayers import ProximityLayersTab
-from .tabs.Supervised import SupervisedTab
 from .tabs.TrainingPoints import TrainingPointsTab
-from .tabs.Unsupervised import UnsupervisedTab
 from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
+from .tabs.AddLayers_Redo import AddLayersTab
+
+from .tabs.Labels import LabelsTab
+from .tabs.Unsupervised import UnsupervisedTab
+from .tabs.ProximityLayers import ProximityLayersTab
+from .tabs.Supervised import SupervisedTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
@@ -66,10 +67,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.tabWidget.setGeometry(QRect(10, 60, 391, 511))
 
         # populate tabs
-        self.initiateCMA_tab        = InitiateCMATab(self, self.tabWidget)
+        self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
         self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
         self.InspectLayersTab       = InspectLayersTab(self, self.tabWidget)
-        # self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
         self.rasterize_tab          = RasterizationTab(self, self.tabWidget)
         self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
         self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
@@ -77,6 +77,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         # self.labels_tab             = LabelsTab(self, self.tabWidget)
         # self.unsupervised_tab       = UnsupervisedTab(self, self.tabWidget)
         # self.supervised_tab         = SupervisedTab(self, self.tabWidget)
+        # self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
+        # self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
 
         # add tabs to parent
         addToParentLayout(self.tabWidget)
