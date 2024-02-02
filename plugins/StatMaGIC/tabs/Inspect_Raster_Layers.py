@@ -25,6 +25,7 @@ class InspectLayersTab(TabBase):
         self.comboBox = QgsMapLayerComboBox(self)
         self.comboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
         self.rasterBandBox = QgsRasterBandComboBox(self)
+        self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
 
         addFormItem(topFormLayout, "Raster / DataCube:", self.comboBox)
         addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)

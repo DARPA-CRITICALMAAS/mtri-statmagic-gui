@@ -8,7 +8,7 @@ from osgeo import gdal, ogr, osr
 
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
 from statmagic_backend.maths.sampling import randomSample
-from statmagic_backend.utils import polytextreplace
+from statmagic_backend.utils import polytextreplace, loggingDecorator
 
 from PyQt5.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor
@@ -291,6 +291,7 @@ def rasterBandDescAslist(rasterpath):
     return descs
 
 
+@loggingDecorator
 def add_macrostrat_vectortilemap_to_project():
     url = 'https://dev.macrostrat.org/tiles/carto/{z}/{x}/{y}'
     options = QgsMapLayerFactory.LayerOptions(
