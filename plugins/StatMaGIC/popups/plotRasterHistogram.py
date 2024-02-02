@@ -1,5 +1,5 @@
 from qgis.PyQt.QtWidgets import QDialog, QWidget, QVBoxLayout, QLineEdit, QListWidget, QListWidgetItem, QMenu, QAction
-from qgis.gui import QgsMapLayerComboBox
+from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QDialogButtonBox, QGridLayout, QComboBox, QFormLayout, QVBoxLayout, QLabel, QPushButton, QMainWindow
@@ -25,14 +25,19 @@ class RasterHistQtPlot(QDialog):
         self.pltItem: pg.PlotItem = self.plot_widget.plotItem
 
         ###
+        raster_label = QLabel('Raster Layer')
+        self.raster_selection_box = QgsMapLayerComboBox()
+        self.raster_selection_box.setFilters(QgsMapLayerProxyModel.RasterLayer)
+
+        band_label = QLabel("Band")
+        self.raster_band_input = QgsRasterBandComboBox()
+        self.raster_band_input.setLayer(self.raster_selection_box.currentLayer())
+        self.raster_selection_box.layerChanged.connect(self.raster_band_input.setLayer)
+
         aoi_label = QLabel('AOI')
         self.aoi_selection_box = QgsMapLayerComboBox()
         self.aoi_selection_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
         self.aoi_selection_box.setFixedWidth(300)
-
-        raster_label = QLabel('Raster Layer')
-        self.raster_selection_box = QgsMapLayerComboBox()
-        self.raster_selection_box.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
         self.run_hist_btn = QPushButton()
         self.run_hist_btn.setText('Plot Histogram')
@@ -40,6 +45,7 @@ class RasterHistQtPlot(QDialog):
 
         self.layer_select_layout = QFormLayout()
         self.layer_select_layout.addRow(raster_label, self.raster_selection_box)
+        self.layer_select_layout.addRow(band_label, self.raster_band_input)
         self.layer_select_layout.addRow(aoi_label, self.aoi_selection_box)
         self.layer_select_layout.addWidget(self.run_hist_btn)
         ####
@@ -57,6 +63,8 @@ class RasterHistQtPlot(QDialog):
 
         print(self.raster_selection_box.currentLayer())
         print(self.aoi_selection_box.currentLayer())
+        print(self.raster_band_input.currentBand())
+        #print(self.raster_selection_box.currentLayer().bandName(self.raster_band_input.currentBand()))
 
         raster: QgsRasterLayer = self.raster_selection_box.currentLayer()
         aoi: QgsVectorLayer = self.aoi_selection_box.currentLayer()
@@ -100,6 +108,10 @@ class RasterHistQtPlot(QDialog):
             self.pltItem.clear()
             print("Adding to pltItem")
             self.pltItem.addItem(bar_chart)
+            self.pltItem.setTitle(raster.title())
+            self.pltItem.setLabel(axis='bottom', text='Pixel Counts')
+            self.pltItem.setLabel(axis='left', text=str(self.raster_band_input.currentBand()))
+
         #print(hist.histogramVector)
 
 
