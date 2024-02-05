@@ -113,9 +113,6 @@ class RasterizationTab(TabBase):
 
 
 
-
-
-
     def distance_to_features_raster(self):
         selectedLayer = self.proximity_layer_box.currentLayer()
         withSelected = self.with_selected_check_top.isChecked()

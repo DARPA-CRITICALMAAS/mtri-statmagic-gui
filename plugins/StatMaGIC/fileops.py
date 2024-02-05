@@ -1,7 +1,7 @@
 """ Functions that interact with the filesystem on disk. """
 import pickle
 import tempfile
-
+import geopandas as gpd
 from osgeo import gdal
 
 
@@ -85,3 +85,13 @@ def path_mkdir(path):
         print("Folder is already there")
     else:
         print("Folder was created")
+
+def parse_vector_source(datastr):
+    try:
+        # This will be the case for geopackages, but not shapefile or geojson
+        fp, layername = datastr.split('|')
+        gdf = gpd.read_file(fp, layername=layername.split('=')[1])
+    except ValueError:
+        fp = datastr
+        gdf = gpd.read_file(fp)
+    return gdf

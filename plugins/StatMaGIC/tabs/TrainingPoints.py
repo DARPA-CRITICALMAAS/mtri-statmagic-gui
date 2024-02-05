@@ -8,14 +8,14 @@ from sklearn import svm
 
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsMapLayerProxyModel, QgsFieldProxyModel
-from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QSpinBox, QCheckBox, QPushButton, QDoubleSpinBox, QFormLayout
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton, QDoubleSpinBox, QFormLayout
 
 from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
 from statmagic_backend.extract.raster import extractBands, extractBandsInBounds
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
 
 from .TabBase import TabBase
-from ..fileops import gdalSave
+from ..fileops import gdalSave, parse_vector_source
 from ..gui_helpers import *
 from ..layerops import addRFconfLayer, bandSelToList
 from ..plotting import makePCAplot
@@ -29,30 +29,26 @@ class TrainingPointsTab(TabBase):
 
         topFrame, topGrid = addFrame(self, "Grid", "NoFrame", "Plain", 3)
 
-        label1 = QLabel('Training Point Layer')
-        label2 = QLabel('With Selected')
-        label3 = QLabel('Add Buffer')
-        self.training_point_layer_box = QgsMapLayerComboBox()
+        label0 = QLabel('Data Raster Layer')
+        label1 = QLabel('Training Vector Layer')
+        label2 = QLabel('With Selected:    ')
+        label3 = QLabel('Add Buffer:')
+
+        # Todo: Add filters and ToolTips on these
+        self.training_layer_box = QgsMapLayerComboBox()
+        self.data_raster_box = QgsMapLayerComboBox()
         self.training_buffer_box = QSpinBox()
         self.with_selected_training = QCheckBox()
 
-        topGrid.addWidget(label1, 0, 0)
-        topGrid.addWidget(self.training_point_layer_box, 1, 0)
-        #
-        # topForm = QFormLayout()
-        # topForm.addRow(label2, self.with_selected_training)
-        # topForm.addRow(label3, self.training_buffer_box)
-        #
-        # topGrid.addWidget(topForm, 0, 1)
 
-        topGrid.addWidget(label2, 0, 1)
-        topGrid.addWidget(self.with_selected_training, 0, 2)
-        topGrid.addWidget(label3, 1, 1)
-        topGrid.addWidget(self.training_buffer_box, 1, 2)
-
-        topGrid.setColumnStretch(0, 2)
-        topGrid.setColumnStretch(1, 1)
-        topGrid.setColumnStretch(2, 1)
+        topGrid.addWidget(label0, 0, 0)
+        topGrid.addWidget(self.data_raster_box, 1, 0, 1, 2)
+        topGrid.addWidget(label1, 0, 2)
+        topGrid.addWidget(self.training_layer_box, 1, 2, 1, 2)
+        topGrid.addWidget(label2, 2, 0)
+        topGrid.addWidget(self.with_selected_training, 2, 1)
+        topGrid.addWidget(label3, 2, 2)
+        topGrid.addWidget(self.training_buffer_box, 2, 3)
 
         addToParentLayout(topFrame)
 
@@ -61,9 +57,8 @@ class TrainingPointsTab(TabBase):
         edaFrame, edaGrid = addFrame(self, "Grid", "Panel", "Sunken", 3)
 
         self.sample_at_points_button = QPushButton()
-        self.sample_at_points_button.setText("Sample DataCube at Points")
+        self.sample_at_points_button.setText("Sample DataCube With\n Training Geometry")
         self.sample_at_points_button.clicked.connect(self.sample_raster_at_points)
-        self.sample_at_points_button
 
         self.pca_plot_button = QPushButton()
         self.pca_plot_button.setText('Create PCA Plot')
@@ -81,7 +76,7 @@ class TrainingPointsTab(TabBase):
         label7 = QLabel('eps')
         label8 = QLabel('min_samples')
 
-        edaGrid.addWidget(self.sample_at_points_button, 0, 0, 1, 2)
+        edaGrid.addWidget(self.sample_at_points_button, 0, 0, 2, 2)
         # edaGrid.addWidget(label4, 0, 3)
         edaGrid.addWidget(label5, 1, 2, 1, 1)
         edaGrid.addWidget(label6, 2, 2, 1, 1)
@@ -93,65 +88,6 @@ class TrainingPointsTab(TabBase):
 
 
 
-
-
-
-
-        #### TOP CLUSTER #####
-        # topFrame, topLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
-        #
-        # self.training_layer_combo_box = addQgsMapLayerComboBox(topFrame, "Training Data Layer")
-        # self.gather_pt_data_button = addButton(topFrame, "Sample Raster at Points", self.sample_raster_at_points)
-        #
-        # addToParentLayout(topFrame)
-        #
-        # ##### LEFT ALIGNED CLUSTER #####
-        # leftFrame, leftLayout = addFrame(self, "Grid", "NoFrame", "Plain", 3)
-        # leftLayout.setVerticalSpacing(5)
-        #
-        # label = addLabel(leftLayout, "With Point Sample Data", gridPos=(0,0))
-        # makeLabelBig(label)
-        #
-        # self.train_svm_button = addButton(leftFrame, "Train One Class SVM", self.trainOneClassSVM, gridPos=(1,0))
-        # self.map_svm_button = addButton(leftFrame, "Map SVM Scores", self.mapSVMscores, gridPos=(2,0))
-        #
-        # ##### EMPTY FRAME (to force left alignment) #####
-        # # TODO: figure out why this can't be replaced with a call to alignLayoutAndAddToParent()
-        # rightFrame = QtWidgets.QFrame(leftFrame)
-        # addToParentLayout(rightFrame, gridPos=(0,1))
-        #
-        # addToParentLayout(leftFrame)
-        #
-        # ##### MIDDLE FRAME (visible) #####
-        # middleFrame, middleLayout = addFrame(self, "VBox", "Panel", "Sunken", 2)
-        #
-        # formLayout = QtWidgets.QFormLayout(middleFrame)
-        #
-        # self.training_buffer_dist = addSpinBoxToForm(formLayout, "Buffer Points (units of template CRS):",
-        #                                              dtype=float, value=0, max=1000000, step=25)
-        # self.trainingFieldComboBox = QgsFieldComboBox()
-        # addFormItem(formLayout, "Use Field for Raster Values:", self.trainingFieldComboBox)
-        #
-        # addWidgetFromLayoutAndAddToParent(formLayout, middleFrame)
-        #
-        # self.rasterize_training_button = addButton(middleFrame, "Rasterize Training Vector", self.rasterize_training, align="Center")
-        #
-        # addToParentLayout(middleFrame)
-        #
-        # ##### BOTTOM CLUSTER #####
-        # bottomFrame, bottomLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
-        #
-        # self.generate_plot_button_2 = addButton(bottomFrame, "Plot PCA", self.runPCAplot)
-        #
-        # plotForm = QtWidgets.QFormLayout(bottomFrame)
-        # self.plt_axis_1, self.plt_axis_2 = addTwoSpinBoxesToForm(plotForm, "PCA Dim", "x-axis", "y-axis", 1, 2,
-        #                                                          dtype=int, minX=1, maxX=10, minY=2, maxY=10)
-        # addWidgetFromLayoutAndAddToParent(plotForm, bottomFrame)
-        #
-        # addToParentLayout(bottomFrame)
-        #
-        # self.populate_comboboxes()
-
     # def populate_comboboxes(self):
     #     self.training_layer_combo_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
     #     training_layer = self.training_layer_combo_box.currentLayer()
@@ -162,21 +98,37 @@ class TrainingPointsTab(TabBase):
 
     def sample_raster_at_points(self):
         # TODO Should be able to do Points or Polygons depending on the geometry type
-        data_ras = self.parent.comboBox_raster.currentLayer()
-        selectedLayer = self.training_layer_combo_box.currentLayer()
+        data_ras = self.data_raster_box.currentLayer()
+        selectedLayer = self.training_layer_box.currentLayer()
+        withSelected = self.with_selected_training.isChecked()
+        buffer = self.training_buffer_box.value()
+
+        def sample_raster(data_ras, training_vector, selected, buffer):
+            if selected:
+                sel = training_vector.selectedFeatures()
+            else:
+                sel = training_vector.getFeatures()
+            gdf = gpd.GeoDataFrame.from_features(sel)
+            # Now have as geodataframe
+
+
+        # This function should trim to selected if need be, add buffer to polygons if need be
+        # And return a pd.dataframe of point/pixels as rows, and sampled raster features as columns
+        #
+        # 1) get the selected as gdf
+
+        # 2) add buffer to geometry if needed
+
+        # 3a if poly:
+
+        # 3b if point:
+
+
+
+
+
         datastr = selectedLayer.source()
-
-        # TODO: this looks like duplicated code! find it and move to separate function!
-        try:
-            # This will be the case for geopackages, but not shapefile or geojson
-            fp, layername = datastr.split('|')
-            gdf = gpd.read_file(fp, layername=layername.split('=')[1])
-        except ValueError:
-            fp = datastr
-            gdf = gpd.read_file(fp)
-
-        # fp, layername = datastr.split('|')
-        # gdf = gpd.read_file(fp, layername=layername.split('=')[1])
+        gdf = parse_vector_source(datastr)
         raster = rio.open(data_ras.source())
         raster_crs = raster.crs
         if gdf.crs != raster_crs:
@@ -196,7 +148,7 @@ class TrainingPointsTab(TabBase):
                      f"{s.shape[0] - dat.shape[0]} "
                      f"dropped from intersection with nodata values.")
 
-        self.parent.labels_tab.PrintBox.setText(statement)  # TODO: not this
+        self.parent.labels_tab.PrintBox.setText(statement)
         self.iface.messageBar().pushMessage(statement)
 
         self.parent.point_samples = df
