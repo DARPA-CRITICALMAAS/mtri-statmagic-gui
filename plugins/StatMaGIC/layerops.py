@@ -5,6 +5,10 @@ from pathlib import Path
 
 import numpy as np
 from osgeo import gdal, ogr, osr
+import rasterio as rio
+import pandas as pd
+from rasterio.mask import mask
+from rasterio.plot import reshape_as_image
 
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
 from statmagic_backend.maths.sampling import randomSample
@@ -121,84 +125,131 @@ def bands2indices(bandlist):
     idxs = [b - 1 for b in bandlist]
     return np.array(idxs)
 
+#
+# def ExtractRasterValuesFromSelectedFeature(SelectedRaster, SelectedLayer, Feature):
+#     r_ds = gdal.Open(SelectedRaster.source())
+#     geot = r_ds.GetGeoTransform()
+#     cellres = geot[1]
+#     r_proj = r_ds.GetProjection()
+#
+#     vl = QgsVectorLayer('Polygon?crs=%s' % SelectedLayer.crs().authid(), "temp",
+#                         "memory")  # Create a temp Polygon Layer
+#     pr = vl.dataProvider()
+#     pr.addFeature(Feature)
+#     vl.updateExtents()
+#
+#     bb = Feature.geometry().boundingBox()  # xMin: float, yMin: float = 0, xMax: float = 0, yMax: float = 0
+#     bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
+#
+#     offsets = boundingBoxToOffsets(bbc, geot)
+#     new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
+#
+#     sizeX = int(((bbc[2] - bbc[0]) / cellres) + 1)
+#     sizeY = int(((bbc[3] - bbc[1]) / cellres) + 1)
+#
+#     mem_driver_gdal = gdal.GetDriverByName("MEM")
+#     tr_ds = mem_driver_gdal.Create("", sizeX, sizeY, 1, gdal.GDT_Byte)
+#
+#     tr_ds.SetGeoTransform(new_geot)
+#     tr_ds.SetProjection(r_proj)
+#     vals = np.zeros((sizeY, sizeX))
+#     tr_ds.GetRasterBand(1).WriteArray(vals)
+#
+#     mem_driver = ogr.GetDriverByName("Memory")
+#     shp_name = "temp"
+#     tp_ds = mem_driver.CreateDataSource(shp_name)
+#
+#     prj = r_ds.GetProjection()
+#     srs = osr.SpatialReference()
+#     srs.ImportFromWkt(prj)
+#     tp_lyr = tp_ds.CreateLayer('polygons', srs, ogr.wkbPolygon)
+#
+#     featureDefn = tp_lyr.GetLayerDefn()
+#     feature = ogr.Feature(featureDefn)
+#     poly_text = Feature.geometry().asWkt()  # This is the geometry of the selected feature
+#     # Here need to change the MultiPolygonZ to POLYGON and remove 1 set of parentehes
+#     # print(poly_text)
+#     poly_text = polytextreplace(poly_text)
+#
+#     polygeo = ogr.CreateGeometryFromWkt(poly_text)
+#     feature.SetGeometry(polygeo)
+#     tp_lyr.CreateFeature(feature)
+#     # feature = None
+#
+#     gdal.RasterizeLayer(tr_ds, [1], tp_lyr, burn_values=[1])
+#
+#     msk = tr_ds.ReadAsArray()
+#     dat = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)[:, msk == 1]
+#     return dat
+#
+#
+# def getTrainingDataFromFeatures(selRas, selLayer, withSelected=False, samplingRate=None, maxPerPoly=None):
+#     trainingList = []
+#     if withSelected is True:
+#         sel = selLayer.selectedFeatures()
+#     else:
+#         sel = selLayer.getFeatures()
+#     for feat in sel:
+#         classLabel = feat['type_id']
+#         plydat = ExtractRasterValuesFromSelectedFeature(selRas, selLayer, feat)
+#         plydatT = plydat.T
+#         cv = np.full((plydatT.shape[0], 1), classLabel)
+#         ds = np.hstack([cv, plydatT])
+#         if samplingRate is not None:
+#             ds = randomSample(ds, samplingRate)[0]
+#         if maxPerPoly is not None:
+#             if ds.shape[0] > maxPerPoly:
+#                 ds = ds[np.random.choice(ds.shape[0], maxPerPoly, replace=False)]
+#         trainingList.append(ds)
+#     cds = np.vstack(trainingList)
+#     return cds
+#
 
-def ExtractRasterValuesFromSelectedFeature(SelectedRaster, SelectedLayer, Feature):
-    r_ds = gdal.Open(SelectedRaster.source())
-    geot = r_ds.GetGeoTransform()
-    cellres = geot[1]
-    r_proj = r_ds.GetProjection()
+def dataframeFromSampledPoints(gdf, raster_path):
+    raster = rio.open(raster_path)
+    raster_crs = raster.crs
+    if gdf.crs != raster_crs:
+        gdf.to_crs(raster_crs, inplace=True)
+    nodata = raster.nodata
+    bands = raster.descriptions
+    coords = [(x, y) for x, y in zip(gdf.geometry.x, gdf.geometry.y)]  # list of gdf lat/longs
+    samples = [x for x in raster.sample(coords, masked=True)]
+    s = np.array(samples)
+    # Drop rows with nodata value
+    dat = s[~(s == nodata).any(1), :]
+    # also with nan
+    dat = dat[~np.isnan(dat).any(axis=1)]
+    # Turn into dataframe for keeping
+    df = pd.DataFrame(dat, columns=bands)
 
-    vl = QgsVectorLayer('Polygon?crs=%s' % SelectedLayer.crs().authid(), "temp",
-                        "memory")  # Create a temp Polygon Layer
-    pr = vl.dataProvider()
-    pr.addFeature(Feature)
-    vl.updateExtents()
+    # statement = (f"{dat.shape[0]} sample points collected. \n"
+    #              f"{s.shape[0] - dat.shape[0]} "
+    #              f"dropped from intersection with nodata values.")
 
-    bb = Feature.geometry().boundingBox()  # xMin: float, yMin: float = 0, xMax: float = 0, yMax: float = 0
-    bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
-
-    offsets = boundingBoxToOffsets(bbc, geot)
-    new_geot = geotFromOffsets(offsets[0], offsets[2], geot)
-
-    sizeX = int(((bbc[2] - bbc[0]) / cellres) + 1)
-    sizeY = int(((bbc[3] - bbc[1]) / cellres) + 1)
-
-    mem_driver_gdal = gdal.GetDriverByName("MEM")
-    tr_ds = mem_driver_gdal.Create("", sizeX, sizeY, 1, gdal.GDT_Byte)
-
-    tr_ds.SetGeoTransform(new_geot)
-    tr_ds.SetProjection(r_proj)
-    vals = np.zeros((sizeY, sizeX))
-    tr_ds.GetRasterBand(1).WriteArray(vals)
-
-    mem_driver = ogr.GetDriverByName("Memory")
-    shp_name = "temp"
-    tp_ds = mem_driver.CreateDataSource(shp_name)
-
-    prj = r_ds.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(prj)
-    tp_lyr = tp_ds.CreateLayer('polygons', srs, ogr.wkbPolygon)
-
-    featureDefn = tp_lyr.GetLayerDefn()
-    feature = ogr.Feature(featureDefn)
-    poly_text = Feature.geometry().asWkt()  # This is the geometry of the selected feature
-    # Here need to change the MultiPolygonZ to POLYGON and remove 1 set of parentehes
-    # print(poly_text)
-    poly_text = polytextreplace(poly_text)
-
-    polygeo = ogr.CreateGeometryFromWkt(poly_text)
-    feature.SetGeometry(polygeo)
-    tp_lyr.CreateFeature(feature)
-    # feature = None
-
-    gdal.RasterizeLayer(tr_ds, [1], tp_lyr, burn_values=[1])
-
-    msk = tr_ds.ReadAsArray()
-    dat = r_ds.ReadAsArray(offsets[2], offsets[0], sizeX, sizeY)[:, msk == 1]
-    return dat
+    # return df, statement
+    return df
 
 
-def getTrainingDataFromFeatures(selRas, selLayer, withSelected=False, samplingRate=None, maxPerPoly=None):
-    trainingList = []
-    if withSelected is True:
-        sel = selLayer.selectedFeatures()
-    else:
-        sel = selLayer.getFeatures()
-    for feat in sel:
-        classLabel = feat['type_id']
-        plydat = ExtractRasterValuesFromSelectedFeature(selRas, selLayer, feat)
-        plydatT = plydat.T
-        cv = np.full((plydatT.shape[0], 1), classLabel)
-        ds = np.hstack([cv, plydatT])
-        if samplingRate is not None:
-            ds = randomSample(ds, samplingRate)[0]
-        if maxPerPoly is not None:
-            if ds.shape[0] > maxPerPoly:
-                ds = ds[np.random.choice(ds.shape[0], maxPerPoly, replace=False)]
-        trainingList.append(ds)
-    cds = np.vstack(trainingList)
-    return cds
+def dataframFromSampledPolys(rasterpath, gdf):
+    raster = rio.open(rasterpath)
+    column_names = raster.descriptions
+    nodata = raster.nodata
+    dflist = []
+    for index, feature in gdf.iterrows():
+        outdf = rasDF_fromPolyShape(rasterpath, feature, column_names, nodata)
+        dflist.append(outdf)
+    bigdf = pd.concat(dflist)
+    return bigdf
+
+def rasDF_fromPolyShape(rasterpath, feature, column_names, nodata):
+    geom = [feature['geometry']]
+    rdarr = mask(rio.open(rasterpath), shapes=geom, crop=True)[0]
+    stack = reshape_as_image(rdarr)
+    new_shape = (stack.shape[0] * stack.shape[1], stack.shape[2])
+    predstack = stack.reshape(new_shape)
+    tvs = predstack[~(predstack == nodata).all(1)]
+    df = pd.DataFrame(data=tvs, columns=column_names)
+    return df
 
 
 def addVectorLayer(vector_path, name, group):
@@ -312,6 +363,7 @@ def add_macrostrat_vectortilemap_to_project():
     # QgsProject.instance().addMapLayer(ml)
     return ml
 
+
 def return_selected_macrostrat_features_as_qgsLayer():
     # Make sure the Macrostrat Layer is selected
     layer = QgsProject.instance().mapLayersByName('Macrostrat Carto')[0]
@@ -354,6 +406,30 @@ def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
     # Todo: Should this be projected to the project CRS?
     return QgsVectorLayer(gdf.to_json(), f"Selected Macrostrat {name}", "ogr")
 
+
 def set_project_crs(QgsRef):
     QgsProject.instance().setCrs(QgsRef)
 
+
+def apply_model_to_array(model, array, raster_dict):
+    data_array = np.transpose(array, (1, 2, 0))  # convert from bands, rows, columns to rows, cols, bands
+    twoDshape = (data_array.shape[0] * data_array.shape[1], data_array.shape[2])
+    pred_data = data_array.reshape(twoDshape)
+    bool_arr = np.all(pred_data == raster_dict['NoData'], axis=1)
+    if np.count_nonzero(bool_arr == 1) < 1:
+        print('not over no data values')
+        scores = model.score_samples(pred_data)
+
+    else:
+        idxr = bool_arr.reshape(pred_data.shape[0])
+        pstack = pred_data[idxr == 0, :]
+        scrs = model.score_samples(pstack)
+
+        scores = np.zeros_like(bool_arr, dtype='float32')
+        scores[~bool_arr] = scrs
+        scores[bool_arr] = 0
+
+    preds = scores.reshape(raster_dict['sizeY'], raster_dict['sizeX'], 1)
+    classout = np.transpose(preds, (0, 1, 2))[:, :, 0]
+
+    return classout

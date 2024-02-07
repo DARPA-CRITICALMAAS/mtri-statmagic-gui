@@ -11,10 +11,10 @@ from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
 from .tabs.AddLayers_Redo import AddLayersTab
 
-from .tabs.Labels import LabelsTab
-from .tabs.Unsupervised import UnsupervisedTab
-from .tabs.ProximityLayers import ProximityLayersTab
-from .tabs.Supervised import SupervisedTab
+# from .tabs.Labels import LabelsTab
+# from .tabs.Unsupervised import UnsupervisedTab
+# from .tabs.ProximityLayers import ProximityLayersTab
+# from .tabs.Supervised import SupervisedTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):

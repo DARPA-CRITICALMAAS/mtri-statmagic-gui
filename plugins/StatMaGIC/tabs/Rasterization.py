@@ -68,7 +68,7 @@ class RasterizationTab(TabBase):
 
         # NEXT FRAME - Rasterize Training Points
         tpFrame, tpLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
-        tpFrameLabel = addLabel(midLayout, "Rasterize Training Points")
+        tpFrameLabel = addLabel(tpLayout, "Rasterize Training Points")
         makeLabelBig(tpFrameLabel)
         tpGridLayout = QtWidgets.QGridLayout()
 
