@@ -19,17 +19,17 @@ class InspectLayersTab(TabBase):
         ##### TOP FRAME - Insepetion options#####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         topFormLayout = QtWidgets.QFormLayout()
-
-        # Needs to set a raster box. Will need to think about having a copy of the datacube.tif
-        # So that one can be edited and one can be loaded in the QGIS TOC
+        #
+        # # Needs to set a raster box. Will need to think about having a copy of the datacube.tif
+        # # So that one can be edited and one can be loaded in the QGIS TOC
         self.comboBox = QgsMapLayerComboBox(self)
         self.comboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.rasterBandBox = QgsRasterBandComboBox(self)
-        self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
-
+        # self.rasterBandBox = QgsRasterBandComboBox(self)
+        # self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
+        #
         addFormItem(topFormLayout, "Raster / DataCube:", self.comboBox)
-        addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
-
+        # addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
+        #
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
 
@@ -40,16 +40,8 @@ class InspectLayersTab(TabBase):
         # addToParentLayout(middleFormLayout)
 
         self.drop_layers_button = addButton(self, "Drop Layers Menu", self.popup_drop_layer_dialogue)
-
-        self.populate_comboboxes()
-
         self.simple_plot_button = addButton(self, "Raster Histogram", self.popup_make_hist_plot)
 
-    def populate_comboboxes(self):
-        raster_layer = self.comboBox.currentLayer()
-        if raster_layer:
-            self.rasterBandBox.setLayer(raster_layer)
-            self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
 
     def popup_drop_layer_dialogue(self):
         popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
