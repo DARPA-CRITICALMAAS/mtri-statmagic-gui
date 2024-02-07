@@ -18,7 +18,7 @@ from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffset
 from .TabBase import TabBase
 from ..fileops import gdalSave, parse_vector_source
 from ..gui_helpers import *
-from ..layerops import addRFconfLayer, apply_model_to_array, dataframeFromSampledPoints, dataframFromSampledPolys
+from ..layerops import addGreyScaleLayer, apply_model_to_array, dataframeFromSampledPoints, dataframFromSampledPolys
 from ..plotting import makePCAplot
 
 
@@ -225,7 +225,7 @@ class TrainingPointsTab(TabBase):
         else:
             TOCgroup = root.findGroup('IsolationForestOutputs')
 
-        addRFconfLayer(savedLayer, "Isolation Forest Output", TOCgroup)
+        addGreyScaleLayer(savedLayer, "Isolation Forest Output", TOCgroup)
 
     def trainOneClassSVM(self):
         if self.parent.oneClassSVM is not None:
