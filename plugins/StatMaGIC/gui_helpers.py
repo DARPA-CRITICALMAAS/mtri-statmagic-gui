@@ -99,10 +99,10 @@ def addToParentLayout(widget, gridPos=()):
     widget.parent().layout().addWidget(widget, *gridPos)
 
 
-def addWidgetFromLayoutAndAddToParent(layout, parent):
+def addWidgetFromLayoutAndAddToParent(layout, parent, gridPos=()):
     widget = QtWidgets.QWidget(parent)
     widget.setLayout(layout)
-    parent.layout().addWidget(widget)
+    parent.layout().addWidget(widget, *gridPos)
     return widget
 
 

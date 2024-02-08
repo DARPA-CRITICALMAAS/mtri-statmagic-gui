@@ -2,6 +2,7 @@
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
+from .tabs.Beak import BeakTab
 from .tabs.Geochemistry import GeochemistryTab
 from .tabs.InitiateCMA import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
@@ -70,6 +71,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
         self.sri_tab                = SRITab(self, self.tabWidget)
+        self.beak_tab               = BeakTab(self, self.tabWidget)
 
         # add tabs to parent
         addToParentLayout(self.tabWidget)
