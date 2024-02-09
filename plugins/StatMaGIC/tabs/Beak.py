@@ -34,8 +34,8 @@ class BeakTab(TabBase):
         self.categoricalPath = QgsFileWidget()
         self.outputPath = QgsFileWidget()
 
-        self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
-        self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        # self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        # self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.outputPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
 
         addFormItem(topFormLayout, "Path to Numerical Data:", self.numericalPath)
@@ -79,7 +79,7 @@ class BeakTab(TabBase):
         self.radiuscooling = addComboBoxToForm(miscFormLayout, "Function Defining Decrease in Neighborhood Size:", ["linear", "exponential"])
         self.scalecooling = addComboBoxToForm(miscFormLayout, "Function Defining Decrease in Learning Scale:", ["linear", "exponential"])
         self.scale0 = addSpinBoxToForm(miscFormLayout, "Initial Learning Rate:", dtype=float, value=0.1, min=0, max=1, step=0.01)
-        self.scale0 = addSpinBoxToForm(miscFormLayout, "Final Learning Rate:", dtype=float, value=0.01, min=0, max=1, step=0.01)
+        self.scaleN = addSpinBoxToForm(miscFormLayout, "Final Learning Rate:", dtype=float, value=0.01, min=0, max=1, step=0.01)
         self.initialization = addComboBoxToForm(miscFormLayout, "Type of SOM Initialization:", ["random", "pca"])
         self.gridtype = addComboBoxToForm(miscFormLayout, "Type of SOM Grid:", ["hexagonal", "rectangular"])
 
@@ -95,8 +95,62 @@ class BeakTab(TabBase):
 
         addToParentLayout(bottomFrame)
 
+    def setup_paths(self):
+        self.numerical_path = self.numericalPath.filePath()
+        self.categorical_path = self.categoricalPath.filePath()
+        self.output_folder = self.outputPath.filePath()
+        (
+            self.input_files,
+            self.output_file_somspace,
+            self.outgeofile
+        ) = prepare_args(self.numerical_path, self.categorical_path, self.output_folder)
+
     def run_som_workflow(self):
-        pass
+        self.setup_paths()
+        som_args = {
+            "input_file": self.input_files,
+            "geotiff_input": self.input_files,      # geotiff_input files, separated by comma
+            "output_folder": self.output_folder,
+            "som_x": self.som_x.value(),
+            "som_y": self.som_y.value(),
+            "epochs": self.epochs.value(),
+            "kmeans": str(self.kmeansCheckBox.isChecked()).lower(),
+            "kmeans_init": self.kmeans_init.value(),
+            "kmeans_min": self.kmeans_min.value(),
+            "kmeans_max": self.kmeans_max.value(),
+            "neighborhood": self.neighborhood.currentText(),
+            "std_coeff": self.std_coeff.value(),
+            "maptype": self.maptype.currentText(),
+            # "initialcodebook": None,
+            "radius0": self.radius0.value(),
+            "radiusN": self.radiusN.value(),
+            "radiuscooling": self.radiuscooling.currentText(),
+            "scalecooling": self.scalecooling.currentText(),
+            "scale0": self.scale0.value(),
+            "scaleN": self.scaleN.value(),
+            "initialization": self.initialization.currentText(),
+            "gridtype": self.gridtype.currentText(),
+            "output_file_somspace": self.output_file_somspace,
+            # Additional optional parameters below:
+            "outgeofile": self.outgeofile,
+            "output_file_geospace": self.outgeofile
+        }
+        beak_som_workflow(som_args)
 
     def plot_som_results(self):
-        pass
+        self.setup_paths()
+        # TODO: make some kind of GUI for the ones that are still hardcoded
+        plot_args = {
+            "som_x": self.som_x.value(),
+            "som_y": self.som_y.value(),
+            "input_file": self.input_files,
+            "outsomfile": self.output_file_somspace,
+            "dir": self.output_folder,
+            "grid_type": 'rectangular',  # grid type (square or hexa), (rectangular or hexagonal)
+            "redraw": 'true',
+            # whether to draw all plots, or only those required for clustering (true: draw all. false:draw only for clustering).
+            "outgeofile": self.outgeofile,
+            "dataType": 'grid',  # Data type (scatter or grid)
+            "noDataValue": '-9999'  # noData value
+        }
+        plot_som_results(plot_args)
