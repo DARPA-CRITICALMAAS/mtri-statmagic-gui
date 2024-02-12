@@ -34,8 +34,8 @@ class BeakTab(TabBase):
         self.categoricalPath = QgsFileWidget()
         self.outputPath = QgsFileWidget()
 
-        # self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
-        # self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.outputPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
 
         addFormItem(topFormLayout, "Path to Numerical Data:", self.numericalPath)
