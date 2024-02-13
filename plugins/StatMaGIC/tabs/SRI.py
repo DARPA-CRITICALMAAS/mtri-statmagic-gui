@@ -29,13 +29,6 @@ import rasterio as rio
 from rasterio.windows import Window
 
 
-# loads the pretrained checkpoint
-ckpt_path = str(files("sri_maper.ckpts") / "epoch_007.ckpt")
-model = CMALitModule.load_from_checkpoint(ckpt_path)
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
-
-
 class SRITab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "SRI")
@@ -90,6 +83,11 @@ class SRITab(TabBase):
                            f"Please install it before running the Beak tab.")
             msgBox.exec()
             return
+        # loads the pretrained checkpoint
+        ckpt_path = str(files("sri_maper.ckpts") / "epoch_007.ckpt")
+        model = CMALitModule.load_from_checkpoint(ckpt_path)
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
         raster_layer: QgsRasterLayer = self.raster_selection_box.currentLayer()
         target_raster_layer: QgsRasterLayer = self.target_raster_selection_box.currentLayer()
         aoi_layer: QgsVectorLayer = self.aoi_selection_box.currentLayer()
