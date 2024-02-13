@@ -25,11 +25,8 @@ from .statmagic_dockwidget import StatMaGICDockWidget
 try:
     import pydevd_pycharm
     pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
-except (ImportError, ConnectionRefusedError):
-    try:
-        pass
-    except AttributeError:
-        pass
+except (ImportError, ConnectionRefusedError, AttributeError):
+    pass
 
 
 class StatMaGIC(QWidget):
