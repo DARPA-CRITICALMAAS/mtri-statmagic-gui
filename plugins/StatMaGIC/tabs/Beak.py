@@ -149,6 +149,12 @@ class BeakTab(TabBase):
         beak_som_workflow(som_args)
 
     def plot_som_results(self):
+        if SOMOCLU_FAILED:
+            msgBox = QMessageBox()
+            msgBox.setText("The package <pre>somoclu</pre> is not installed on your system. "
+                           "Please install it before running the Beak tab.")
+            msgBox.exec()
+            return
         self.setup_paths()
         # TODO: make some kind of GUI for the ones that are still hardcoded
         plot_args = {
