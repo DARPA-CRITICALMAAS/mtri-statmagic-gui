@@ -26,7 +26,10 @@ try:
     import pydevd_pycharm
     pydevd_pycharm.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
 except (ImportError, ConnectionRefusedError):
-    pass
+    try:
+        pass
+    except AttributeError:
+        pass
 
 
 class StatMaGIC(QWidget):
