@@ -79,8 +79,8 @@ class SRITab(TabBase):
         if PYTORCH_FAILED:
             msgBox = QMessageBox()
             msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:"
-                           f"<pre>{stack_trace[-1]}</pre>"
-                           f"Please install it before running the Beak tab.")
+                           f"<pre>{stack_trace[-2]}</pre>"
+                           f"Please install it before running the SRI tab.")
             msgBox.exec()
             return
         # loads the pretrained checkpoint
