@@ -79,8 +79,8 @@ class SRITab(TabBase):
         if PYTORCH_FAILED:
             msgBox = QMessageBox()
             # msgBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum))
-            msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:"
-                           f"<code>{stack_trace[-2]}</code>"
+            msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:\n"
+                           f"<code>{stack_trace[-2]}</code>\n"
                            f"Please install it before running the SRI tab.")
             msgBox.exec()
             return
