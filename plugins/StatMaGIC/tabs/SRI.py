@@ -1,6 +1,16 @@
+import traceback
+
 import torch
 from torchinfo import summary
-from sri_maper.src.models.cma_module import CMALitModule
+
+try:
+    from sri_maper.src.models.cma_module import CMALitModule
+    PYTORCH_FAILED = False
+except ValueError:
+    PYTORCH_FAILED = True
+    error = traceback.format_exc()
+    # split stack trace into a list and slice it
+    stack_trace = error.split('\n')
 
 import sys
 if sys.version_info < (3, 9):
@@ -73,6 +83,13 @@ class SRITab(TabBase):
         addToParentLayout(topFrame)
 
     def run_sri_classifier(self):
+        if PYTORCH_FAILED:
+            msgBox = QMessageBox()
+            msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:"
+                           f"<pre>{stack_trace[-1]}</pre>"
+                           f"Please install it before running the Beak tab.")
+            msgBox.exec()
+            return
         raster_layer: QgsRasterLayer = self.raster_selection_box.currentLayer()
         target_raster_layer: QgsRasterLayer = self.target_raster_selection_box.currentLayer()
         aoi_layer: QgsVectorLayer = self.aoi_selection_box.currentLayer()
