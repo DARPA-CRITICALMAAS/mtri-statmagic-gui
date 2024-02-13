@@ -19,7 +19,7 @@ else:
     from importlib.resources import files
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QSizePolicy
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
 
 
@@ -78,6 +78,7 @@ class SRITab(TabBase):
     def run_sri_classifier(self):
         if PYTORCH_FAILED:
             msgBox = QMessageBox()
+            msgBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum))
             msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:"
                            f"<pre>{stack_trace[-2]}</pre>"
                            f"Please install it before running the SRI tab.")
