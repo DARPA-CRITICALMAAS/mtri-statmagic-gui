@@ -137,10 +137,10 @@ Without the necessary code present, the respective `Beak` or `SRI` tabs will not
 <summary><b>Windows Users</b></summary>
 
 1. Open GitHub and navigate to the `mtri-statmagic-backend` repository: https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-backend
-2. Select the down arrow near the `<>Code` button and copy the URL by clicking the `Copy url to clipboard` ![Screenshot 2024-01-23 112057.png](uploads/6cec242ac7579764c387028c4985b526/Screenshot_2024-01-23_112057.png) ![Pasted image 20240122160534.png](uploads/fd0fde1edf5c3053e75eb9439d41c011/Pasted_image_20240122160534.png)
+2. Select the down arrow near the `<>Code` button and copy the URL by clicking the `Copy url to clipboard` ![Copy URL image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/9a4f2bbd-294d-4bba-b60f-d43f281b3b9a)
 3. Open Git Bash from the start menu or search bar
-4. In Git Bash, navigate to the folder that you would like to save these repositories into using the change directory `cd` command. For example, I have mine in saved in my local computer's users folder in a directory called `dev` for development. ![Screenshot 2024-01-22 170559.png](uploads/3275c130622249de4bded178cd54425a/Screenshot_2024-01-22_170559.png)
-5. Type `git clone` and then right click to paste the copied URL from GitHub![Screenshot 2024-01-22 170809.png](uploads/fcb80d6a7b4aab8d239b62a82899962d/Screenshot_2024-01-22_170809.png)
+4. In Git Bash, navigate to the folder that you would like to save these repositories into using the change directory `cd` command. For example, I have mine in saved in my local computer's users folder in a directory called `dev` for development. ![Git bash image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/84296d10-110d-47f9-8319-327d11a28f65)
+5. Type `git clone` and then right click to paste the copied URL from GitHub ![Git Clone image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/97324ee9-bf35-4ba4-a82e-ac0de21c8a1c)
 6. Hit Enter
 7. Repeat steps 2-5 with the GitHub `mtri-statmagic-gui` repository: https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui
 8. If you wish to use Beak's workflow, repeat steps 2-5 using https://github.com/DARPA-CRITICALMAAS/beak-ta3 . The `Beak` tab will not function without Beak's software.
@@ -180,7 +180,8 @@ Run the following command **(required for the plugin to function)**:
 ```
 pip install -e .
 ```
-![Screenshot 2024-01-23 104231.png](uploads/eab54fa9240d5387f02b0a73a3fb8af3/Screenshot_2024-01-23_104231.png)
+![pip install image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/5efd611a-ff08-4f1c-9135-f865bcb28786)
+
 
 If you intend to use the `Beak` tab, `cd ../beak-ta3` then run `pip install -e .`.
 
@@ -194,7 +195,7 @@ If you intend to use the `SRI` tab, `cd ../sri-ta3` then run `pip install -e .`.
 1. Open Miniforge Prompt
 2. Activate the StatMaGIC environment with `mamba activate statmagic`
 3. Navigate to the `statmagic_gui` repository (e.g. `cd dev\statmagic_gui`) _Note once you start typing you can hit the `Tab` key to fill out the rest of the path._
-4. Run the `aws_launch_qgis.bat` script from within `statmagic_gui` ![Screenshot 2024-01-23 093952.png](uploads/e4c4539e4ca4bcf5c791830e28a7fd8b/Screenshot_2024-01-23_093952.png)
+4. Run the `aws_launch_qgis.bat` script from within `statmagic_gui` ![aws_launch_qgis image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/ae0d4fa2-c76a-4bc8-b7ad-56dacd049363)
 5. This will prompt a series of commands to open up QGIS.
 
 </details>
@@ -214,9 +215,11 @@ If you intend to use the `SRI` tab, `cd ../sri-ta3` then run `pip install -e .`.
 
 1. Select a new project by clicking the new project icon (white page in the upper left) or re-open a recent project from the suggestions.
 
-   ![Pasted image 20240123105522.png](uploads/a95161248e4fe7c3afb3c2d5d62844ba/Pasted_image_20240123105522.png)
-2. The StatMaGIC plug-in icon![Screenshot 2024-01-23 111713.png](uploads/e1a8f479c5a6cd521e6d682293e93380/Screenshot_2024-01-23_111713.png) will appear at the top of the QGIS project and when clicked on will open the plug-in along the right side of the QGIS project workspace. _Note: Should the StatMaGIC icon not appear automatically on your tool bar, select `Plugins` along the top menu and `Manage and Install Plugins...` In the plugin manager, navigate to the installed plugins and check the box next to the StatMaGIC plugin._
+  ![new QGIS project image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/ec2d4a78-9109-4bfe-8486-09a3044e4a70)
 
-   ![Pasted image 20240123111650.png](uploads/ff3a3720872558c96dfcc793049b8cb5/Pasted_image_20240123111650.png)
+2. The StatMaGIC plug-in icon ![plugin icon image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/bebf2529-e66f-43f0-8496-29e77e08c129) will appear at the top of the QGIS project and when clicked on will open the plug-in along the right side of the QGIS project workspace. _Note: Should the StatMaGIC icon not appear automatically on your tool bar, select `Plugins` along the top menu and `Manage and Install Plugins...` In the plugin manager, navigate to the installed plugins and check the box next to the StatMaGIC plugin._
+
+   ![Manage and Install Plugins image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/fc89854a-9b75-4386-89b9-0eef17ebbe73)
+
 3. You are now ready to use the StatMaGIC tools.
 
