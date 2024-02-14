@@ -28,16 +28,17 @@ class SRITab(TabBase):
         makeLabelBig(topFrameLabel)
         topFormLayout = QtWidgets.QFormLayout()
 
-        print("Create combobox")
+        print("Create input raster combobox")
         raster_label = QLabel('Input Datacube')
         self.raster_selection_box = QgsMapLayerComboBox(self)
         self.raster_selection_box.setShowCrs(True)
         self.raster_selection_box.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
+        print("Create target raster combobox")
         target_raster_label = QLabel('Target Layer')
         self.target_raster_selection_box = QgsMapLayerComboBox(self)
         self.target_raster_selection_box.setShowCrs(True)
-        self.tager_raster_selection_box.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.target_raster_selection_box.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
         print("Create AOI box")
         aoi_label = QLabel('AOI')
