@@ -1,9 +1,16 @@
 from pathlib import Path
 
 import geopandas as gpd
+from PyQt5.QtWidgets import QMessageBox
 from shapely.geometry import box
 
-from statmagic_backend.dev.beak_som_workflow import *
+
+try:
+    from statmagic_backend.dev.beak_som_workflow import *
+    SOMOCLU_FAILED = False
+except ImportError:
+    SOMOCLU_FAILED = True
+
 from statmagic_backend.dev.match_stack_raster_tools import split_cube
 
 from PyQt5 import QtWidgets
@@ -111,6 +118,12 @@ class BeakTab(TabBase):
         # ) = prepare_args(self.numerical_path, self.categorical_path, self.output_folder)
 
     def run_som_workflow(self):
+        if SOMOCLU_FAILED:
+            msgBox = QMessageBox()
+            msgBox.setText("The package <pre>somoclu</pre> is not installed on your system. "
+                           "Please install it before running the Beak tab.")
+            msgBox.exec()
+            return
         self.setup_paths()
         som_args = {
             "input_file": self.input_files,
@@ -143,6 +156,12 @@ class BeakTab(TabBase):
         beak_som_workflow(som_args)
 
     def plot_som_results(self):
+        if SOMOCLU_FAILED:
+            msgBox = QMessageBox()
+            msgBox.setText("The package <pre>somoclu</pre> is not installed on your system. "
+                           "Please install it before running the Beak tab.")
+            msgBox.exec()
+            return
         self.setup_paths()
         # TODO: make some kind of GUI for the ones that are still hardcoded
         plot_args = {

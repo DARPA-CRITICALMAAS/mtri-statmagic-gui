@@ -1,6 +1,16 @@
+import traceback
+
 import torch
 from torchinfo import summary
-from sri_maper.src.models.cma_module import CMALitModule
+
+try:
+    from sri_maper.src.models.cma_module import CMALitModule
+    PYTORCH_FAILED = False
+except ValueError:
+    PYTORCH_FAILED = True
+    error = traceback.format_exc()
+    # split stack trace into a list and slice it
+    stack_trace = error.split('\n')
 
 import sys
 if sys.version_info < (3, 9):
@@ -9,7 +19,7 @@ else:
     from importlib.resources import files
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QSizePolicy
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
 
 
@@ -17,13 +27,6 @@ from .TabBase import TabBase
 from ..gui_helpers import *
 import rasterio as rio
 from rasterio.windows import Window
-
-
-# loads the pretrained checkpoint
-ckpt_path = str(files("sri_maper.ckpts") / "epoch_007.ckpt")
-model = CMALitModule.load_from_checkpoint(ckpt_path)
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
 
 
 class SRITab(TabBase):
@@ -73,6 +76,19 @@ class SRITab(TabBase):
         addToParentLayout(topFrame)
 
     def run_sri_classifier(self):
+        if PYTORCH_FAILED:
+            msgBox = QMessageBox()
+            # msgBox.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum))
+            msgBox.setText(f"The package <pre>pytorch</pre> threw the following error:\n"
+                           f"<br /><br /><code>{stack_trace[-2]}</code><br /><br />\n"
+                           f"Please install it before running the SRI tab.")
+            msgBox.exec()
+            return
+        # loads the pretrained checkpoint
+        ckpt_path = str(files("sri_maper.ckpts") / "epoch_007.ckpt")
+        model = CMALitModule.load_from_checkpoint(ckpt_path)
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
         raster_layer: QgsRasterLayer = self.raster_selection_box.currentLayer()
         target_raster_layer: QgsRasterLayer = self.target_raster_selection_box.currentLayer()
         aoi_layer: QgsVectorLayer = self.aoi_selection_box.currentLayer()

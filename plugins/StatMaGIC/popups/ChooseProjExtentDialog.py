@@ -1,7 +1,10 @@
-from PyQt5.QtWidgets import QDialogButtonBox,  QLineEdit, QDialog, QVBoxLayout, QPushButton, QLabel, QCheckBox
+from PyQt5.QtCore import QVariant, Qt
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QDialogButtonBox, QLineEdit, QDialog, QVBoxLayout, QPushButton, QLabel, QCheckBox, \
+    QInputDialog
 from qgis.PyQt.QtCore import pyqtSignal
-from qgis.gui import QgsMapLayerComboBox, QgsFileWidget
-from qgis.core import QgsProject
+from qgis.gui import QgsMapLayerComboBox, QgsFileWidget, QgsMapToolEmitPoint, QgsRubberBand
+from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsPoint, Qgis, QgsFeature, QgsGeometry, QgsDistanceArea
 from shapely.geometry import box
 from shapely.wkt import loads
 import geopandas as gpd
@@ -12,11 +15,11 @@ class ChooseExtent(QDialog):
 
     def __init__(self, parent=None):
         """Constructor."""
-        # super(AddRasterLayer, self).__init__(parent)
         super(ChooseExtent, self).__init__()
 
         # preserve a pointer to the dockwidget to access its attributes
         self.parent = parent
+        self.iface = self.parent.iface
         self.extent_gdf = None
         self.crs_epsg = None
         self.initUI()
