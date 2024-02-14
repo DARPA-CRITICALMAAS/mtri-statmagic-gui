@@ -4,11 +4,14 @@ import geopandas as gpd
 from PyQt5.QtWidgets import QMessageBox
 from shapely.geometry import box
 
+
 try:
     from statmagic_backend.dev.beak_som_workflow import *
     SOMOCLU_FAILED = False
 except ImportError:
     SOMOCLU_FAILED = True
+
+from statmagic_backend.dev.match_stack_raster_tools import split_cube
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer, QFileInfo
@@ -39,8 +42,8 @@ class BeakTab(TabBase):
         self.categoricalPath = QgsFileWidget()
         self.outputPath = QgsFileWidget()
 
-        self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
-        self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        # self.numericalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        # self.categoricalPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.outputPath.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
 
         addFormItem(topFormLayout, "Path to Numerical Data:", self.numericalPath)
@@ -61,7 +64,7 @@ class BeakTab(TabBase):
 
         self.som_x = addSpinBoxToGrid(middleFrame, "X", value=30, min=1, max=100, gridPos=(2,0))
         self.som_y = addSpinBoxToGrid(middleFrame, "Y", value=30, min=1, max=100, gridPos=(3,0))
-        self.epochs = addSpinBoxToGrid(middleFrame, "# of epochs to run:", value=10, min=10, max=100, step=10, gridPos=(4,0))
+        self.epochs = addSpinBoxToGrid(middleFrame, "# of epochs to run:", value=10, min=1, max=100, step=10, gridPos=(4,0))
 
         kmeansFormLayout = QtWidgets.QFormLayout()
 
@@ -102,13 +105,17 @@ class BeakTab(TabBase):
 
     def setup_paths(self):
         self.numerical_path = self.numericalPath.filePath()
+        input_files = split_cube(self.numerical_path, standardize=True)
+        self.input_files = ",".join(input_files)
         self.categorical_path = self.categoricalPath.filePath()
         self.output_folder = self.outputPath.filePath()
-        (
-            self.input_files,
-            self.output_file_somspace,
-            self.outgeofile
-        ) = prepare_args(self.numerical_path, self.categorical_path, self.output_folder)
+        self.output_file_somspace = str(Path(self.output_folder) / "result_som.txt")
+        self.outgeofile = str(Path(self.output_folder) / "result_geo.txt")
+        # (
+        #     self.input_files,
+        #     self.output_file_somspace,
+        #     self.outgeofile
+        # ) = prepare_args(self.numerical_path, self.categorical_path, self.output_folder)
 
     def run_som_workflow(self):
         if SOMOCLU_FAILED:
