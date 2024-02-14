@@ -6,7 +6,7 @@ from torchinfo import summary
 try:
     from sri_maper.src.models.cma_module import CMALitModule
     PYTORCH_FAILED = False
-except ValueError:
+except (ValueError, AttributeError):
     PYTORCH_FAILED = True
     error = traceback.format_exc()
     # split stack trace into a list and slice it
