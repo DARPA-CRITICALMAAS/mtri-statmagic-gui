@@ -146,14 +146,7 @@ class SRITab(TabBase):
         for i, row in enumerate(range(aoi_min_row, aoi_max_row)):
             for j, col in enumerate(range(aoi_min_col, aoi_max_col)):
                 input_data_cpu[i * aoi_num_pixels_in_row + j, :, :, :] = sri_input_tif.read(window=Window(col - 16, row - 16, 33, 33))
-                labels_cpu[i * aoi_num_pixels_in_row + j] = target_data[0, i, j]
-                pos = sri_input_tif.xy(row, col)
-                if i == 0 and j == 0:
-                    print(pos)
-                locs_cpu[0, i * aoi_num_pixels_in_row + j] = pos[0]
-                locs_cpu[1, i * aoi_num_pixels_in_row + j] = pos[1]
 
-        # Copy data to device
         input_patch = torch.from_numpy(input_data_cpu).float().to(device)
         labels_patch = torch.from_numpy(labels_cpu).float().to(device)
         locs = torch.from_numpy(locs_cpu).float().to(device)

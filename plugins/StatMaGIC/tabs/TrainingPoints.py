@@ -164,6 +164,7 @@ class TrainingPointsTab(TabBase):
 
     def sample_raster_with_training_layer(self):
         data_ras = self.data_raster_box.currentLayer()
+        print(data_ras.source())
         selectedLayer = self.training_layer_box.currentLayer()
         withSelected = self.with_selected_training.isChecked()
         buffer = self.training_buffer_box.value()
@@ -173,7 +174,8 @@ class TrainingPointsTab(TabBase):
         else:
             sel = selectedLayer.getFeatures()
         gdf = gpd.GeoDataFrame.from_features(sel)
-        gdf.set_crs(selectedLayer.crs().authid(), inplace=True)
+        gdf.set_crs(selectedLayer.crs().toWkt(), inplace=True)
+        gdf.to_crs(data_ras.crs().toWkt(), inplace=True)
         # TODO: Convert to the CRS of the project if need be.
         if buffer > 0:
             gdf['geometry'] = gdf.geometry.buffer(buffer)

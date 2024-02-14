@@ -48,7 +48,7 @@ def dataframeFromSampledPoints(gdf, raster_path):
     return df
 
 
-def dataframFromSampledPolys(rasterpath, gdf):
+def dataframFromSampledPolys(gdf, rasterpath):
     raster = rio.open(rasterpath)
     column_names = raster.descriptions
     nodata = raster.nodata

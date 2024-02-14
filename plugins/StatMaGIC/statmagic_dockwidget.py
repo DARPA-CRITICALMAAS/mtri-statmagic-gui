@@ -23,7 +23,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.iface = parent.iface
         self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
-        self.resize(485, 642)
+        # self.resize(200, 300)
         self.dockWidgetContents = QtWidgets.QWidget(self)
         self.dockWidgetLayout = QtWidgets.QVBoxLayout()
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
@@ -60,7 +60,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def createTabs(self):
         # create tab container
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
-        self.tabWidget.setGeometry(QRect(10, 60, 391, 511))
+        # self.tabWidget.setGeometry(QRect(10, 60, 190, 290))
 
         # populate tabs
         self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
