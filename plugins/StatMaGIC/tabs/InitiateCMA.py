@@ -25,6 +25,7 @@ class InitiateCMATab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Initiate CMA")
         self.parent = parent
+        self.iface = self.parent.iface
         self.extent_gdf = None
         # Maybe this should be set from the project crs to start??
         self.src_crs = None
@@ -59,6 +60,7 @@ class InitiateCMATab(TabBase):
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
         self.template_input = QgsMapLayerComboBox()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
+        self.mQgsProjectionSelectionWidget.setCrs(QgsCoordinateReferenceSystem('ESRI:102008'))
 
         self.chooseExtentOptions = QtWidgets.QPushButton()
         self.chooseExtentOptions.setText('Open Extent Selection Menu')
@@ -66,9 +68,8 @@ class InitiateCMATab(TabBase):
         self.chooseExtentOptions.setToolTip('Opens Menu with options for selected an extent')
 
         addFormItem(middleFormLayout, "Select Project Directory:", self.proj_dir_input)
-        addFormItem(middleFormLayout, "Select Project Bounds:", self.template_input)
-        addFormItem(middleFormLayout, "Select Project CRS:", self.mQgsProjectionSelectionWidget)
-        addFormItem(middleFormLayout, "Choose Project Bounds", self.chooseExtentOptions)
+        addFormItem(middleFormLayout, "Choose Project CRS:", self.mQgsProjectionSelectionWidget)
+        addFormItem(middleFormLayout, "Define Project Bounds", self.chooseExtentOptions)
         addWidgetFromLayoutAndAddToParent(middleFormLayout, middleFrame)
 
         # two labeled spin boxes in one row can't be added to a form layout
@@ -82,11 +83,32 @@ class InitiateCMATab(TabBase):
         addToParentLayout(spinBoxWidget)
         addToParentLayout(middleFrame)
 
+        #### CheckList Labels
+
+        checkFrame, checkLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
+        checkFrameLabel = addLabel(checkLayout, "Initiation Checklist")
+        makeLabelBig(checkFrameLabel)
+
+
+        # Todo: how to change the text after directory selected, CRS changed, Bounds returned from popup
+        self.dirSelectedLabel = QtWidgets.QLabel('Project Not Selected')
+        self.crsSelectedLabel = QtWidgets.QLabel('Crs set to default')
+        self.boundsSelectedLabel = QtWidgets.QLabel('Bounds not defined')
+
+        checkLayout.addWidget(self.dirSelectedLabel)
+        checkLayout.addWidget(self.crsSelectedLabel)
+        checkLayout.addWidget(self.boundsSelectedLabel)
+
+        # addWidgetFromLayoutAndAddToParent(checkListLayout, checkFrame)
+        addToParentLayout(checkFrame)
+
         ##### BIG BUTTONS #####
         buttonLayout = QtWidgets.QHBoxLayout()
         buttonWidget = addWidgetFromLayout(buttonLayout, self)
         self.make_template_raster_button = addButton(buttonWidget, "Create Project Files", self.initiate_CMA_workflow)
         self.check_size_button = addButton(buttonWidget, "Check Memory Size", self.print_estimated_size)
+        self.make_template_raster_button.setEnabled(True)
+        self.check_size_button.setEnabled(True)
 
         addToParentLayout(buttonWidget)
 
@@ -102,6 +124,19 @@ class InitiateCMATab(TabBase):
         self.resume_jsonProj_button = addButton(bottomFrame, "Set Project", self.set_project_json)
 
         addToParentLayout(bottomFrame)
+
+        self.setButtonsActiveOnConditions()
+
+    def setButtonsActiveOnConditions(self):
+        # Todo: When the following  conditions are changed (directory set, gdf returned from Extent dialog make the buttons enabled
+        # When we get this figured out reset the buttons to setEnabled(False) on lines 107-108
+        # Better would be if the dialog has been set, because the default path to the unchanged dia root will exists
+        self.proj_dir_input.fileChanged  # might work??
+        input_path = Path(self.proj_dir_input.filePath())
+        if self.extent_gdf is not None and input_path.exists():
+            self.make_template_raster_button.setEnabled(True)
+            self.check_size_button.setEnabled(True)
+
 
     def chooseExtentDialog(self):
         popup = ChooseExtent(self)
@@ -157,69 +192,79 @@ class InitiateCMATab(TabBase):
         self.iface.messageBar().pushMessage(message)
 
     def print_estimated_size(self):
-        selectedLayer = self.template_input.currentLayer()
+        # selectedLayer = self.template_input.currentLayer()
+        # pixel_size = self.pixel_size_input.value()
+        # buffer_distance = self.buffer_dist_spinBox.value()
+        # box_crs = self.mQgsProjectionSelectionWidget.crs()
+        #
+        # # This just gets the filename
+        # datastr = selectedLayer.source()
+        # try:
+        #     # This will be the case for geopackages, but not shapefile or geojson
+        #     fp, layername = datastr.split('|')
+        # except ValueError:
+        #     fp = datastr
+        #
+        # # Define the CRSs
+        # dst_crs = box_crs.authid()
+        # src_crs = selectedLayer.crs().authid()
+        #
+        # # bounds was the giving the correct answer the original way. So what does this do different than the ways below??
+        # bounds = gpd.read_file(fp).to_crs(dst_crs).total_bounds
+        #
+        # # Going through without chaining the reproject
+        # # reading with geopandas. This is what was taking a long time if input contains complicated geometries
+        # gbounds_src = gpd.read_file(fp).total_bounds
+        # # bounds was the giving the correct answer the original way
+        #
+        # bbox_src = box(*gbounds_src)
+        # # convert to geoseries for projection methods
+        # ggeoseries = gpd.GeoSeries(bbox_src).set_crs(src_crs)
+        # ggeoseries_dst = ggeoseries.to_crs(dst_crs)
+        # # A buffer if needed would go here
+        # if buffer_distance > 0:
+        #     geom_series1 = ggeoseries_dst.buffer(buffer_distance)
+        # else:
+        #     geom_series1 = ggeoseries_dst
+        # gbounds1 = geom_series1.total_bounds
+        #
+        #
+        # # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine - Old Comment
+        # # This is using the qgsVectorLayer extent and build in pyqgis reproject
+        # qRect_extent_src = selectedLayer.extent()
+        # xform = QgsCoordinateTransform(selectedLayer.crs(), box_crs, QgsProject.instance())
+        # qRect_extent_dst = xform.transformBoundingBox(qRect_extent_src)
+        # # you can see here the qRect_extent_dst is will match gbounds1 and not bounds. So what is happening??
+        #
+        # # Here trying to do get the qgsRect to a geopandas polygon in source crs, then project with geopandas
+        # qbox_src = box(qRect_extent_src.xMinimum(), qRect_extent_src.yMinimum(), qRect_extent_src.xMaximum(), qRect_extent_src.yMaximum())
+        # gs_src = gpd.GeoSeries(qbox_src).set_crs(src_crs)
+        # gs_dst = gs_src.to_crs(dst_crs)
+        # if buffer_distance > 0:
+        #     geom_series2 = gs_dst.buffer(buffer_distance)
+        # else:
+        #     geom_series2 = gs_dst
+        # # Why is this different than bounds???
+        # gbounds2 = geom_series2.total_bounds
         pixel_size = self.pixel_size_input.value()
-        buffer_distance = self.buffer_dist_spinBox.value()
         box_crs = self.mQgsProjectionSelectionWidget.crs()
-
-        # This just gets the filename
-        datastr = selectedLayer.source()
-        try:
-            # This will be the case for geopackages, but not shapefile or geojson
-            fp, layername = datastr.split('|')
-        except ValueError:
-            fp = datastr
-
-        # Define the CRSs
         dst_crs = box_crs.authid()
-        src_crs = selectedLayer.crs().authid()
+        buffer_distance = self.buffer_dist_spinBox.value()
 
-        # bounds was the giving the correct answer the original way. So what does this do different than the ways below??
-        bounds = gpd.read_file(fp).to_crs(dst_crs).total_bounds
 
-        # Going through without chaining the reproject
-        # reading with geopandas. This is what was taking a long time if input contains complicated geometries
-        gbounds_src = gpd.read_file(fp).total_bounds
-        # bounds was the giving the correct answer the original way
-
-        bbox_src = box(*gbounds_src)
-        # convert to geoseries for projection methods
-        ggeoseries = gpd.GeoSeries(bbox_src).set_crs(src_crs)
-        ggeoseries_dst = ggeoseries.to_crs(dst_crs)
-        # A buffer if needed would go here
+        self.extent_gdf.to_crs(dst_crs, inplace=True)
         if buffer_distance > 0:
-            geom_series1 = ggeoseries_dst.buffer(buffer_distance)
-        else:
-            geom_series1 = ggeoseries_dst
-        gbounds1 = geom_series1.total_bounds
-
-
-        # There may need to be some crs projection stuff here, but wouldn't change the memory much I imagine - Old Comment
-        # This is using the qgsVectorLayer extent and build in pyqgis reproject
-        qRect_extent_src = selectedLayer.extent()
-        xform = QgsCoordinateTransform(selectedLayer.crs(), box_crs, QgsProject.instance())
-        qRect_extent_dst = xform.transformBoundingBox(qRect_extent_src)
-        # you can see here the qRect_extent_dst is will match gbounds1 and not bounds. So what is happening??
-
-        # Here trying to do get the qgsRect to a geopandas polygon in source crs, then project with geopandas
-        qbox_src = box(qRect_extent_src.xMinimum(), qRect_extent_src.yMinimum(), qRect_extent_src.xMaximum(), qRect_extent_src.yMaximum())
-        gs_src = gpd.GeoSeries(qbox_src).set_crs(src_crs)
-        gs_dst = gs_src.to_crs(dst_crs)
-        if buffer_distance > 0:
-            geom_series2 = gs_dst.buffer(buffer_distance)
-        else:
-            geom_series2 = gs_dst
-        # Why is this different than bounds???
-        gbounds2 = geom_series2.total_bounds
+            self.extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+        bounds = self.extent_gdf.total_bounds
 
         memstring = print_memory_allocation_from_resolution_bounds(bounds, pixel_size)
         self.iface.messageBar().pushMessage(memstring)
 
-        memstring1 = print_memory_allocation_from_resolution_bounds(gbounds1, pixel_size)
-        self.iface.messageBar().pushMessage(memstring1)
-
-        memstring2 = print_memory_allocation_from_resolution_bounds(gbounds2, pixel_size)
-        self.iface.messageBar().pushMessage(memstring2)
+        # memstring1 = print_memory_allocation_from_resolution_bounds(gbounds1, pixel_size)
+        # self.iface.messageBar().pushMessage(memstring1)
+        #
+        # memstring2 = print_memory_allocation_from_resolution_bounds(gbounds2, pixel_size)
+        # self.iface.messageBar().pushMessage(memstring2)
 
     def set_project_json(self):
         proj_path = self.resume_json_file_input.filePath()

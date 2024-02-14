@@ -87,7 +87,7 @@ class AddLayersTab(TabBase):
         self.addfromCubeButton.setToolTip('Opens up a new window with options to select layers to add from a existing  dataset.')
 
         self.dataCubeFile = QgsFileWidget()
-        self.dataCubeFile.setFilePath('/home/jagraham/Documents/Local_work/statMagic/test_data/NA_output_noNan.tif')
+        self.dataCubeFile.setFilePath('/home/jagraham/Documents/Local_work/statMagic/hack6_data/MTRI_DataCube/NA_output_noNan.tif')
         self.dataCubeFile.setToolTip('Choose an existing raster to select layers from')
 
 

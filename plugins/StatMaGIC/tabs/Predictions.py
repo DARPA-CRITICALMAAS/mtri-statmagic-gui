@@ -10,7 +10,7 @@ from statmagic_backend.dev.threshold_inference import threshold_inference
 from .TabBase import TabBase
 from ..fileops import gdalSave1
 from ..gui_helpers import *
-from ..layerops import addRFconfLayer, addVectorLayer
+from ..layerops import addGreyScaleLayer, addVectorLayer
 
 
 class PredictionsTab(TabBase):
@@ -61,7 +61,9 @@ class PredictionsTab(TabBase):
         geot = r_ds.GetGeoTransform()
         r_proj = r_ds.GetProjection()
         savedLayer = gdalSave1('Threshold', output[0], gdal.GDT_Byte, geot, r_proj, 0)
-        addRFconfLayer(savedLayer, f"Inference_Cutoff_prob_{format(prob_cut, '.2f')}_uncert_{format(cert_cut, '.2f')}", inference_group)
+        addGreyScaleLayer(savedLayer,
+                          f"Inference_Cutoff_prob_{format(prob_cut, '.2f')}_uncert_{format(cert_cut, '.2f')}",
+                          inference_group)
 
         if to_polys:
             print('raster and vector')

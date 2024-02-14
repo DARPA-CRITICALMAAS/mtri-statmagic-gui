@@ -4,6 +4,7 @@ from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 
 
 from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
+from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
 
 from .TabBase import TabBase
 from ..gui_helpers import *
@@ -68,7 +69,7 @@ class RasterizationTab(TabBase):
 
         # NEXT FRAME - Rasterize Training Points
         tpFrame, tpLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
-        tpFrameLabel = addLabel(midLayout, "Rasterize Training Points")
+        tpFrameLabel = addLabel(tpLayout, "Rasterize Training Points")
         makeLabelBig(tpFrameLabel)
         tpGridLayout = QtWidgets.QGridLayout()
 
@@ -87,6 +88,9 @@ class RasterizationTab(TabBase):
         self.training_field_box.setFilters(QgsFieldProxyModel.Numeric)
         self.rasterize_training_button.clicked.connect(self.rasterize_training)
         self.rasterize_training_button.setText('Rasterize\n Training Points')
+
+        self.training_buffer_box.setRange(0, 10000)
+        self.training_buffer_box.setSingleStep(50)
 
         """
         So in lay.addWidget(widget, 2, 0, 1, 3) it means that "widget" 
@@ -110,9 +114,6 @@ class RasterizationTab(TabBase):
 
         addWidgetFromLayoutAndAddToParent(tpGridLayout, tpFrame)
         addToParentLayout(tpFrame)
-
-
-
 
 
 
@@ -144,7 +145,16 @@ class RasterizationTab(TabBase):
         self.iface.messageBar().pushMessage(message)
 
     def rasterize_training(self):
-        return
+        selectedLayer = self.training_point_layer_box.currentLayer()
+        withSelected = self.with_selected_training.isChecked()
+        buffer = self.training_buffer_box.value()
+        gdf = qgs_features_to_gdf(selectedLayer, selected=withSelected)
+        gdf.to_crs(self.parent.meta_data['project_CRS'], inplace=True)
+
+        message = training_vector_rasterize(gdf, self.parent.meta_data['template_path'],
+                                            self.parent.meta_data['project_path'] + '/training_raster.tif', buffer)
+
+        self.iface.messageBar().pushMessage(message)
 
 
 

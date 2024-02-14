@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 from qgis.PyQt.QtCore import pyqtSignal, QRect
-from qgis.core import QgsMapLayerProxyModel
 
 from .gui_helpers import *
+from .tabs.Beak import BeakTab
 from .tabs.Geochemistry import GeochemistryTab
-from .tabs.InitiateCMA_redo import InitiateCMATab
+from .tabs.InitiateCMA import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
 from .tabs.TrainingPoints import TrainingPointsTab
 from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
-from .tabs.AddLayers_Redo import AddLayersTab
+from .tabs.AddLayers import AddLayersTab
 from .tabs.SRI import SRITab
-
-from .tabs.Labels import LabelsTab
-from .tabs.Unsupervised import UnsupervisedTab
-from .tabs.ProximityLayers import ProximityLayersTab
-from .tabs.Supervised import SupervisedTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
@@ -28,7 +23,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.iface = parent.iface
         self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
-        self.resize(485, 642)
+        # self.resize(200, 300)
         self.dockWidgetContents = QtWidgets.QWidget(self)
         self.dockWidgetLayout = QtWidgets.QVBoxLayout()
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
@@ -65,7 +60,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def createTabs(self):
         # create tab container
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
-        self.tabWidget.setGeometry(QRect(10, 60, 391, 511))
+        # self.tabWidget.setGeometry(QRect(10, 60, 190, 290))
 
         # populate tabs
         self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
@@ -76,11 +71,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
         self.sri_tab                = SRITab(self, self.tabWidget)
-        # self.labels_tab             = LabelsTab(self, self.tabWidget)
-        # self.unsupervised_tab       = UnsupervisedTab(self, self.tabWidget)
-        # self.supervised_tab         = SupervisedTab(self, self.tabWidget)
-        # self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
-        # self.proximityLayers_tab    = ProximityLayersTab(self, self.tabWidget)
+        self.beak_tab               = BeakTab(self, self.tabWidget)
 
         # add tabs to parent
         addToParentLayout(self.tabWidget)

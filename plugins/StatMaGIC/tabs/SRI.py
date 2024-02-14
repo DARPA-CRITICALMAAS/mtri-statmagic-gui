@@ -1,17 +1,28 @@
-from pathlib import Path
+import torch
+from torchinfo import summary
+from sri_maper.src.models.cma_module import CMALitModule
 
-from statmagic_backend.geo_chem.link_black_shales_db import prep_black_shales
-from statmagic_backend.dev.simple_CT_point_interpolation import interpolate_gdf_value
+import sys
+if sys.version_info < (3, 9):
+    from importlib_resources import files
+else:
+    from importlib.resources import files
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QCheckBox, QPushButton, QLabel, QComboBox, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
-from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
 
 from .TabBase import TabBase
 from ..gui_helpers import *
 import rasterio as rio
 from rasterio.windows import Window
+
+
+# loads the pretrained checkpoint
+ckpt_path = str(files("sri_maper.ckpts") / "epoch_007.ckpt")
+model = CMALitModule.load_from_checkpoint(ckpt_path)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 
 class SRITab(TabBase):
@@ -44,6 +55,8 @@ class SRITab(TabBase):
         aoi_label = QLabel('AOI')
         self.aoi_selection_box = QgsMapLayerComboBox()
         self.aoi_selection_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.aoi_selection_box.setAllowEmptyLayer(True)
+        self.aoi_selection_box.setCurrentIndex(0)
 
         print("Create button")
         self.run_sri_classifier_btn = QPushButton()
@@ -62,7 +75,6 @@ class SRITab(TabBase):
         raster_layer: QgsRasterLayer = self.raster_selection_box.currentLayer()
         target_raster_layer: QgsRasterLayer = self.target_raster_selection_box.currentLayer()
         aoi_layer: QgsVectorLayer = self.aoi_selection_box.currentLayer()
-        print(raster_layer.name(), aoi_layer.name())
 
         # Check that the user has selected valid inputs
         if raster_layer is None:
@@ -70,6 +82,7 @@ class SRITab(TabBase):
             msgBox.setText("You must select a valid raster layer for the histogram")
             msgBox.exec()
             return
+        # Todo: pull bounds from canvas if not set
         if aoi_layer is None:
             msgBox = QMessageBox()
             msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")
@@ -87,7 +100,8 @@ class SRITab(TabBase):
             return
 
         # Assume the bounding box of the first feature of the AOI layer is the AOI
-        extents_feature = aoi_layer.getFeature(0)
+        # I had to change this from 0 to 1. Using gpkg as input seems to always have 0 return null geometry
+        extents_feature = aoi_layer.getFeature(1)
         extents_rect = extents_feature.geometry().boundingBox()
 
         print("Constructing coordinate transform")
@@ -122,25 +136,21 @@ class SRITab(TabBase):
 
         # Construct the batches required to classify each pixel within the AOI
         num_pixels = aoi_num_pixels_in_row * aoi_num_pixels_in_col
+        print(f'num pixels row {aoi_num_pixels_in_row}')
+        print(f'num pixels col {aoi_num_pixels_in_col}')
         input_data_cpu = np.zeros(shape=(num_pixels, 73, 33, 33), dtype=float)
         labels_cpu = np.zeros(shape=(num_pixels,), dtype=float)
         locs_cpu = np.zeros(shape=(2, num_pixels), dtype=float)
         for i, row in enumerate(range(aoi_min_row, aoi_max_row)):
             for j, col in enumerate(range(aoi_min_col, aoi_max_col)):
                 input_data_cpu[i * aoi_num_pixels_in_row + j, :, :, :] = sri_input_tif.read(window=Window(col - 16, row - 16, 33, 33))
-                labels_cpu[i * aoi_num_pixels_in_row + j] = target_data[0, i, j]
-                pos = sri_input_tif.xy(row, col)
-                if i == 0 and j == 0:
-                    print(pos)
-                locs_cpu[0, i * aoi_num_pixels_in_row + j] = pos[0]
-                locs_cpu[1, i * aoi_num_pixels_in_row + j] = pos[1]
 
-        # Copy data to device
         input_patch = torch.from_numpy(input_data_cpu).float().to(device)
         labels_patch = torch.from_numpy(labels_cpu).float().to(device)
         locs = torch.from_numpy(locs_cpu).float().to(device)
 
         # Predict step
+        print(device)
         batch_idx = 0
         output_p = model.predict_step((input_patch, labels_patch, locs[0], locs[1]), batch_idx)
         print(f"Long, Lat: {output_p[0, :2]}")
@@ -156,4 +166,6 @@ class SRITab(TabBase):
             for j in range(0, aoi_num_pixels_in_row):
                 pred_p_data[0, i, j] = output_p_cpu[i * aoi_num_pixels_in_row + j, 2]
 
+        print(pred_p_data.shape)
+        print(pred_p_data.dtype)
 

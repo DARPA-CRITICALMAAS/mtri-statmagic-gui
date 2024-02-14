@@ -19,37 +19,63 @@ class InspectLayersTab(TabBase):
         ##### TOP FRAME - Insepetion options#####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         topFormLayout = QtWidgets.QFormLayout()
-
-        # Needs to set a raster box. Will need to think about having a copy of the datacube.tif
-        # So that one can be edited and one can be loaded in the QGIS TOC
+        #
+        # # Needs to set a raster box. Will need to think about having a copy of the datacube.tif
+        # # So that one can be edited and one can be loaded in the QGIS TOC
         self.comboBox = QgsMapLayerComboBox(self)
         self.comboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        self.rasterBandBox = QgsRasterBandComboBox(self)
-        self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
-
+        # self.rasterBandBox = QgsRasterBandComboBox(self)
+        # self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
+        #
         addFormItem(topFormLayout, "Raster / DataCube:", self.comboBox)
-        addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
-
+        # addFormItem(topFormLayout, "Choose Band: ", self.rasterBandBox)
+        #
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
 
-        ##### MIDDLE FRAME #####
-        # middleFrame, middleLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
-        # middleFormLayout = QtWidgets.QFormLayout()
-        # self.drop_layers_button = addButton(middleFormLayout, "Drop Layers", self.popup_drop_layer_dialogue)
-        # addToParentLayout(middleFormLayout)
-
         self.drop_layers_button = addButton(self, "Drop Layers Menu", self.popup_drop_layer_dialogue)
-
-        self.populate_comboboxes()
-
         self.simple_plot_button = addButton(self, "Raster Histogram", self.popup_make_hist_plot)
 
-    def populate_comboboxes(self):
-        raster_layer = self.comboBox.currentLayer()
-        if raster_layer:
-            self.rasterBandBox.setLayer(raster_layer)
-            self.comboBox.layerChanged.connect(self.rasterBandBox.setLayer)
+        ##### TOP STUFF #####
+        topFrame1, topLayout1 = addFrame(self, "HBox", "NoFrame", "Plain", 3)
+
+        data_items = ["Full Data", "Within Mask", "Within Polygons"]
+        self.data_sel_box = addComboBox(topFrame1, "Data Selection", data_items, layout_str="VBox")
+        self.NumClustersBox = addSpinBox(topFrame1, "# Clusters", "VBox", dtype=int, value=5, min=2)
+        self.pca_var_exp = addSpinBox(topFrame1, "PCA var exp", "VBox", dtype=float,
+                                      value=0.95, min=0.25, max=0.99, step=0.025)
+        self.pca_var_exp.setDecimals(3)  # TODO: add to helper if this is a common operation
+
+
+        addToParentLayout(topFrame1)
+
+        topFrame2, topLayout2 = addFrame(self, "HBox", "NoFrame", "Sunken", 3)
+
+        self.PCAbox = addCheckbox(topFrame2, "Standardize and PCA", isChecked=True)
+        addEmptyFrame(topLayout2)  # force space between checkbox and addMSbutton
+        self.RunKmeansButton = addButton(topFrame2, "Run Kmeans", self.selectKmeansData)
+
+        addToParentLayout(topFrame2)
+
+        addEmptyFrame(self.layout())  # force space between top stuff and map clusters frame
+
+        ##### MAP CLUSTERS FRAME #####
+        mapClustersFrame, mapClustersLayout = addFrame(self, "VBox", "Box", "Sunken", 2, margins=10)
+
+        self.ArchetypeCheckBox = addCheckbox(mapClustersFrame, "Return Archetypes")
+
+        subFrame, subLayout = addFrame(mapClustersFrame, "HBox", "NoFrame", "Sunken", 3)
+        subLayout.setSpacing(5)
+
+        formLayout = QtWidgets.QFormLayout(subFrame)
+        self.ConfValue = addLineEditToForm(formLayout, "Confidence Threshold", value=0.95)
+        self.FuzzinessValue = addLineEditToForm(formLayout, "Fuzziness Metric (1-5)", value=2)
+        subLayout.addLayout(formLayout)
+
+        self.MapClustersButton = addButton(subFrame, "Map Clusters", self.map_clusters)
+
+        addToParentLayout(subFrame)
+        addToParentLayout(mapClustersFrame)
 
     def popup_drop_layer_dialogue(self):
         popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
@@ -59,3 +85,9 @@ class InspectLayersTab(TabBase):
         popup = RasterHistQtPlot(self.parent)
         #popup.exec_()
         self.hist_window = popup.show()
+
+    def map_clusters(self):
+        pass
+
+    def selectKmeansData(self):
+        pass
