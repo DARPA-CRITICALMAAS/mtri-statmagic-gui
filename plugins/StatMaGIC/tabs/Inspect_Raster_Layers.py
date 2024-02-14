@@ -7,6 +7,7 @@ from .TabBase import TabBase
 from ..gui_helpers import *
 from ..popups.dropRasterLayer import RasterBandSelectionDialog
 from ..popups.plotRasterHistogram import RasterHistQtPlot
+from ..popups.pcaClusterAnalysis import PCAClusterQtPlot
 
 
 class InspectLayersTab(TabBase):
@@ -35,6 +36,7 @@ class InspectLayersTab(TabBase):
 
         self.drop_layers_button = addButton(self, "Drop Layers Menu", self.popup_drop_layer_dialogue)
         self.simple_plot_button = addButton(self, "Raster Histogram", self.popup_make_hist_plot)
+        self.pca_cluster_button = addButton(self, "PCA and Cluster Analysis", self.popup_pca_cluster_analysis)
 
         ##### TOP STUFF #####
         topFrame1, topLayout1 = addFrame(self, "HBox", "NoFrame", "Plain", 3)
@@ -85,6 +87,10 @@ class InspectLayersTab(TabBase):
         popup = RasterHistQtPlot(self.parent)
         #popup.exec_()
         self.hist_window = popup.show()
+
+    def popup_pca_cluster_analysis(self):
+        popup = PCAClusterQtPlot(self.parent)
+        self.pca_window = popup.show()
 
     def map_clusters(self):
         pass
