@@ -5,7 +5,7 @@ else:
     from importlib.resources import files
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QTextEdit, QComboBox, QTableView
+from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QTextEdit, QComboBox, QTableView, QCheckBox
 from PyQt5.QtCore import Qt, QAbstractTableModel
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
 
@@ -15,7 +15,8 @@ import rasterio as rio
 from rasterio.windows import Window
 import requests
 import pandas as pd
-
+import geopandas as gpd
+from pathlib import Path
 
 class pandasModel(QAbstractTableModel):
 
@@ -56,9 +57,10 @@ class TA2Tab(TabBase):
         topFormLayout = QtWidgets.QFormLayout()
 
         print("Create query input box")
-        self.query_text_label = QLabel('Query Type')
+        self.query_type_label = QLabel('Query Type')
         self.query_type_selection_box = QComboBox()
         self.query_type_selection_box.addItems(['MinMod', 'GeoKB'])
+        self.query_text_label = QLabel('Query Input')
         self.query_text_box = QTextEdit()
         self.query_text_box.setReadOnly(False)
         self.query_text_box.setMaximumHeight(100)
@@ -68,11 +70,11 @@ class TA2Tab(TabBase):
         self.run_minmod_query_btn.setText('Run MinMod Query')
         self.set_run_query_btn_text()
         self.query_type_selection_box.currentTextChanged.connect(self.set_run_query_btn_text)
-        self.run_minmod_query_btn.clicked.connect(self.process_minmod_query)
+        self.run_minmod_query_btn.clicked.connect(self.process_query)
 
         print("Create layout")
-        topFormLayout.addRow(self.query_text_label, self.query_type_selection_box)
-        topFormLayout.addRow(self.query_text_box)
+        topFormLayout.addRow(self.query_type_label, self.query_type_selection_box)
+        topFormLayout.addRow(self.query_text_label, self.query_text_box)
         topFormLayout.addRow(self.run_minmod_query_btn)
         addWidgetFromLayoutAndAddToParent(topFormLayout, topFrame)
         addToParentLayout(topFrame)
@@ -83,15 +85,38 @@ class TA2Tab(TabBase):
         makeLabelBig(respFrameLabel)
         respFormLayout = QtWidgets.QFormLayout()
 
-        #self.resp_text_box = QTextEdit()
-        #self.resp_text_box.setReadOnly(True)
-        #self.resp_text_box.setMaximumHeight(100)
         self.resp_view = QTableView()
-        #self.resp_view.resize()
 
         respFormLayout.addRow(self.resp_view)
         addWidgetFromLayoutAndAddToParent(respFormLayout, respFrame)
         addToParentLayout(respFrame)
+
+        ## Bottom Frame - Convert response to a GIS layer
+        tolayerFrame, tolayerLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
+        tolayerFrameLabel = addLabel(tolayerLayout, "Convert to GIS Layer")
+        makeLabelBig(tolayerFrameLabel)
+        tolayerFormLayout = QtWidgets.QFormLayout()
+
+        self.has_location_label = QLabel('Response has Location?')
+        self.has_location_checkbox = QCheckBox()
+        self.has_location_checkbox.setChecked(False)
+        self.location_feature_combo_box_label = QLabel('Response Location Feature')
+        self.location_feature_combo_box = QComboBox()
+        self.output_file_label = QLabel('Output File')
+        self.output_file_text_box = QgsFileWidget()
+        self.output_file_text_box.setStorageMode(QgsFileWidget.StorageMode.SaveFile)
+        self.save_response_btn = QPushButton()
+        self.save_response_btn.setText('Save Response to File')
+        self.save_response_btn.clicked.connect(self.save_response_to_file)
+
+        tolayerFormLayout.addRow(self.has_location_label, self.has_location_checkbox)
+        tolayerFormLayout.addRow(self.location_feature_combo_box_label, self.location_feature_combo_box)
+        tolayerFormLayout.addRow(self.output_file_label, self.output_file_text_box)
+        tolayerFormLayout.addWidget(self.save_response_btn)
+        addWidgetFromLayoutAndAddToParent(tolayerFormLayout, tolayerFrame)
+        addToParentLayout(tolayerFrame)
+
+        self.last_response = None
 
     def set_run_query_btn_text(self):
         if self.query_type_selection_box.currentText() == 'MinMod':
@@ -99,7 +124,7 @@ class TA2Tab(TabBase):
         else:
             self.run_minmod_query_btn.setText('Run GeoKB Query')
 
-    def process_minmod_query(self):
+    def process_query(self):
         print("Running minmod query")
         query = self.query_text_box.toPlainText()
         print(query)
@@ -116,11 +141,14 @@ class TA2Tab(TabBase):
             self.resp_view.setModel(None)
             return
 
+        self.last_response = res_df
         model = pandasModel(res_df)
         self.resp_view.setModel(model)
 
+        self.location_feature_combo_box.clear()
+        self.location_feature_combo_box.addItems(res_df.columns)
+
         print("Done running query")
-        #self.resp_text_box.setText(res_df.head())
 
     def run_minmod_query(self, query, values=False):
         print("Run MindMod Query")
@@ -145,17 +173,32 @@ class TA2Tab(TabBase):
         \n''' + query
         # send query
         print("Posting final query :", final_query)
-        response = requests.post(
-            url=endpoint,
-            data={'query': final_query},
-            timeout=5,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/sparql-results+json"  # Requesting JSON format
-            },
-            verify=False  # Set to False to bypass SSL verification as per the '-k' in curl
-        )
+        try:
+            response = requests.post(
+                url=endpoint,
+                data={'query': final_query},
+                timeout=5,
+                headers={
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Accept": "application/sparql-results+json"  # Requesting JSON format
+                },
+                verify=False  # Set to False to bypass SSL verification as per the '-k' in curl
+            )
+        except requests.exceptions.Timeout:
+            print("Request timed out")
+            msgBox = QMessageBox()
+            msgBox.setText("Request timed out")
+            msgBox.exec()
+            return None
+
         print(response.status_code)
+        if response.status_code == 404:
+            print("Endpoint not found")
+            msgBox = QMessageBox()
+            msgBox.setText("Endpoint not found")
+            msgBox.exec()
+            return None
+
         #print(response.text)
         try:
             qres = response.json()
@@ -168,5 +211,42 @@ class TA2Tab(TabBase):
         except:
             return None
 
+    def save_response_to_file(self):
+        if self.last_response is None:
+            msgBox = QMessageBox()
+            msgBox.setText("No response to save")
+            msgBox.exec()
+            return
 
+        if self.has_location_checkbox.isChecked():
+            location_feature = self.location_feature_combo_box.currentText()
+            if location_feature == "":
+                msgBox = QMessageBox()
+                msgBox.setText("No location feature selected")
+                msgBox.exec()
+                return
+            else:
+                self.save_response_to_gis_file(location_feature)
+        else:
+            self.save_response_to_csv_file()
+
+    def save_response_to_csv_file(self):
+        file_path = self.output_file_text_box.filePath()
+        self.last_response.to_csv(file_path, index=False)
+
+    def save_response_to_gis_file(self, location_feature):
+        resp_file_path = Path(self.output_file_text_box.filePath())
+        gdf = gpd.GeoDataFrame(self.last_response, geometry=self.last_response[location_feature], crs="EPSG:4326")
+        gdf.drop(columns=[location_feature], inplace=True)
+        gdf.to_file(resp_file_path, driver="GeoJSON")
+
+        resp_layer = QgsVectorLayer(str(resp_file_path), resp_file_path.stem, "ogr")
+        if not resp_layer.isValid():
+            msgBox = QMessageBox()
+            msgBox.setText("Error creating GIS layer")
+            msgBox.exec()
+            return
+        else:
+            QgsProject.instance().addMapLayer(resp_layer)
+            self.iface.messageBar().pushMessage(f"Added {resp_file_path.stem} to map", level=QMessageBox.Information)
 
