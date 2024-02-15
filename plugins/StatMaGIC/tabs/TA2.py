@@ -17,6 +17,9 @@ import requests
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
+from shapely import wkt
+from shapely.wkt import loads
+from shapely.errors import WKTReadingError
 
 class pandasModel(QAbstractTableModel):
 
@@ -231,15 +234,30 @@ class TA2Tab(TabBase):
             self.save_response_to_csv_file()
 
     def save_response_to_csv_file(self):
+        print("Saving response as csv")
         file_path = self.output_file_text_box.filePath()
         self.last_response.to_csv(file_path, index=False)
 
     def save_response_to_gis_file(self, location_feature):
+        print("Saving path as GeoJSON")
         resp_file_path = Path(self.output_file_text_box.filePath())
-        gdf = gpd.GeoDataFrame(self.last_response, geometry=self.last_response[location_feature], crs="EPSG:4326")
-        gdf.drop(columns=[location_feature], inplace=True)
+        loc_feature = self.location_feature_combo_box.currentText()
+        print("Location feature: ", loc_feature)
+
+        # You will probably need to add code here to convert one of the columns of the response into shapely points,
+        # and use that as the geometry column when creating the GeoDataFrame
+        df = self.last_response
+        print("Loading location feature to WKT")
+        df['loc_wkt'] = df[loc_feature].apply(self.safe_wkt_load)
+        print("Creating GeoDataFrame")
+        print(df.head())
+        gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
+        print("Dropping column loc_wkt")
+        gdf.drop(columns=['loc_wkt'], inplace=True)
+        print("Saving to file")
         gdf.to_file(resp_file_path, driver="GeoJSON")
 
+        print("Opening file as GIS layer", resp_file_path)
         resp_layer = QgsVectorLayer(str(resp_file_path), resp_file_path.stem, "ogr")
         if not resp_layer.isValid():
             msgBox = QMessageBox()
@@ -247,6 +265,13 @@ class TA2Tab(TabBase):
             msgBox.exec()
             return
         else:
+            print("Adding layer to map")
             QgsProject.instance().addMapLayer(resp_layer)
-            self.iface.messageBar().pushMessage(f"Added {resp_file_path.stem} to map", level=QMessageBox.Information)
+            #self.iface.messageBar().pushMessage(f"Added {resp_file_path.stem} to map", level=QMessageBox.Information)
 
+    def safe_wkt_load(self, wkt_string):
+        try:
+            return loads(wkt_string)
+        except WKTReadingError as e:
+            print(f"Error converting WKT: {e}")
+            return None
