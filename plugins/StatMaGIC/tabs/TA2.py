@@ -66,6 +66,8 @@ class TA2Tab(TabBase):
         print("Create run minmod query button")
         self.run_minmod_query_btn = QPushButton()
         self.run_minmod_query_btn.setText('Run MinMod Query')
+        self.set_run_query_btn_text()
+        self.query_type_selection_box.currentTextChanged.connect(self.set_run_query_btn_text)
         self.run_minmod_query_btn.clicked.connect(self.process_minmod_query)
 
         print("Create layout")
@@ -90,6 +92,12 @@ class TA2Tab(TabBase):
         respFormLayout.addRow(self.resp_view)
         addWidgetFromLayoutAndAddToParent(respFormLayout, respFrame)
         addToParentLayout(respFrame)
+
+    def set_run_query_btn_text(self):
+        if self.query_type_selection_box.currentText() == 'MinMod':
+            self.run_minmod_query_btn.setText('Run MinMod Query')
+        else:
+            self.run_minmod_query_btn.setText('Run GeoKB Query')
 
     def process_minmod_query(self):
         print("Running minmod query")
