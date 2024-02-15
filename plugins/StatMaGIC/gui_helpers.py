@@ -470,3 +470,4 @@ def makeLabelBig(label):
 
     label.setFont(font)
     label.setAlignment(QtCore.Qt.AlignCenter)
+

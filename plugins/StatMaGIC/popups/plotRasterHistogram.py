@@ -14,6 +14,7 @@ from rasterio.windows import Window, from_bounds
 import geopandas as gpd
 from shapely import box
 import numpy as np
+import geopandas as gpd
 
 
 class RasterHistQtPlot(QDialog):

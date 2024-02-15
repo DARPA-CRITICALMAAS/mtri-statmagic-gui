@@ -22,7 +22,6 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QSizePolicy
 from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
 
-
 from .TabBase import TabBase
 from ..gui_helpers import *
 import rasterio as rio
@@ -92,7 +91,6 @@ class SRITab(TabBase):
         raster_layer: QgsRasterLayer = self.raster_selection_box.currentLayer()
         target_raster_layer: QgsRasterLayer = self.target_raster_selection_box.currentLayer()
         aoi_layer: QgsVectorLayer = self.aoi_selection_box.currentLayer()
-        # print(raster_layer.name(), aoi_layer.name())
 
         # Check that the user has selected valid inputs
         if raster_layer is None:
@@ -186,3 +184,4 @@ class SRITab(TabBase):
 
         print(pred_p_data.shape)
         print(pred_p_data.dtype)
+
