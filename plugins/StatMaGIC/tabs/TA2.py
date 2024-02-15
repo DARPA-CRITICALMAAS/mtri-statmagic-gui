@@ -236,6 +236,10 @@ class TA2Tab(TabBase):
 
     def save_response_to_gis_file(self, location_feature):
         resp_file_path = Path(self.output_file_text_box.filePath())
+
+        # You will probably need to add code here to convert one of the columns of the response into shapely points,
+        # and use that as the geometry column when creating the GeoDataFrame
+        
         gdf = gpd.GeoDataFrame(self.last_response, geometry=self.last_response[location_feature], crs="EPSG:4326")
         gdf.drop(columns=[location_feature], inplace=True)
         gdf.to_file(resp_file_path, driver="GeoJSON")
