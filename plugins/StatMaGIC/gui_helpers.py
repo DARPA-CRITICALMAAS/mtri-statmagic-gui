@@ -308,6 +308,24 @@ def addLineEdit(parent, text):
     return inputBox
 
 
+def addLineEditToGrid(parent, text, gridPos=()):
+    gridLayout = parent.layout()
+    hboxLayout = QtWidgets.QHBoxLayout()
+
+    addLabel(hboxLayout, text)
+
+    # TODO: make the QLineEdit object expand width to fill parent
+    inputBox = QtWidgets.QLineEdit()
+    hboxLayout.addWidget(inputBox)
+
+    addWidgetFromLayout(hboxLayout, parent)
+
+    hboxWidget = addWidgetFromLayout(hboxLayout, parent)
+    gridLayout.addWidget(hboxWidget, *gridPos)
+
+    return inputBox
+
+
 def addLineEditToForm(formLayout, label, value=""):
     lineEdit = QtWidgets.QLineEdit()
     lineEdit.setText(str(value))
@@ -470,4 +488,11 @@ def makeLabelBig(label):
 
     label.setFont(font)
     label.setAlignment(QtCore.Qt.AlignCenter)
+
+
+def extractListWidgetItems(listWidget):
+    items = []
+    for x in range(listWidget.count()):
+        items.append(listWidget.item(x).text())
+    return items
 
