@@ -2,6 +2,7 @@
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
+from .tabs.AWS import AWSTab
 from .tabs.Beak import BeakTab
 from .tabs.Geochemistry import GeochemistryTab
 from .tabs.InitiateCMA import InitiateCMATab
@@ -74,6 +75,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.sri_tab                = SRITab(self, self.tabWidget)
         self.beak_tab               = BeakTab(self, self.tabWidget)
         self.ta2_tab                = TA2Tab(self, self.tabWidget)
+        self.aws_tab                = AWSTab(self, self.tabWidget)
 
         # add tabs to parent
         addToParentLayout(self.tabWidget)
