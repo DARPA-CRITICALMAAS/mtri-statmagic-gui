@@ -168,6 +168,7 @@ class AddLayersTab(TabBase):
         # Todo: Need to be able to handle multiband inputs
         # turn method string to resampling type using the dictionary in helperFuncs
         riomethod_list = [resampling_dict.get(m, m) for m in method_list]
+        print(riomethod_list)
 
         resampled_arrays = match_and_stack_rasters(template_path, input_raster_list, riomethod_list, num_threads=num_threads)
         add_matched_arrays_to_data_raster(data_raster_path, resampled_arrays, description_list)

@@ -169,10 +169,10 @@ class RasterHistQtPlot(QDialog):
             extents_rect = extents_feature.geometry().boundingBox()
 
             # Open the raster layer with rasterio since the built-in QGIS histogram function is broken
-
             try:
                 with rio.open(raster_path) as ds:
                     # Get the coordinates of the AOI feature in the same CRS as the raster
+                    # Todo: This method will have to be adjusted to account for irregular geometries to drop values outside the polygons
                     print("Constructing coordinate transform")
                     min_corner = QgsPoint(extents_rect.xMinimum(), extents_rect.yMinimum())
                     max_corner = QgsPoint(extents_rect.xMaximum(), extents_rect.yMaximum())
@@ -209,13 +209,7 @@ class RasterHistQtPlot(QDialog):
                 with rio.open(raster_path) as ds:
                     nodata = ds.nodata
                     dat = ds.read(band)
-                    # band_data = dat
-                    dat1d = dat.ravel()
-                    d = dat1d[~np.isnan(dat1d)]
-                    # band_data = np.delete(d, np.where(d == nodata))
-                    band_data = d[~[np.where(d == nodata)]]
-                    print(dat.shape)
-                    print(band_data.shape)
+                    band_data = np.delete(dat, np.where(dat == nodata))
 
             except (RasterioIOError, IOError):
                 msgBox = QMessageBox()
@@ -245,14 +239,8 @@ class RasterHistQtPlot(QDialog):
                     win = Window(min(min_col[0], max_col[0]), min(min_row[0], max_row[0]),
                                  abs(max_col[0] - min_col[0]), abs(max_row[0] - min_row[0]))
                     print("Reading band within window")
-                    band_data = ds.read(band, window=win)
-                    # dat = ds.read(band, window=win)
-                    # band_data = dat
-                    # dat1d = dat.ravel()
-                    # d = dat1d[~np.isnan(dat1d)]
-                    # band_data = np.delete(d, np.where(d == nodata))
-                    # band_data = d[~[np.where(d == nodata)]]
-
+                    dat = ds.read(band, window=win)
+                    band_data = np.delete(dat, np.where(dat == nodata))
 
             except (RasterioIOError, IOError):
                 msgBox = QMessageBox()
