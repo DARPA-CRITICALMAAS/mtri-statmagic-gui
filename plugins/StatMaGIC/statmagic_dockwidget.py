@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from PyQt5.QtWidgets import QScrollArea, QAbstractScrollArea
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
@@ -30,7 +31,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.dockWidgetLayout = QtWidgets.QVBoxLayout()
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
 
-        self.addGlobalOptions()
+        self.CMA_WorkflowLog = {}
 
         self.createTabs()
 
@@ -41,28 +42,14 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.point_samples = None
         self.oneClassSVM = None
 
-    def addGlobalOptions(self):
-        """ Add the stuff that always appears above the tabs. """
-        self.topLayout = QtWidgets.QHBoxLayout()
-        self.topWidget = addWidgetFromLayout(self.topLayout, self.dockWidgetContents)
-
-        # self.comboBox_raster = addQgsMapLayerComboBox(self.topWidget, "Raster Layer")
-        # self.comboBox_vector = addQgsMapLayerComboBox(self.topWidget, "Polygon Layer")
-        #
-        # self.comboBox_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        # self.comboBox_vector.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        #
-        # (
-        #     self.ClusterWholeExtentBox,
-        #     self.UseBandSelectionBox
-        # ) = addTwoCheckboxes(self.topWidget, "Whole Raster", "Use Selected Bands Only")
-
-        addToParentLayout(self.topWidget)
-
     def createTabs(self):
+        # create containing widget to allow scroll bars to appear on resize
+        self.scrollArea = QScrollArea(self.dockWidgetContents)
+        self.scrollArea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        # self.scrollArea.setLayout(QtWidgets.QVBoxLayout)
+
         # create tab container
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
-        # self.tabWidget.setGeometry(QRect(10, 60, 190, 290))
 
         # populate tabs
         self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
@@ -78,7 +65,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.aws_tab                = AWSTab(self, self.tabWidget)
 
         # add tabs to parent
-        addToParentLayout(self.tabWidget)
+        # addToParentLayout(self.tabWidget)
+        self.scrollArea.setWidget(self.tabWidget)
+        addToParentLayout(self.scrollArea)
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
