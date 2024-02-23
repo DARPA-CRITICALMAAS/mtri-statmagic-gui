@@ -48,7 +48,7 @@ source $HOME/mambaforge/bin/activate
 
 1. Download the Git Bash installer:
 
-   - Navigate to https://gitforwindows.com in a web browser
+   - Navigate to https://gitforwindows.org in a web browser
    - Click the "Download" button
 2. Run the installation wizard by double clicking the `.exe` file you downloaded. Select all of the default options.
 3. In the start menu, type "git bash" to launch the "Git Bash" app.
