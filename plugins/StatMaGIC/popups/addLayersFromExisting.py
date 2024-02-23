@@ -139,7 +139,8 @@ class CustomCheckableListWidget(QWidget):
         num_threads = self.num_threads_resamp_spinBox.value()
 
         add_selected_bands_from_source_raster_to_data_raster(self.parent.parent.meta_data['data_raster_path'],
-                                                             self.parent.raster_layer_path, bandlist, method, num_threads)
+                                                             self.parent.raster_layer_path, bandlist, method,
+                                                             num_threads)
 
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
         # self.iface.mapCanvas().refreshAllLayers()
