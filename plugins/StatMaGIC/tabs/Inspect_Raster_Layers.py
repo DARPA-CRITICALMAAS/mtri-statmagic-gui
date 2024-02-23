@@ -93,6 +93,7 @@ class InspectLayersTab(TabBase):
 
         self.test_rubberPoly_button = addButton(self, "test Poly rubberband", self.drawPolygon)
         self.test_rubberRect_button = addButton(self, "test Rect rubberband", self.drawRectangle)
+        self.test_rect_button = addButton(self, "test Rect result", self.print_rect)
 
     def popup_drop_layer_dialogue(self):
         popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
@@ -225,12 +226,17 @@ class InspectLayersTab(TabBase):
 
     def drawRectangle(self):
         print('launching Rectangle Tool')
-        c = self.parent.canvas
-        bb = c.extent()
+        self.c = self.parent.canvas
+        bb = self.c.extent()
         bb.asWktCoordinates()
         print(bb)
-        print(f'canvas is {c}')
-        t = RectangleMapTool(c)
+        print(f'canvas is {self.c}')
+        self.t = RectangleMapTool(self.c)
         print('tool referenced to canvas')
-        c.setMapTool(t)
+        self.c.setMapTool(self.t)
+        print("done drawRectangle")
+
+    def print_rect(self):
+        print('Rectangle is:', self.t.rectangle())
+
 
