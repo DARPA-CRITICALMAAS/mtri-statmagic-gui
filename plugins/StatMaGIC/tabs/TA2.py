@@ -103,11 +103,14 @@ class TA2Tab(TabBase):
         self.has_location_label = QLabel('Response has Location?')
         self.has_location_checkbox = QCheckBox()
         self.has_location_checkbox.setChecked(False)
+        self.has_location_checkbox.stateChanged.connect(self.has_location_checkbox_state_changed)
         self.location_feature_combo_box_label = QLabel('Response Location Feature')
         self.location_feature_combo_box = QComboBox()
         self.output_file_label = QLabel('Output File')
         self.output_file_text_box = QgsFileWidget()
         self.output_file_text_box.setStorageMode(QgsFileWidget.StorageMode.SaveFile)
+        self.output_file_text_box.setFilter('CSV (*.csv)')
+        #self.output_file_text_box.setFilter('GeoJSON (*.geojson)')
         self.save_response_btn = QPushButton()
         self.save_response_btn.setText('Save Response to File')
         self.save_response_btn.clicked.connect(self.save_response_to_file)
@@ -120,6 +123,12 @@ class TA2Tab(TabBase):
         addToParentLayout(tolayerFrame)
 
         self.last_response = None
+
+    def has_location_checkbox_state_changed(self, state):
+        if state == Qt.Checked:
+            self.output_file_text_box.setFilter('GeoJSON (*.geojson)')
+        else:
+            self.output_file_text_box.setFilter('CSV (*.csv)')
 
     def set_run_query_btn_text(self):
         if self.query_type_selection_box.currentText() == 'MinMod':
