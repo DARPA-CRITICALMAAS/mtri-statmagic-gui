@@ -26,9 +26,11 @@ class InitiateCMATab(TabBase):
         super().__init__(parent, tabWidget, "Initiate CMA")
         self.parent = parent
         self.iface = self.parent.iface
+
+        # geodataframe to hold the project bounds
+        # at project initialization, no extent is defined
+        # after initialization, this data is loaded from the project json
         self.extent_gdf = None
-        # Maybe this should be set from the project crs to start??
-        self.src_crs = None
 
         ##### TOP FRAME #####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
