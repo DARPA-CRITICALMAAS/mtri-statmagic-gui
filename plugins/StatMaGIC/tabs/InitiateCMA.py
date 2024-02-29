@@ -62,6 +62,7 @@ class InitiateCMATab(TabBase):
         self.template_input = QgsMapLayerComboBox()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
         self.mQgsProjectionSelectionWidget.setCrs(QgsCoordinateReferenceSystem('ESRI:102008'))
+        self.mQgsProjectionSelectionWidget.crsChanged.connect(self.crsChanged)
 
         self.chooseExtentOptions = QtWidgets.QPushButton()
         self.chooseExtentOptions.setText('Open Extent Selection Menu')
@@ -132,16 +133,20 @@ class InitiateCMATab(TabBase):
 
         self.updateInitiationCheckList()
 
+    def crsChanged(self):
+        crs = self.mQgsProjectionSelectionWidget.crs()
+        if crs.isGeographic():
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setText("Warning: You have selected a geographic coordinate system. Consider choosing a projected coordinate system for better performance.")
+            msgBox.exec()
+        self.updateInitiationCheckList()
+
     def updateInitiationCheckList(self):
-        # Todo: When the following  conditions are changed (directory set, gdf returned from Extent dialog make the buttons enabled
-        # When we get this figured out reset the buttons to setEnabled(False) on lines 107-108
-        # Better would be if the dialog has been set, because the default path to the unchanged dia root will exists
         project_dir_selected = False
         crs_selected = False
         bounds_selected = False
 
         project_dir = Path(self.proj_dir_input.filePath())
-        print('project_dir: ', project_dir)
         project_crs = self.mQgsProjectionSelectionWidget.crs()
         project_bounds = self.extent_gdf
 
@@ -179,6 +184,7 @@ class InitiateCMATab(TabBase):
     def chooseExtentDialog(self):
         popup = ChooseExtent(self)
         popup.exec_()
+        self.updateInitiationCheckList()
 
     def initiate_CMA_workflow(self):
         # Retrieve metadata inputs
