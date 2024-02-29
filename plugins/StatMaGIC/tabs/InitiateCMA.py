@@ -58,6 +58,7 @@ class InitiateCMATab(TabBase):
 
         self.proj_dir_input = QgsFileWidget()
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        self.proj_dir_input.fileChanged.connect(self.updateInitiationCheckList)
         self.template_input = QgsMapLayerComboBox()
         self.mQgsProjectionSelectionWidget = QgsProjectionSelectionWidget()
         self.mQgsProjectionSelectionWidget.setCrs(QgsCoordinateReferenceSystem('ESRI:102008'))
@@ -95,6 +96,10 @@ class InitiateCMATab(TabBase):
         self.crsSelectedLabel = QtWidgets.QLabel('Crs set to default')
         self.boundsSelectedLabel = QtWidgets.QLabel('Bounds not defined')
 
+        self.dirSelectedLabel.setStyleSheet('background-color: red')
+        self.crsSelectedLabel.setStyleSheet('background-color: red')
+        self.boundsSelectedLabel.setStyleSheet('background-color: red')
+
         checkLayout.addWidget(self.dirSelectedLabel)
         checkLayout.addWidget(self.crsSelectedLabel)
         checkLayout.addWidget(self.boundsSelectedLabel)
@@ -107,8 +112,8 @@ class InitiateCMATab(TabBase):
         buttonWidget = addWidgetFromLayout(buttonLayout, self)
         self.make_template_raster_button = addButton(buttonWidget, "Create Project Files", self.initiate_CMA_workflow)
         self.check_size_button = addButton(buttonWidget, "Check Memory Size", self.print_estimated_size)
-        self.make_template_raster_button.setEnabled(True)
-        self.check_size_button.setEnabled(True)
+        self.make_template_raster_button.setEnabled(False)
+        self.check_size_button.setEnabled(False)
 
         addToParentLayout(buttonWidget)
 
@@ -125,18 +130,51 @@ class InitiateCMATab(TabBase):
 
         addToParentLayout(bottomFrame)
 
-        self.setButtonsActiveOnConditions()
+        self.updateInitiationCheckList()
 
-    def setButtonsActiveOnConditions(self):
+    def updateInitiationCheckList(self):
         # Todo: When the following  conditions are changed (directory set, gdf returned from Extent dialog make the buttons enabled
         # When we get this figured out reset the buttons to setEnabled(False) on lines 107-108
         # Better would be if the dialog has been set, because the default path to the unchanged dia root will exists
-        self.proj_dir_input.fileChanged  # might work??
-        input_path = Path(self.proj_dir_input.filePath())
-        if self.extent_gdf is not None and input_path.exists():
+        project_dir_selected = False
+        crs_selected = False
+        bounds_selected = False
+
+        project_dir = Path(self.proj_dir_input.filePath())
+        print('project_dir: ', project_dir)
+        project_crs = self.mQgsProjectionSelectionWidget.crs()
+        project_bounds = self.extent_gdf
+
+        if project_dir.exists() and not project_dir == Path('.'):
+            project_dir_selected = True
+            self.dirSelectedLabel.setText('Project Directory Selected')
+            self.dirSelectedLabel.setStyleSheet('background-color: lightgreen')
+        else:
+            self.dirSelectedLabel.setText('Project Not Selected')
+            self.dirSelectedLabel.setStyleSheet('background-color: red')
+
+        if project_crs.isValid():
+            crs_selected = True
+            self.crsSelectedLabel.setText('CRS Set')
+            self.crsSelectedLabel.setStyleSheet('background-color: lightgreen')
+        else:
+            self.crsSelectedLabel.setText('CRS set to default')
+            self.crsSelectedLabel.setStyleSheet('background-color: red')
+
+        if project_bounds is not None:
+            bounds_selected = True
+            self.boundsSelectedLabel.setText('Bounds Defined')
+            self.boundsSelectedLabel.setStyleSheet('background-color: lightgreen')
+        else:
+            self.boundsSelectedLabel.setText('Bounds not defined')
+            self.boundsSelectedLabel.setStyleSheet('background-color: red')
+
+        if project_dir_selected and crs_selected and bounds_selected:
             self.make_template_raster_button.setEnabled(True)
             self.check_size_button.setEnabled(True)
-
+        else:
+            self.make_template_raster_button.setEnabled(False)
+            self.check_size_button.setEnabled(False)
 
     def chooseExtentDialog(self):
         popup = ChooseExtent(self)
