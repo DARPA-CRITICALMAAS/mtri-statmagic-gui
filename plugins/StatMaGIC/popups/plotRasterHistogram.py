@@ -15,6 +15,8 @@ import geopandas as gpd
 from shapely import box
 import numpy as np
 import geopandas as gpd
+from ..popups.grab_polygon import PolygonMapTool
+from ..popups.grab_rectangle import RectangleMapTool
 
 
 class RasterHistQtPlot(QDialog):
@@ -54,9 +56,7 @@ class RasterHistQtPlot(QDialog):
         self.aoi_selection_box.setFixedWidth(300)
         self.aoi_selection_box.setAllowEmptyLayer(True)
         self.aoi_selection_box.setCurrentIndex(0)
-        # self.aoi_selection_box.addItems(['Canvas', 'Full Raster'])
-        # self.highlightFeature()
-        # self.aoi_selection_box.layerChanged.connect(self.highlightFeature)
+
 
         non_aoi_label = QLabel('Non AOI Options')
         self.non_aoi_selection_box = QComboBox(self)
@@ -76,10 +76,18 @@ class RasterHistQtPlot(QDialog):
         self.num_bins_input.setRange(10, 100)
         self.num_bins_input.setSingleStep(5)
 
+        # Buttons to draw area
+        self.drawRectButton = QPushButton()
+        self.drawRectButton.setText('Draw Rectangle')
+        self.drawRectButton.clicked.connect(self.drawRect)
+        self.drawPolyButton = QPushButton()
+        self.drawPolyButton.setText('Draw Polygon')
+        self.drawPolyButton.clicked.connect(self.drawPoly)
+
         # Button to create histogram
         self.run_hist_btn = QPushButton()
         self.run_hist_btn.setText('Plot Histogram')
-        self.run_hist_btn.clicked.connect(self.plot_raster_histogram)
+        self.run_hist_btn.clicked.connect(self.parse_raster_histogram)
 
         # Text box to display statistics
         self.text_box = QTextEdit()
@@ -92,6 +100,8 @@ class RasterHistQtPlot(QDialog):
         self.layer_select_layout.addRow(non_aoi_label, self.non_aoi_selection_box)
         self.layer_select_layout.addRow(aoi_label, self.aoi_selection_box)
         self.layer_select_layout.addRow(bins_label, self.num_bins_input)
+        self.layer_select_layout.addWidget(self.drawRectButton)
+        self.layer_select_layout.addWidget(self.drawPolyButton)
         self.layer_select_layout.addWidget(self.run_hist_btn)
         self.layer_select_layout.addWidget(self.text_box)
         ####
@@ -112,7 +122,25 @@ class RasterHistQtPlot(QDialog):
         self.iface.mainWindow().findChild(QAction, 'mActionDeselectAll').trigger()
         aoi.selectByIds([0])
 
-    def plot_raster_histogram(self):
+    def drawRect(self):
+        self.c = self.parent.canvas
+        self.t = RectangleMapTool(self.c)
+        self.c.setMapTool(self.t)
+        # From here just need to open the raster within the polygon shape
+        # Will need to do some of the Rasterpath, band, etc
+        raster: QgsRasterLayer = self.raster_selection_box.currentLayer()
+        band = self.raster_band_input.currentBand()
+        raster_path = Path(raster.source())
+        # Then 
+        # self.plot_raster_histogram(dat, nodata, raster.name())
+
+    def drawPoly(self):
+        self.c = self.parent.canvas
+        self.t = PolygonMapTool(self.c)
+        self.c.setMapTool(self.t)
+
+
+    def parse_raster_histogram(self):
         # The correct way to compute a histogram should be with the QGIS
         # histogram provider, but the function histogramVector is broken in QGIS 3.34
         # https://github.com/qgis/QGIS/issues/29700
@@ -195,7 +223,7 @@ class RasterHistQtPlot(QDialog):
                     win = Window(min(min_col, max_col), min(min_row, max_row),
                                  abs(max_col - min_col), abs(max_row - min_row))
                     print("Reading band within window")
-                    band_data = ds.read(band, window=win)
+                    dat = ds.read(band, window=win)
 
             except (RasterioIOError, IOError):
                 msgBox = QMessageBox()
@@ -207,7 +235,6 @@ class RasterHistQtPlot(QDialog):
             print("Extracting values from full raster")
             try:
                 with rio.open(raster_path) as ds:
-
                     dat = ds.read(band)
 
             except (RasterioIOError, IOError):
@@ -248,7 +275,36 @@ class RasterHistQtPlot(QDialog):
 
         # Deal with nodata values
         nodata = rio.open(raster_path).nodata
-        dat1d = np.ravel(dat)
+        # Todo: The name should be the name of the layer
+        self.plot_raster_histogram(dat, nodata, raster.name())
+        # dat1d = np.ravel(dat)
+        # band_data = np.delete(dat1d, np.where(dat1d == nodata))
+        #
+        # print("Computing histogram")
+        # hist, bin_edges = np.histogram(band_data,
+        #                                range=(np.nanmin(band_data), np.nanmax(band_data)),
+        #                                bins=int(self.num_bins_input.text()), density=False)
+        #
+        # print("Plotting histogram")
+        # bar_chart = pg.BarGraphItem(x0=bin_edges[:-1], x1=bin_edges[1:], height=hist, pen='w', brush=(0, 0, 255, 150))
+        # self.pltItem.clear()
+        # self.pltItem.addItem(bar_chart)
+        # self.pltItem.setTitle(raster.name())
+        # self.pltItem.setLabel(axis='left', text='Pixel Counts')
+        # self.pltItem.setLabel(axis='bottom', text=f"Band {str(self.raster_band_input.currentBand())}")
+        #
+        # print("Display statistics")
+        # self.text_box.setText(f'NumPixels = {band_data.size}\n'
+        #                       f'NumNaN = {np.count_nonzero(np.isnan(band_data))}\n'
+        #                       f'NumNodata = {dat1d.size - band_data.size}\n'
+        #                       f'Min = {np.nanmin(band_data)}\n'
+        #                       f'Max = {np.nanmax(band_data)}\n'
+        #                       f'Mean = {np.nanmean(band_data)}\n'
+        #                       f'Median = {np.nanmedian(band_data)}\n'
+        #                       f'Var = {np.nanvar(band_data)}')
+
+    def plot_raster_histogram(self, data, nodata, Name):
+        dat1d = np.ravel(data)
         band_data = np.delete(dat1d, np.where(dat1d == nodata))
 
         print("Computing histogram")
@@ -260,7 +316,7 @@ class RasterHistQtPlot(QDialog):
         bar_chart = pg.BarGraphItem(x0=bin_edges[:-1], x1=bin_edges[1:], height=hist, pen='w', brush=(0, 0, 255, 150))
         self.pltItem.clear()
         self.pltItem.addItem(bar_chart)
-        self.pltItem.setTitle(raster.name())
+        self.pltItem.setTitle(Name)
         self.pltItem.setLabel(axis='left', text='Pixel Counts')
         self.pltItem.setLabel(axis='bottom', text=f"Band {str(self.raster_band_input.currentBand())}")
 

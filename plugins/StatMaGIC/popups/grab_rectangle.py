@@ -15,7 +15,6 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.canvas = canvas
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.msg = QMessageBox()
-        # self.rubberBand = QgsRubberBand(self.canvas, QgsWkbTypes.PolygonGeometry)
         self.rubberBand = QgsRubberBand(self.canvas, Qgis.GeometryType.Polygon)
         self.rubberBand.setColor(Qt.red)
         self.rubberBand.setWidth(1)

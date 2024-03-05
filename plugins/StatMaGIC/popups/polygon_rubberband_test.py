@@ -155,7 +155,6 @@ class PolygonMapTool(QgsMapToolEmitPoint):
             self.finished = False
 
         self.click_point = self.toMapCoordinates(e.pos())
-
         self.rubberBand.addPoint(self.click_point, True)
         self.points.append(self.click_point)
         self.rubberBand.show()

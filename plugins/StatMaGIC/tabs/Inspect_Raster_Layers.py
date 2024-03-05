@@ -7,7 +7,7 @@ from ..gui_helpers import *
 from ..popups.dropRasterLayer import RasterBandSelectionDialog
 from ..popups.plotRasterHistogram import RasterHistQtPlot
 from ..popups.pcaClusterAnalysis import PCAClusterQtPlot
-from ..popups.qgsRubberBand import SamplingPolygon
+from ..popups.grab_polygon import PolygonMapTool
 from ..popups.grab_rectangle import RectangleMapTool
 
 # These are the imports for trying to figure out the QgsRubberband for getting temporary polgyons from the canvas
@@ -112,126 +112,17 @@ class InspectLayersTab(TabBase):
         pass
     #
     def drawPolygon(self):
-        geom = SamplingPolygon(self.parent.canvas)
+        self.c = self.parent.canvas
+        self.t = PolygonMapTool(self.c)
+        self.c.setMapTool(self.t)
 
-        # pass
-
-
-        # Create new virtual layer
-        # vlyr = QgsVectorLayer("Polygon", "temporary_polygons", "memory")
-        # dprov = vlyr.dataProvider()
-        #
-        # # Add field to virtual layer
-        # dprov.addAttributes([QgsField("name", QVariant.String),
-        #                      QgsField("size", QVariant.Double)])
-        #
-        # vlyr.updateFields()
-        #
-        # # Access MapTool
-        # previousMapTool = self.iface.mapCanvas().mapTool()
-        # myMapTool = QgsMapToolEmitPoint(self.iface.mapCanvas())
-        #
-        # # create empty list to store coordinates
-        # coordinates = []
-        #
-        # # Access ID
-        # fields = dprov.fields()
-        #
-        # def drawBand(currentPos, clickedButton):
-        #     self.iface.mapCanvas().xyCoordinates.connect(drawBand)
-        #
-        #     if self.rubberband and self.rubberband.numberOfVertices():
-        #         self.rubberband.removeLastPoint()
-        #         self.rubberband.addPoint(currentPos)
-        #
-        # def mouseClick(currentPos, clickedButton):
-        #     if clickedButton == Qt.LeftButton and len(coordinates) == 0:
-        #         # create the polygon rubber band associated to the current canvas
-        #
-        #         self.rubberband = QgsRubberBand(self.iface.mapCanvas(), True)
-        #         # set rubber band style
-        #         color = QColor(78, 97, 114)
-        #         color.setAlpha(190)
-        #         self.rubberband.setColor(color)
-        #         # Draw rubberband
-        #         self.rubberband.addPoint(QgsPoint(currentPos))
-        #         coordinates.extend(QgsPoint(currentPos))
-        #         print(coordinates)
-        #     if clickedButton == Qt.LeftButton and len(coordinates) > 0:
-        #         self.rubberband.addPoint(QgsPoint(currentPos))
-        #         coordinates.extend(QgsPoint(currentPos))
-        #         print(coordinates)
-        #
-        #     if clickedButton == Qt.RightButton:
-        #
-        #         # open input dialog
-        #         description = QInputDialog.getText(self.iface.mainWindow(), "Description",
-        #                                                     "Description for Polygon at x and y", QLineEdit.Normal,
-        #                                                     'My Polygon')
-        #
-        #         # create feature and set geometry
-        #         poly = QgsFeature()
-        #
-        #         # easier solution using simply the geometry of self.rubberband
-        #         # geomP = self.rubberband.asGeometry()
-        #
-        #         # or create polygon from point list
-        #         # creat float point = clickeck positions
-        #         point = QPointF()
-        #         # create  float polygon --> construcet out of 'point'
-        #         list_polygon = QPolygonF()
-        #
-        #         for x in range(0, len(coordinates)):
-        #             # since there is no distinction between x and y values we only want every second value
-        #             if x % 2 == 0:
-        #                 point.setX(coordinates[x])
-        #                 point.setY(coordinates[x + 1])
-        #                 list_polygon.append(point)
-        #         point.setX(coordinates[0])
-        #         point.setY(coordinates[1])
-        #         list_polygon.append(point)
-        #
-        #         geomP = QgsGeometry.fromQPolygonF(list_polygon)
-        #
-        #         poly.setGeometry(geomP)
-        #         # set attributes
-        #         indexN = dprov.fieldNameIndex('name')
-        #         indexA = dprov.fieldNameIndex('size')
-        #
-        #         # measure Area by geometry geomP
-        #         # poly.setAttributes([QgsDistanceArea().measure(geomP), description])
-        #
-        #         # measure Area by list-of-QgsPoint
-        #         poly.setAttributes([QgsDistanceArea().measurePolygon(geomP.asPolygon()[0]), description])
-        #
-        #         # add feature
-        #         dprov.addFeatures([poly])
-        #         vlyr.updateExtents()
-        #
-        #         # add layer
-        #         self.iface.mapCanvas().refresh()
-        #         QgsProject.instance().addMapLayers([vlyr])
-        #
-        #         # delete list
-        #         del coordinates[:]
-        #         self.iface.mapCanvas().scene().removeItem(self.rubberband)
-        #
-        # myMapTool.canvasClicked.connect(mouseClick)
-        # self.iface.mapCanvas().setMapTool(myMapTool)
-        #
-        #
 
     def drawRectangle(self):
         print('launching Rectangle Tool')
         self.c = self.parent.canvas
-        bb = self.c.extent()
-        bb.asWktCoordinates()
-        print(bb)
-        print(f'canvas is {self.c}')
         self.t = RectangleMapTool(self.c)
-        print('tool referenced to canvas')
         self.c.setMapTool(self.t)
-        print("done drawRectangle")
+
 
     def print_rect(self):
         print('Rectangle is:', self.t.rectangle())
