@@ -27,8 +27,6 @@ class InspectLayersTab(TabBase):
         self.parent = parent
         self.iface = self.parent.iface
 
-        # self.rubberband = None
-
         ##### TOP FRAME - Insepetion options#####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         topFormLayout = QtWidgets.QFormLayout()
@@ -101,7 +99,6 @@ class InspectLayersTab(TabBase):
 
     def popup_make_hist_plot(self):
         popup = RasterHistQtPlot(self.parent)
-        #popup.exec_()
         self.hist_window = popup.show()
 
     def popup_pca_cluster_analysis(self):
@@ -238,5 +235,6 @@ class InspectLayersTab(TabBase):
 
     def print_rect(self):
         print('Rectangle is:', self.t.rectangle())
+
 
 

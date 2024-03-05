@@ -17,6 +17,7 @@ from ..gui_helpers import *
 from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
 from ..popups.addLayersFromExisting import RasterBandSelectionDialog
+from ..popups.addLayersFromCloudfront import CloudFrontSelectionDialog
 from ..fileops import path_mkdir
 from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
 
@@ -90,9 +91,16 @@ class AddLayersTab(TabBase):
         self.dataCubeFile.setFilePath('/home/jagraham/Documents/Local_work/statMagic/hack6_data/MTRI_DataCube/NA_output_noNan.tif')
         self.dataCubeFile.setToolTip('Choose an existing raster to select layers from')
 
+        self.addfromCloudButton = QPushButton()
+        self.addfromCloudButton.setText('Add Nationwide Layers \nFrom CloudFront')
+        self.addfromCloudButton.clicked.connect(self.chooseLayersFromCloudDialog)
+        self.addfromCloudButton.setToolTip(
+            'Opens up a new window with options to select layers to add from CloudFront COGs.')
+
 
         AddLayerButtonsLayout.addWidget(self.addfromCubeButton, 0, 0)
         AddLayerButtonsLayout.addWidget(self.dataCubeFile, 0, 1)
+        AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 2, 0)
 
 
         bottomFormLayout = QVBoxLayout()
@@ -147,7 +155,12 @@ class AddLayersTab(TabBase):
         popup.exec_()
 
     def chooseLayersFromCubeDialog(self):
+        # Todo: This should popup first a file dialog of which to select the raster, then go to the selection menu
         popup = RasterBandSelectionDialog(self.parent, self.dataCubeFile.filePath())
+        popup.exec_()
+
+    def chooseLayersFromCloudDialog(self):
+        popup = CloudFrontSelectionDialog(self.parent)
         popup.exec_()
 
     def process_add_raster_list(self):

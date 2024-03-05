@@ -24,6 +24,30 @@ def addGreyScaleLayer(rasterLayer, layerName, group):
 
 
 def dataframeFromSampledPoints(gdf, raster_path):
+    """
+    Parameters
+    ----------
+    gdf
+    raster_path
+
+    Returns
+    -------
+
+    """
+    """
+    Create a dataframe from sampled points in a raster, aligning the coordinate reference systems if necessary.
+
+    Args:
+        gdf: geopandas.GeoDataFrame
+            The geospatial data frame containing the points to be sampled.
+
+        raster_path: str
+            The file path to the raster from which the points will be sampled.
+
+    Returns:
+        pandas.DataFrame
+            A dataframe containing the sampled points.
+    """
     raster = rio.open(raster_path)
     raster_crs = raster.crs
     if gdf.crs != raster_crs:
@@ -50,6 +74,8 @@ def dataframeFromSampledPoints(gdf, raster_path):
 
 def dataframFromSampledPolys(gdf, rasterpath):
     raster = rio.open(rasterpath)
+    if gdf.crs != raster.crs:
+        gdf.to_crs(raster.crs, inplace=True)
     column_names = raster.descriptions
     nodata = raster.nodata
     dflist = []
