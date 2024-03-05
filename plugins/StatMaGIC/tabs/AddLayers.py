@@ -9,7 +9,7 @@ from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_raste
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog
 from qgis.gui import QgsFileWidget
 
 from .TabBase import TabBase
@@ -87,21 +87,14 @@ class AddLayersTab(TabBase):
         self.addfromCubeButton.clicked.connect(self.chooseLayersFromCubeDialog)
         self.addfromCubeButton.setToolTip('Opens up a new window with options to select layers to add from a existing  dataset.')
 
-        self.dataCubeFile = QgsFileWidget()
-        self.dataCubeFile.setFilePath('/home/jagraham/Documents/Local_work/statMagic/hack6_data/MTRI_DataCube/NA_output_noNan.tif')
-        self.dataCubeFile.setToolTip('Choose an existing raster to select layers from')
-
         self.addfromCloudButton = QPushButton()
         self.addfromCloudButton.setText('Add Nationwide Layers \nFrom CloudFront')
         self.addfromCloudButton.clicked.connect(self.chooseLayersFromCloudDialog)
         self.addfromCloudButton.setToolTip(
             'Opens up a new window with options to select layers to add from CloudFront COGs.')
 
-
         AddLayerButtonsLayout.addWidget(self.addfromCubeButton, 0, 0)
-        AddLayerButtonsLayout.addWidget(self.dataCubeFile, 0, 1)
-        AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 2, 0)
-
+        AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 0, 1)
 
         bottomFormLayout = QVBoxLayout()
 
@@ -156,7 +149,9 @@ class AddLayersTab(TabBase):
 
     def chooseLayersFromCubeDialog(self):
         # Todo: This should popup first a file dialog of which to select the raster, then go to the selection menu
-        popup = RasterBandSelectionDialog(self.parent, self.dataCubeFile.filePath())
+        rasterFilePath = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
+        print(rasterFilePath)
+        popup = RasterBandSelectionDialog(self.parent, rasterFilePath[0])
         popup.exec_()
 
     def chooseLayersFromCloudDialog(self):

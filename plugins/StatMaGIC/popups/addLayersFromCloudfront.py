@@ -4,7 +4,6 @@ from qgis.PyQt.QtWidgets import QDialog, QWidget, QVBoxLayout, QLineEdit, QListW
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QDialogButtonBox, QComboBox, QSpinBox, QCheckBox
-# from statmagic_backend.dev.match_stack_raster_tools import add_selected_bands_from_source_raster_to_data_raster
 from statmagic_backend.dev.match_stack_raster_tools import *
 from qgis.core import QgsRasterLayer, QgsProject
 from ..constants import nationdata_raster_dict, resampling_dict
