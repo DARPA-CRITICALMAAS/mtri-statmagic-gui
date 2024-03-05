@@ -207,9 +207,8 @@ class RasterHistQtPlot(QDialog):
             print("Extracting values from full raster")
             try:
                 with rio.open(raster_path) as ds:
-                    nodata = ds.nodata
+
                     dat = ds.read(band)
-                    band_data = np.delete(dat, np.where(dat == nodata))
 
             except (RasterioIOError, IOError):
                 msgBox = QMessageBox()
@@ -232,7 +231,6 @@ class RasterHistQtPlot(QDialog):
             print("Extracting values from canvas")
             try:
                 with rio.open(raster_path) as ds:
-                    nodata = ds.nodata
 
                     min_row, min_col = ds.index(bounds.minx, bounds.miny)
                     max_row, max_col = ds.index(bounds.maxx, bounds.maxy)
@@ -240,13 +238,18 @@ class RasterHistQtPlot(QDialog):
                                  abs(max_col[0] - min_col[0]), abs(max_row[0] - min_row[0]))
                     print("Reading band within window")
                     dat = ds.read(band, window=win)
-                    band_data = np.delete(dat, np.where(dat == nodata))
+
 
             except (RasterioIOError, IOError):
                 msgBox = QMessageBox()
                 msgBox.setText("You must use a locally available raster layer for the histogram.")
                 msgBox.exec()
                 return
+
+        # Deal with nodata values
+        nodata = rio.open(raster_path).nodata
+        dat1d = np.ravel(dat)
+        band_data = np.delete(dat1d, np.where(dat1d == nodata))
 
         print("Computing histogram")
         hist, bin_edges = np.histogram(band_data,
@@ -264,6 +267,7 @@ class RasterHistQtPlot(QDialog):
         print("Display statistics")
         self.text_box.setText(f'NumPixels = {band_data.size}\n'
                               f'NumNaN = {np.count_nonzero(np.isnan(band_data))}\n'
+                              f'NumNodata = {dat1d.size - band_data.size}\n'
                               f'Min = {np.nanmin(band_data)}\n'
                               f'Max = {np.nanmax(band_data)}\n'
                               f'Mean = {np.nanmean(band_data)}\n'
