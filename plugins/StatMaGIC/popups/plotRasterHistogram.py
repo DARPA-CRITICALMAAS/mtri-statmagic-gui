@@ -11,8 +11,9 @@ from qgis.core import QgsPoint, QgsCoordinateTransform
 from pathlib import Path
 import rasterio as rio
 from rasterio.windows import Window, from_bounds
-import geopandas as gpd
+from rasterio.mask import mask
 from shapely import box
+from shapely.wkt import loads
 import numpy as np
 import geopandas as gpd
 from ..popups.grab_polygon import PolygonMapTool
@@ -61,7 +62,8 @@ class RasterHistQtPlot(QDialog):
         non_aoi_label = QLabel('Non AOI Options')
         self.non_aoi_selection_box = QComboBox(self)
         self.non_aoi_selection_box.setFixedWidth(300)
-        self.non_aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry'])
+        self.non_aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry',
+                                             'Rectangle', 'Polygon'])
 
         # Select number of bins in the histogram
         bins_label = QLabel("# Bins")
@@ -124,20 +126,13 @@ class RasterHistQtPlot(QDialog):
 
     def drawRect(self):
         self.c = self.parent.canvas
-        self.t = RectangleMapTool(self.c)
-        self.c.setMapTool(self.t)
-        # From here just need to open the raster within the polygon shape
-        # Will need to do some of the Rasterpath, band, etc
-        raster: QgsRasterLayer = self.raster_selection_box.currentLayer()
-        band = self.raster_band_input.currentBand()
-        raster_path = Path(raster.source())
-        # Then 
-        # self.plot_raster_histogram(dat, nodata, raster.name())
+        self.RectTool = RectangleMapTool(self.c)
+        self.c.setMapTool(self.RectTool)
 
     def drawPoly(self):
         self.c = self.parent.canvas
-        self.t = PolygonMapTool(self.c)
-        self.c.setMapTool(self.t)
+        self.PolyTool = PolygonMapTool(self.c)
+        self.c.setMapTool(self.PolyTool)
 
 
     def parse_raster_histogram(self):
@@ -174,6 +169,66 @@ class RasterHistQtPlot(QDialog):
               f' band {self.raster_band_input.currentBand()},'
               f' within AOI {self.aoi_selection_box.currentLayer()},'
               f' #bins = {self.num_bins_input.text()}')
+
+        if self.non_aoi_selection_box.currentIndex() == 4:
+            print('drawing from Polygon')
+            if self.PolyTool.geometry() is None:
+                msgBox = QMessageBox()
+                msgBox.setText("You must first draw a polygon to provide an AOI for the histogram")
+                msgBox.exec()
+                return
+
+            poly = self.PolyTool.geometry()
+            raster_crs = raster.crs().authid()
+            crs_epsg = self.parent.canvas.mapSettings().destinationCrs().authid()
+            # This could also make use of the __geo_interface__ referenced in the comments here
+            # https://gis.stackexchange.com/questions/353452/convert-qgis-geometry-into-shapely-geometry-to-use-orient-method-defined-in-shap
+            wkt = poly.asWkt()
+            shapely_geom = loads(wkt)
+            print(shapely_geom)
+            # There should always just be one geometry
+            bounding_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=crs_epsg)
+            bounding_gdf.to_crs(raster_crs, inplace=True)
+
+            try:
+                with rio.open(raster_path) as ds:
+                    geom = [bounding_gdf.geometry[0]]
+                    rdarr = mask(ds, shapes=geom, crop=True)[0]
+                    dat = rdarr[band, :, :]
+
+            except (RasterioIOError, IOError):
+                msgBox = QMessageBox()
+                msgBox.setText("You must use a locally available raster layer for the histogram.")
+                msgBox.exec()
+                return
+
+
+        if self.non_aoi_selection_box.currentIndex() == 3:
+            print('drawing from Rectangle')
+            if self.RectTool.rectangle() is None:
+                msgBox = QMessageBox()
+                msgBox.setText("You must first draw a rectangle to provide an AOI for the histogram")
+                msgBox.exec()
+                return
+
+            bb = self.RectTool.rectangle()
+            raster_crs = raster.crs().authid()
+            crs_epsg = self.parent.canvas.mapSettings().destinationCrs().authid()
+            bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
+            bounding_gdf = gpd.GeoDataFrame(geometry=[box(*bbc)], crs=crs_epsg)
+            bounding_gdf.to_crs(raster_crs, inplace=True)
+
+            try:
+                with rio.open(raster_path) as ds:
+                    geom = [bounding_gdf.geometry[0]]
+                    rdarr = mask(ds, shapes=geom, crop=True)[0]
+                    dat = rdarr[band, :, :]
+
+            except (RasterioIOError, IOError):
+                msgBox = QMessageBox()
+                msgBox.setText("You must use a locally available raster layer for the histogram.")
+                msgBox.exec()
+                return
 
         if self.non_aoi_selection_box.currentIndex() == 2:
             print('drawing from vector geometry')
