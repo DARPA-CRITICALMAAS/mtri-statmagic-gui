@@ -24,6 +24,11 @@ from statmagic_backend.maths.clustering import kmeans_fit_predict
 from ..fileops import rasterio_write_raster_from_array
 from ..layerops import qgis_poly_to_gdf, shape_data_array_to_raster_array, shape_raster_array_to_data_array
 
+
+# Todo: Implement a similar flow to the other sample_from_... using self.raster_array and self.raster_dict to
+# pass to run_kmeans using sample_from_polygon as example.
+# Todo: add in self.layer_name from prep_kmeans that can be used as layer name in the QGIS Layer Tree
+
 class KmeansClusteringMenu(QDialog):
 
     def __init__(self, parent=None):
@@ -49,13 +54,14 @@ class KmeansClusteringMenu(QDialog):
         self.aoi_selection_box.setFixedWidth(300)
         self.aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry',
                                              'Rectangle', 'Polygon'])
+        self.aoi_selection_box.setCurrentIndex(4)
         # These were the original options
         # data_items = ["Full Data", "Within Mask", "Within Polygons"]
 
         # Number of Clusters | ComboBox
         self.numClusters_selection_spin = QSpinBox(self)
         self.numClusters_selection_spin.setRange(2, 50)
-        self.numClusters_selection_spin.setValue(2)
+        self.numClusters_selection_spin.setValue(8)
         self.numClusters_selection_spin.setSingleStep(1)
 
         # PCA Var Exp | FloatSpinBox
@@ -69,6 +75,7 @@ class KmeansClusteringMenu(QDialog):
 
         # Do PCA Checkbox | CheckBox
         self.doPCAcheck = QCheckBox(self)
+        self.doPCAcheck.setChecked(True)
 
         # Exclusivity Threshold | FloatSpinBox
         self.archExcl_selection_spin = QDoubleSpinBox(self)
@@ -95,6 +102,7 @@ class KmeansClusteringMenu(QDialog):
         # self.map_clusters_Button.setToolTip('Spatializes the kmeans clusters and adds them to the map')
 
         self.map_clusters_check = QCheckBox(self)
+        self.map_clusters_check.setChecked(True)
         self.map_clusters_check.setText('Map Clusters')
         self.map_clusters_check.setToolTip('Creates a rasterized output of the kmeans and adds to the map')
 
