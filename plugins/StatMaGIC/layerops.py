@@ -1,13 +1,14 @@
 """ Functions that handle raster/vector layers and depend on QGIS gui components. """
 
 from pathlib import Path
-
-import numpy as np
 from osgeo import gdal
 import rasterio as rio
 import pandas as pd
 from rasterio.mask import mask
 from rasterio.plot import reshape_as_image
+from shapely.wkt import loads
+import numpy as np
+import geopandas as gpd
 
 
 from statmagic_backend.utils import polytextreplace, loggingDecorator
@@ -204,3 +205,43 @@ def apply_model_to_array(model, array, raster_dict):
     classout = np.transpose(preds, (0, 1, 2))[:, :, 0]
 
     return classout
+
+def qgis_poly_to_gdf(poly, poly_crs, raster_crs):
+    wkt = poly.asWkt()
+    shapely_geom = loads(wkt)
+    bounding_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=poly_crs)
+    bounding_gdf.to_crs(raster_crs, inplace=True)
+    return bounding_gdf
+
+def shape_raster_array_to_data_array(raster_array, raster_dict, return_mask=False):
+    da = np.transpose(raster_array, (1, 2, 0))  # convert from bands, rows, columns to rows, cols, bands
+    data2D_full = da.reshape((da.shape[0] * da.shape[1], da.shape[2]))
+    if return_mask:
+        nodata_mask = np.all(data2D_full == raster_dict['NoData'], axis=1)
+        idxr = nodata_mask.reshape(data2D_full.shape[0])
+        # Test which of these is correct and best
+        # data_nd_removed = data2D_full[~idxr]
+        data_nd_removed = data2D_full[idxr == 0, :]
+        return data_nd_removed, nodata_mask
+    else:
+        data_nan = np.where(data2D_full == raster_dict['NoData'], np.nan, data2D_full)
+        return data_nan
+
+def shape_data_array_to_raster_array(data_array, raster_dict, mask_array=None, nodata=None):
+    rsizeX, rsizeY = raster_dict['sizeX'], raster_dict['sizeY']
+    if mask_array is not None:
+        da = np.zeros_like(mask_array).astype(data_array.dtype)
+        da[~mask_array] = data_array
+        da[mask_array] = nodata
+        rda = da.reshape(rsizeY, rsizeX, 1)
+        raster_data = np.transpose(rda, (0, 1, 2))[:, :, 0]
+        return raster_data
+
+    else:
+
+        rda = data_array.reshape(rsizeY, rsizeX, 1)
+        raster_data = np.transpose(rda, (0, 1, 2))[:, :, 0]
+        if nodata is not None:
+            return np.where(raster_data == np.nan, nodata, raster_data).astype(data_array.dtype)
+        else:
+            return raster_data.astype(data_array.dtype)

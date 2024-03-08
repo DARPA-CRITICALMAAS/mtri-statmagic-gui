@@ -154,6 +154,7 @@ class RasterHistQtPlot(QDialog):
             msgBox.setText("You must select a valid raster band for the histogram")
             msgBox.exec()
             return
+
         if self.num_bins_input.text() == '':
             msgBox = QMessageBox()
             msgBox.setText("You must select a valid number of bins for the histogram")
@@ -185,8 +186,6 @@ class RasterHistQtPlot(QDialog):
             # https://gis.stackexchange.com/questions/353452/convert-qgis-geometry-into-shapely-geometry-to-use-orient-method-defined-in-shap
             wkt = poly.asWkt()
             shapely_geom = loads(wkt)
-            print(shapely_geom)
-            # There should always just be one geometry
             bounding_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=crs_epsg)
             bounding_gdf.to_crs(raster_crs, inplace=True)
 
@@ -201,7 +200,6 @@ class RasterHistQtPlot(QDialog):
                 msgBox.setText("You must use a locally available raster layer for the histogram.")
                 msgBox.exec()
                 return
-
 
         if self.non_aoi_selection_box.currentIndex() == 3:
             print('drawing from Rectangle')

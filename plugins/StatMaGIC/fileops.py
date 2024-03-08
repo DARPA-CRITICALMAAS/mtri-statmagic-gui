@@ -3,7 +3,44 @@ import pickle
 import tempfile
 import geopandas as gpd
 from osgeo import gdal
+import rasterio as rio
+import numpy as np
 
+def gdalTransform_to_rasterioAffine(gt):
+    a = gt[0]
+    b = gt[1]
+    c = gt[2]
+    d = gt[3]
+    e = gt[4]
+    f = gt[5]
+    return rio.Affine(b, c, a, e, f, d)
+
+def rasterio_write_raster_from_array(raster_array, raster_dict, output_path=None, description_list=None):
+    if output_path is None:
+        tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
+        output_path = tempfile.mkstemp(dir=tfol, suffix='.tif')[1]
+
+    if len(raster_array.shape) == 2:
+        raster_array = np.expand_dims(raster_array, axis=0)
+
+    # This will need to get dropped once the raster_dict methods are updated to rasterio
+    if type(raster_dict['GeoTransform']) == list:
+        transform = gdalTransform_to_rasterioAffine(raster_dict['GeoTransform'])
+    else:
+        transform = raster_dict['GeoTransform']
+
+    new_dataset = rio.open(output_path, 'w', driver='Gtiff',
+                           height=raster_array.shape[1], width=raster_array.shape[2],
+                           count=raster_array.shape[0], dtype=raster_array.dtype,
+                           crs=raster_dict['Projection'],
+                           nodata=raster_dict['NoData'],
+                           transform=transform)
+    if description_list:
+        for band, desc in enumerate(description_list, 1):
+            new_dataset.set_band_description(band, desc)
+    new_dataset.write(raster_array)
+    new_dataset.close()
+    return output_path
 
 def gdalSave(prefix, array2write, bittype, geotransform, projection, nodataval, descs=()):
     tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
@@ -76,6 +113,12 @@ def kosher(obj, path):
     outfile = open(path, 'wb')
     pickle.dump(obj, outfile)
     outfile.close()
+
+def dill(pklpath):
+    infile = open(pklpath, 'rb')
+    obj = pickle.load(infile)
+    infile.close()
+    return obj
 
 
 def path_mkdir(path):
