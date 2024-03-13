@@ -10,6 +10,7 @@ from ..popups.pcaClusterAnalysis import PCAClusterQtPlot
 from ..popups.grab_polygon import PolygonMapTool
 from ..popups.grab_rectangle import RectangleMapTool
 from ..popups.ClusterMappingDialog import KmeansClusteringMenu
+from ..popups.choose_raster_dialog import SelectRasterLayer
 
 
 class InspectLayersTab(TabBase):
@@ -18,6 +19,8 @@ class InspectLayersTab(TabBase):
 
         self.parent = parent
         self.iface = self.parent.iface
+
+        self.drop_layer = None
 
         ##### TOP FRAME - Insepetion options#####
         # topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
@@ -90,7 +93,12 @@ class InspectLayersTab(TabBase):
         # Todo: make a popup to select which raster layer will have bands dropped
         # Probably a simple dialog with a MapLayerComboBox
         # The raster_layer should be a QgsRasterLayer
-        popup = RasterBandSelectionDialog(self.parent, raster_layer=self.comboBox.currentLayer())
+        raster_path_popup = SelectRasterLayer(self.parent)
+        raster_path_popup.exec_()
+        # Todo: I can't figure out why this is self.parent and not self. Works but maybe should be altered....?
+        print(self.parent.drop_layer)
+        # Todo: Need to more robustly handle the band descriptions for cases that aren't Band1: Desc, etc
+        popup = RasterBandSelectionDialog(self.parent, raster_layer=self.parent.drop_layer)
         popup.exec_()
 
     def popup_make_hist_plot(self):
@@ -110,13 +118,11 @@ class InspectLayersTab(TabBase):
         self.t = PolygonMapTool(self.c)
         self.c.setMapTool(self.t)
 
-
     def drawRectangle(self):
         print('launching Rectangle Tool')
         self.c = self.parent.canvas
         self.t = RectangleMapTool(self.c)
         self.c.setMapTool(self.t)
-
 
     def print_rect(self):
         print('Rectangle is:', self.t.rectangle())

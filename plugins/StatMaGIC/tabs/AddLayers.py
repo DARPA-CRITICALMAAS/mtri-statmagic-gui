@@ -148,9 +148,7 @@ class AddLayersTab(TabBase):
         popup.exec_()
 
     def chooseLayersFromCubeDialog(self):
-        # Todo: This should popup first a file dialog of which to select the raster, then go to the selection menu
         rasterFilePath = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
-        print(rasterFilePath)
         popup = RasterBandSelectionDialog(self.parent, rasterFilePath[0])
         popup.exec_()
 
@@ -216,15 +214,8 @@ class AddLayersTab(TabBase):
 
         print(bounds)
 
-        # Starting from the __main__
-        # TODO: Make this folder in the project folder
-        # TODO: have the zoom level accessible
-
-
-        # processing_dir = Path('/home/jagraham/Documents/Local_work/statMagic/devtest/macrostrat_output')
         processing_dir = Path(self.parent.meta_data['project_path']) / 'macrostrat'
         path_mkdir(processing_dir)
-
 
         output_path = str(processing_dir / "dissovle_macrostrat.json")
         m1 = 'querying the Macrostrat Tile Server'
