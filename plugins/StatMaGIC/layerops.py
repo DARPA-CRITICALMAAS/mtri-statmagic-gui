@@ -209,9 +209,16 @@ def apply_model_to_array(model, array, raster_dict):
 def qgis_poly_to_gdf(poly, poly_crs, raster_crs):
     wkt = poly.asWkt()
     shapely_geom = loads(wkt)
-    bounding_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=poly_crs)
-    bounding_gdf.to_crs(raster_crs, inplace=True)
-    return bounding_gdf
+    print(type(shapely_geom))
+    if type(shapely_geom) == 'MultiPolygon':
+        geom = list(shapely_geom.geoms[0])
+    else:
+        geom = [shapely_geom]
+    print(geom)
+    gdf = gpd.GeoDataFrame(geometry=geom, crs=poly_crs)
+    print(gdf.head())
+    gdf.to_crs(raster_crs, inplace=True)
+    return gdf
 
 def shape_raster_array_to_data_array(raster_array, raster_dict, return_mask=False):
     da = np.transpose(raster_array, (1, 2, 0))  # convert from bands, rows, columns to rows, cols, bands

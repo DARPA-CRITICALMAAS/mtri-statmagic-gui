@@ -97,7 +97,6 @@ class InspectLayersTab(TabBase):
         raster_path_popup.exec_()
         # Todo: I can't figure out why this is self.parent and not self. Works but maybe should be altered....?
         print(self.parent.drop_layer)
-        # Todo: Need to more robustly handle the band descriptions for cases that aren't Band1: Desc, etc
         popup = RasterBandSelectionDialog(self.parent, raster_layer=self.parent.drop_layer)
         popup.exec_()
 

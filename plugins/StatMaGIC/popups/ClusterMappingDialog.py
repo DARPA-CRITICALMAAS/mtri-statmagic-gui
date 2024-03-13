@@ -55,6 +55,14 @@ class KmeansClusteringMenu(QDialog):
         self.aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry',
                                              'Rectangle', 'Polygon'])
         self.aoi_selection_box.setCurrentIndex(4)
+
+        vector_label = QLabel('Vector Layer')
+        self.vector_selection_box = QgsMapLayerComboBox(self)
+        self.vector_selection_box.setShowCrs(True)
+        self.vector_selection_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.vector_selection_box.allowEmptyLayer()
+
+
         # These were the original options
         # data_items = ["Full Data", "Within Mask", "Within Polygons"]
 
@@ -129,6 +137,7 @@ class KmeansClusteringMenu(QDialog):
         self.input_layout = QFormLayout()
         self.input_layout.addRow(raster_label, self.raster_selection_box)
         self.input_layout.addRow(aoi_label, self.aoi_selection_box)
+        self.input_layout.addRow(vector_label, self.vector_selection_box)
         self.input_layout.addRow('Choolse Number of Clusters', self.numClusters_selection_spin)
         self.input_layout.addRow('Standardize and PCA', self.doPCAcheck)
         self.input_layout.addRow('PCA Var Exp', self.pcaVarExp_selection_spin)
@@ -186,6 +195,7 @@ class KmeansClusteringMenu(QDialog):
         poly_crs = self.parent.canvas.mapSettings().destinationCrs().authid()
         # Get the polygon from the mapTool
         poly = self.PolyTool.geometry()
+        print(poly)
         # Convert the polygon to a GeoDataFrame
         poly_gdf = qgis_poly_to_gdf(poly, poly_crs, raster_crs)
 
@@ -205,16 +215,73 @@ class KmeansClusteringMenu(QDialog):
         self.run_kmeans()
 
     def sample_from_rectangle(self):
+        # Get the selected raster layer
+        raster = self.raster_selection_box.currentLayer()
+        raster_path = raster.source()
+        self.full_dict = getFullRasterDict_rio(rio.open(raster_path))
+        # Get the epsg crs of the raster layer
+        raster_crs = raster.crs().authid()
+        # Get the polygon from the mapTool
+        bb = self.RectTool.rectangle()
+        crs_epsg = self.parent.canvas.mapSettings().destinationCrs().authid()
+        bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
+        poly_gdf = gpd.GeoDataFrame(geometry=[box(*bbc)], crs=crs_epsg)
+        poly_gdf.to_crs(raster_crs, inplace=True)
+
+        #
+        # poly = self.RectTool.rectangle()
+        # # Convert the polygon to a GeoDataFrame
+        # poly_gdf = qgis_poly_to_gdf(poly, poly_crs, raster_crs)
+
+        try:
+            with rio.open(raster_path) as ds:
+                geom = [poly_gdf.geometry[0]]
+                rdarr, aff = mask(ds, shapes=geom, crop=True)
+                self.raster_dict = getSubsetRasterDict_rio(self.full_dict, rdarr, aff)
+                self.raster_array = rdarr
+
+        except (RasterioIOError, IOError):
+            msgBox = QMessageBox()
+            msgBox.setText("You must use a locally available raster layer for the histogram.")
+            msgBox.exec()
+            return
+
+        self.run_kmeans()
         pass
 
     def sample_from_vector(self):
-        pass
+        aoi = self.vector_selection_box.currentLayer()
+        poly_crs = aoi.crs().authid()
+        poly = aoi.selectedFeatures()[0].geometry()
+        print(poly)
+        raster = self.raster_selection_box.currentLayer()
+        raster_path = raster.source()
+        self.full_dict = getFullRasterDict_rio(rio.open(raster_path))
+        raster_crs = raster.crs().authid()
+        poly_gdf = qgis_poly_to_gdf(poly, poly_crs, raster_crs)
 
-    def sample_from_vector_features(self):
-        pass
+        try:
+            with rio.open(raster_path) as ds:
+                geom = [poly_gdf.geometry[0]]
+                rdarr, aff = mask(ds, shapes=geom, crop=True)
+                self.raster_dict = getSubsetRasterDict_rio(self.full_dict, rdarr, aff)
+                self.raster_array = rdarr
+
+        except (RasterioIOError, IOError):
+            msgBox = QMessageBox()
+            msgBox.setText("You must use a locally available raster layer for the histogram.")
+            msgBox.exec()
+            return
+
+        self.run_kmeans()
 
     def sample_full_raster(self):
-        pass
+        raster = self.raster_selection_box.currentLayer()
+        raster_path = raster.source()
+        self.raster_dict = getFullRasterDict_rio(rio.open(raster_path))
+        self.raster_array = rio.open(raster_path).read()
+        self.run_kmeans()
+
 
     def sample_from_canvas(self):
         r_ds = gdal.Open(self.raster_selection_box.currentLayer().source())
@@ -274,12 +341,12 @@ class KmeansClusteringMenu(QDialog):
 
         if self.aoi_selection_box.currentIndex() == 3:
             try:
-                r = self.rectTool.rectangle()
+                r = self.RectTool.rectangle()
             except AttributeError:
                 msgBox = QMessageBox()
                 msgBox.setText("You must first draw a rectangle to provide an AOI of which to sample data")
                 msgBox.exec()
-            return
+                return
 
         if self.aoi_selection_box.currentIndex() == 4:
             try:
@@ -290,8 +357,24 @@ class KmeansClusteringMenu(QDialog):
                 msgBox.exec()
             return
 
-        # Todo: Add more checks (eg if canvas is selected but bounds are outside)
-        # Todo: How to make this stop the subsequent code if after a check fails
+        if self.aoi_selection_box.currentIndex() == 2:
+            print('drawing from vector geometry')
+            if self.vector_selection_box.currentLayer() is None:
+                msgBox = QMessageBox()
+                msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")
+                msgBox.exec()
+                return
+
+            aoi = self.vector_selection_box.currentLayer()
+
+            try:
+                extents_feature = aoi.selectedFeatures()[0]
+            except IndexError:
+                msgBox = QMessageBox()
+                msgBox.setText("You must select a feature from the vector layer")
+                msgBox.exec()
+                return
+
 
     def updateEnabled(self):
         pass

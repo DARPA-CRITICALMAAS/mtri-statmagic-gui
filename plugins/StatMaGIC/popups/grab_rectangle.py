@@ -19,7 +19,7 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.rubberBand.setColor(Qt.red)
         self.rubberBand.setWidth(1)
         self.reset()
-        self.rect_created.connect(self.rectangle_created)
+        # self.rect_created.connect(self.rectangle_created)
 
     def rectangle_created(self, r):
         self.msg.setText(str(r))
@@ -73,6 +73,11 @@ class RectangleMapTool(QgsMapToolEmitPoint):
               self.startPoint.y() == self.endPoint.y()):
             return None
         return QgsRectangle(self.startPoint, self.endPoint)
+
+
+    def geometry(self):
+        rb = self.rubberBand
+        return self.rubberBand.asGeometry()
 
     def deactivate(self):
         self.rubberBand.reset()
