@@ -114,18 +114,20 @@ class CustomCheckableListWidget(QWidget):
         selection = []
         for i in range(self.lw.count()):
             item = self.lw.item(i)
-            if item.checkState() == Qt.Unchecked:
-                selection.append(item.text())
+            if item.checkState() == Qt.Checked:
+                selection.append(i)
+                # selection.append(item.text())
         selection.sort()
         return selection
 
     def run_drop_layers(self):
         bandlist = self.return_checked_items()
-        drop_selected_layers_from_raster(self.parent.parent.meta_data['data_raster_path'], bandlist)
-        QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
-        # self.iface.mapCanvas().refreshAllLayers()
-        data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
-        QgsProject.instance().addMapLayer(data_raster)
+        raster_layer = self.parent.raster_layer
+        raster_path = raster_layer.source()
+        drop_selected_layers_from_raster(raster_path, bandlist)
+        QgsProject.instance().removeMapLayer(raster_layer)
+        data_raster = QgsRasterLayer(raster_path)
+        QgsProject.instance().addMapLayer(data_raster, 'Raster Data')
         self.cancel()
 
     def signals_connection(self):
@@ -133,6 +135,5 @@ class CustomCheckableListWidget(QWidget):
         self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
-        # Todo: this closes the CustomCheckableListWidget but should close the RasterBandSelectionDialog
-        # Todo: Close the Dialog after run_drop_layers
+
         self.parent.close()

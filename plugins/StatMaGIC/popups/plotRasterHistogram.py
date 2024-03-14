@@ -328,33 +328,8 @@ class RasterHistQtPlot(QDialog):
 
         # Deal with nodata values
         nodata = rio.open(raster_path).nodata
-        # Todo: The name should be the name of the layer
         self.plot_raster_histogram(dat, nodata, raster.name())
-        # dat1d = np.ravel(dat)
-        # band_data = np.delete(dat1d, np.where(dat1d == nodata))
-        #
-        # print("Computing histogram")
-        # hist, bin_edges = np.histogram(band_data,
-        #                                range=(np.nanmin(band_data), np.nanmax(band_data)),
-        #                                bins=int(self.num_bins_input.text()), density=False)
-        #
-        # print("Plotting histogram")
-        # bar_chart = pg.BarGraphItem(x0=bin_edges[:-1], x1=bin_edges[1:], height=hist, pen='w', brush=(0, 0, 255, 150))
-        # self.pltItem.clear()
-        # self.pltItem.addItem(bar_chart)
-        # self.pltItem.setTitle(raster.name())
-        # self.pltItem.setLabel(axis='left', text='Pixel Counts')
-        # self.pltItem.setLabel(axis='bottom', text=f"Band {str(self.raster_band_input.currentBand())}")
-        #
-        # print("Display statistics")
-        # self.text_box.setText(f'NumPixels = {band_data.size}\n'
-        #                       f'NumNaN = {np.count_nonzero(np.isnan(band_data))}\n'
-        #                       f'NumNodata = {dat1d.size - band_data.size}\n'
-        #                       f'Min = {np.nanmin(band_data)}\n'
-        #                       f'Max = {np.nanmax(band_data)}\n'
-        #                       f'Mean = {np.nanmean(band_data)}\n'
-        #                       f'Median = {np.nanmedian(band_data)}\n'
-        #                       f'Var = {np.nanvar(band_data)}')
+
 
     def plot_raster_histogram(self, data, nodata, Name):
         dat1d = np.ravel(data)
