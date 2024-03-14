@@ -14,6 +14,7 @@ from .tabs.Rasterization import RasterizationTab
 from .tabs.AddLayers import AddLayersTab
 from .tabs.SRI import SRITab
 from .tabs.TA2 import TA2Tab
+from .tabs.Sciencebase import SciencebaseTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
@@ -63,6 +64,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.beak_tab               = BeakTab(self, self.tabWidget)
         self.ta2_tab                = TA2Tab(self, self.tabWidget)
         self.aws_tab                = AWSTab(self, self.tabWidget)
+        self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)
 
         # add tabs to parent
         # addToParentLayout(self.tabWidget)
