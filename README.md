@@ -1,6 +1,6 @@
 **This document is hosted at https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/README.md**
 # statmagic_gui
-The QGIS plugin front end for [StatMaGIC](https://github.com/DARPA-CRITICALMAAS/mtri_statmagic_backend).
+The QGIS plugin front end for [StatMaGIC](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-backend).
 
 This user guide is intended to assist in the installation, set-up, and use of the StatMaGIC QGIS Plug-In developed under the DARPA CriticalMAAS for USGS end users.
 
