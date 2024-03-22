@@ -36,6 +36,7 @@ class SRI_PopUp_Menu(QDialog):
         self.iface = parent.iface
         super(SRI_PopUp_Menu, self).__init__(parent)
         QDialog.setWindowTitle(self, "SRI Modelling Menu")
+        self.setLayout(QtWidgets.QVBoxLayout())
 
         ## Top Frame - Select data source and AOI to
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)

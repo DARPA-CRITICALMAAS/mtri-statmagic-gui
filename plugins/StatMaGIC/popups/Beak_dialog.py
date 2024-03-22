@@ -27,6 +27,7 @@ class Beak_PopUp_Menu(QDialog):
         self.iface = parent.iface
         super(Beak_PopUp_Menu, self).__init__(parent)
         QDialog.setWindowTitle(self, "Beak Modelling Menu")
+        self.setLayout(QtWidgets.QVBoxLayout())
 
         ##### TOP FRAME #####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
