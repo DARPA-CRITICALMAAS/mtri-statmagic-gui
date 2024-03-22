@@ -20,6 +20,8 @@ from ..fileops import gdalSave, parse_vector_source
 from ..gui_helpers import *
 from ..layerops import addGreyScaleLayer, apply_model_to_array, dataframeFromSampledPoints, dataframFromSampledPolys
 from ..plotting import makePCAplot
+from ..popups.SRI_dialog import SRI_PopUp_Menu
+from ..popups.Beak_dialog import Beak_PopUp_Menu
 
 
 class TrainingPointsTab(TabBase):
@@ -52,6 +54,11 @@ class TrainingPointsTab(TabBase):
         self.with_selected_training = QCheckBox()
         self.with_selected_training.setToolTip('Will only consider currently selected features for model training')
 
+        self.sample_at_points_button = QPushButton()
+        self.sample_at_points_button.setText("Sample DataCube With Training Geometry")
+        self.sample_at_points_button.clicked.connect(self.sample_raster_with_training_layer)
+        self.sample_at_points_button.setToolTip('Creates an in memory dataframe of the sampled raster values for each '
+                                                'in the training layer geometry')
 
         topGrid.addWidget(label0, 0, 0)
         topGrid.addWidget(self.data_raster_box, 1, 0, 1, 2)
@@ -61,46 +68,47 @@ class TrainingPointsTab(TabBase):
         topGrid.addWidget(self.with_selected_training, 2, 1)
         topGrid.addWidget(label3, 2, 2)
         topGrid.addWidget(self.training_buffer_box, 2, 3)
+        topGrid.addWidget(self.sample_at_points_button, 3, 0, 1, 4)
 
         addToParentLayout(topFrame)
 
-        ## EDA Tools
-
-        edaFrame, edaGrid = addFrame(self, "Grid", "Panel", "Sunken", 3)
-
-        self.sample_at_points_button = QPushButton()
-        self.sample_at_points_button.setText("Sample DataCube With\n Training Geometry")
-        self.sample_at_points_button.clicked.connect(self.sample_raster_with_training_layer)
-
-        self.pca_plot_button = QPushButton()
-        self.pca_plot_button.setText('Create PCA Plot')
-        self.pca_plot_button.clicked.connect(self.runPCAplot)
-
-
-        self.pca_x = QSpinBox()
-        self.pca_x.setValue(1)
-        self.pca_y = QSpinBox()
-        self.pca_y.setValue(2)
-
-        self.dbscan_button = QPushButton()
-        self.dbsca_eta = QDoubleSpinBox()
-        self.dbscan_min_sampe = QSpinBox()
-
-        label4 = QLabel('PCA Plot Axis')
-        label5 = QLabel('PCA Plot X Axis')
-        label6 = QLabel('PCA Plot Y Axis')
-        label7 = QLabel('eps')
-        label8 = QLabel('min_samples')
-
-        edaGrid.addWidget(self.sample_at_points_button, 0, 0, 2, 2)
-        # edaGrid.addWidget(label4, 0, 3)
-        edaGrid.addWidget(label5, 1, 2, 1, 1)
-        edaGrid.addWidget(label6, 2, 2, 1, 1)
-        edaGrid.addWidget(self.pca_x, 1, 3, 1, 1)
-        edaGrid.addWidget(self.pca_y, 2, 3, 1, 1)
-        edaGrid.addWidget(self.pca_plot_button, 0, 4, 2, 1)
-
-        addToParentLayout(edaFrame)
+        # ## EDA Tools
+        #
+        # edaFrame, edaGrid = addFrame(self, "Grid", "Panel", "Sunken", 3)
+        #
+        # self.sample_at_points_button = QPushButton()
+        # self.sample_at_points_button.setText("Sample DataCube With\n Training Geometry")
+        # self.sample_at_points_button.clicked.connect(self.sample_raster_with_training_layer)
+        #
+        # self.pca_plot_button = QPushButton()
+        # self.pca_plot_button.setText('Create PCA Plot')
+        # self.pca_plot_button.clicked.connect(self.runPCAplot)
+        #
+        #
+        # self.pca_x = QSpinBox()
+        # self.pca_x.setValue(1)
+        # self.pca_y = QSpinBox()
+        # self.pca_y.setValue(2)
+        #
+        # self.dbscan_button = QPushButton()
+        # self.dbsca_eta = QDoubleSpinBox()
+        # self.dbscan_min_sampe = QSpinBox()
+        #
+        # label4 = QLabel('PCA Plot Axis')
+        # label5 = QLabel('PCA Plot X Axis')
+        # label6 = QLabel('PCA Plot Y Axis')
+        # label7 = QLabel('eps')
+        # label8 = QLabel('min_samples')
+        #
+        # edaGrid.addWidget(self.sample_at_points_button, 0, 0, 2, 2)
+        # # edaGrid.addWidget(label4, 0, 3)
+        # edaGrid.addWidget(label5, 1, 2, 1, 1)
+        # edaGrid.addWidget(label6, 2, 2, 1, 1)
+        # edaGrid.addWidget(self.pca_x, 1, 3, 1, 1)
+        # edaGrid.addWidget(self.pca_y, 2, 3, 1, 1)
+        # edaGrid.addWidget(self.pca_plot_button, 0, 4, 2, 1)
+        #
+        # addToParentLayout(edaFrame)
 
         ## Modelling Options
         isoFrame, isoLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
@@ -152,6 +160,24 @@ class TrainingPointsTab(TabBase):
 
         isoLayout.addLayout(modelling_main)
         addToParentLayout(isoFrame)
+
+        ##---------- Area for the Beak and SRI tabs ---------------- ##
+        ta3Frame, ta3Layout = addFrame(self, "HBox", "Panel", "Sunken", 3)
+        # ta3FrameLabel = addLabel(ta3Layout, "TA-3 Modelling Menus")
+        # makeLabelBig(ta3FrameLabel)
+
+        self.launch_sri_button = QPushButton()
+        self.launch_sri_button.setText("Open SRI Menu")
+        self.launch_sri_button.clicked.connect(self.launch_sri)
+
+        self.launch_beak_button = QPushButton()
+        self.launch_beak_button.setText("Open Beak Menu")
+        self.launch_beak_button.clicked.connect(self.launch_beak)
+
+        ta3Layout.addWidget(self.launch_sri_button)
+        ta3Layout.addWidget(self.launch_beak_button)
+
+        addToParentLayout(ta3Frame)
 
 
     # def populate_comboboxes(self):
@@ -266,3 +292,11 @@ class TrainingPointsTab(TabBase):
             print('invalid selection')
         if data_input:
             makePCAplot(data_input, pca_axis_1, pca_axis_2, plotsubVal, data_sel)
+
+    def launch_sri(self):
+        popup = SRI_PopUp_Menu(self.parent)
+        self.sri_menu = popup.show()
+
+    def launch_beak(self):
+        popup = Beak_PopUp_Menu(self.parent)
+        self.sri_menu = popup.show()
