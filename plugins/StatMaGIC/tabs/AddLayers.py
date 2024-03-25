@@ -9,7 +9,7 @@ from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_raste
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog
+from PyQt5.QtWidgets import QPushButton, QListWidget, QTableWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QHeaderView, QTableWidgetItem
 from qgis.gui import QgsFileWidget
 
 from .TabBase import TabBase
@@ -111,9 +111,18 @@ class AddLayersTab(TabBase):
         self.addLayerButton.clicked.connect(self.addLayerDialog)
         self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
 
+        # Layer table
+        # self.layer_table = table_combo_widget
+        self.layer_table = QTableWidget(1, 4)
+        self.layer_table.setAlternatingRowColors(True)
+        self.layer_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.layer_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        # self.layer_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.layer_table.setHorizontalHeaderLabels(['Source', 'Band Name', 'Path', 'Resampling'])
+
         # Layer List
-        self.addLayerList = QListWidget()
-        self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        # self.addLayerList = QListWidget()
+        # self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
 
         # Process List Button
         self.processAddLayerButton = QPushButton()
@@ -122,7 +131,8 @@ class AddLayersTab(TabBase):
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
 
         bottomFormLayout.addWidget(self.addLayerButton)
-        bottomFormLayout.addWidget(self.addLayerList)
+        # bottomFormLayout.addWidget(self.addLayerList)
+        bottomFormLayout.addWidget(self.layer_table)
         bottomFormLayout.addWidget(self.processAddLayerButton)
 
         # Core Count Selection
@@ -146,6 +156,7 @@ class AddLayersTab(TabBase):
         addToParentLayout(bottomFrame)
 
         # initialize lists to hold stuff later
+        self.sourcelist = []
         self.pathlist = []
         self.methodlist = []
         self.desclist = []
@@ -160,11 +171,12 @@ class AddLayersTab(TabBase):
         popup = raster_process_menu(self.parent, raster_layer=raster)
         popup.exec_()
 
-
-
     def addLayerDialog(self):
         popup = AddRasterLayer(self)
         popup.exec_()
+        # Todo: This next line should only really get run if accept was the dialog result
+        # Todo: Figure out how to determine if close was from accept or cancel
+        self.refreshTable()
 
     def chooseLayersFromCubeDialog(self):
         rasterFilePath = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
@@ -174,6 +186,18 @@ class AddLayersTab(TabBase):
     def chooseLayersFromCloudDialog(self):
         popup = CloudFrontSelectionDialog(self.parent)
         popup.exec_()
+        band_list = popup.band_list
+        cog_list = popup.cog_paths
+        print(band_list)
+        srs = ['CloudFront' for x in range(len(band_list))]
+        self.pathlist.extend(cog_list)
+        self.desclist.extend(band_list)
+        self.sourcelist.extend(srs)
+        print(self.desclist)
+
+        self.refreshTable()
+
+
 
     def process_add_raster_list(self):
         try:
@@ -277,3 +301,28 @@ class AddLayersTab(TabBase):
 
     def refreshList(self, elem):
         self.addLayerList.addItem(elem)
+
+    def refreshTable(self):
+        # Todo: How to make this remember what is already in table and not rewrite
+        # Don't want to undo table edits
+        # Could just keep a counter that gets updated each time refreshTable is called
+        print(len(self.pathlist))
+        self.layer_table.setRowCount(len(self.pathlist))
+        for i in range(len(self.pathlist)):
+            print(i)
+            print(self.sourcelist[i])
+            print(self.desclist[i])
+            print(self.pathlist[i])
+            self.layer_table.setItem(i, 0, QTableWidgetItem(self.sourcelist[i]))
+            self.layer_table.setItem(i, 1, QTableWidgetItem(self.desclist[i]))
+            self.layer_table.setItem(i, 2, QTableWidgetItem(self.pathlist[i]))
+
+            rs_cb = QComboBox()
+            rs_cb.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
+            self.layer_table.setCellWidget(i, 3, rs_cb)
+
+        # pos = len(self.pathlist) - 1
+        # self.layer_table.setItem(pos, 2, QTableWidgetItem(self.pathlist[pos]))
+        # rs_cb = QComboBox()
+        # rs_cb.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
+        # self.layer_table.setCellWidget(pos, 3, rs_cb)

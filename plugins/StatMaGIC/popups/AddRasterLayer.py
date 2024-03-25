@@ -65,6 +65,7 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.buttonBox.rejected.connect(self.cancel)
 
     def returnLayerInfo(self):
+        # Todo: this needs to have some kind of check number of bands and then act accordingly
         currentfile = self.comboBox.currentLayer()
         filepath = self.fileInput.filePath()
         method = self.samplingBox.currentText()
@@ -72,8 +73,11 @@ class AddRasterLayer(QtWidgets.QDialog):
 
         if currentfile:
             file_source = currentfile.source()
+            self.parent.sourcelist.append('QgsLayer')
         elif filepath:
             file_source = filepath
+            self.parent.sourcelist.append('Local File')
+
         else:
             print('No selection made')
 
@@ -85,10 +89,11 @@ class AddRasterLayer(QtWidgets.QDialog):
             self.parent.desclist.append(description)
 
         self.parent.pathlist.append(file_source)
-        self.parent.methodlist.append(method)
 
+        # self.parent.methodlist.append(method)
 
-        self.parent.refreshList(file_source)
+        # self.parent.refreshList(file_source)
+        # self.parent.refreshTable()
         self.close()
 
     def cancel(self):

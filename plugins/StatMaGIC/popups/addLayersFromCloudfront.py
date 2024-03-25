@@ -16,6 +16,8 @@ class CloudFrontSelectionDialog(QDialog):
     def __init__(self, parent):
         self.parent = parent
         self.iface = parent.iface
+        self.band_list = None
+        self.cog_paths = None
         QDialog.__init__(self)
         self.setGeometry(500, 300, 500, 300)
         # Create an instance of the widget wrapper class
@@ -23,7 +25,24 @@ class CloudFrontSelectionDialog(QDialog):
         self.list_widget.set_items(list(nationdata_raster_dict.keys()))
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.list_widget)
+        ## Testing
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.layout.addWidget(self.buttonBox)
 
+        self.signals_connection()
+
+    def return_bands(self):
+        self.band_list = self.list_widget.return_checked_items()
+        self.cog_paths = [nationdata_raster_dict[key] for key in self.band_list]
+        self.close()
+
+    def signals_connection(self):
+        self.buttonBox.accepted.connect(self.return_bands)
+        self.buttonBox.rejected.connect(self.cancel)
+
+
+    def cancel(self):
+        self.close()
 
 class CustomCheckableListWidget(QWidget):
 
@@ -47,14 +66,14 @@ class CustomCheckableListWidget(QWidget):
         self.num_threads_resamp_spinBox.setSingleStep(1)
         self.num_threads_resamp_spinBox.setValue(1)
         self.rioXcheck = QCheckBox('Use rioxarray', self)
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        # self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.layout.addWidget(self.filter_le)
         self.layout.addWidget(self.items_le)
         self.layout.addWidget(self.lw)
         self.layout.addWidget(self.samplingBox)
         self.layout.addWidget(self.num_threads_resamp_spinBox)
         self.layout.addWidget(self.rioXcheck)
-        self.layout.addWidget(self.buttonBox)
+        # self.layout.addWidget(self.buttonBox)
 
         self.lw.viewport().installEventFilter(self)
 
@@ -67,7 +86,7 @@ class CustomCheckableListWidget(QWidget):
         self.context_menu.addAction(self.action_check_all)
         self.context_menu.addAction(self.action_uncheck_all)
 
-        self.signals_connection()
+        # self.signals_connection()
 
     def select_all(self):
         for i in range(self.lw.count()):
@@ -130,45 +149,45 @@ class CustomCheckableListWidget(QWidget):
         selection.sort()
         return selection
 
-    def run_add_layers(self):
-        bandlist = self.return_checked_items()
-        method = self.samplingBox.currentText()
-        num_threads = self.num_threads_resamp_spinBox.value()
-        use_rioX = self.rioXcheck.isChecked()
+    # def run_add_layers(self):
+    #     bandlist = self.return_checked_items()
+    #     method = self.samplingBox.currentText()
+    #     num_threads = self.num_threads_resamp_spinBox.value()
+    #     use_rioX = self.rioXcheck.isChecked()
+    #
+    #     # Right now this is just doing the same resampling for all
+    #     # Todo: Create a flow where the user can select which bands to resample with which method
+    #     rs_list = [resampling_dict.get(method) for i in range(len(bandlist))]
+    #     cog_paths = [nationdata_raster_dict[key] for key in bandlist]
+    #
+    #
+    #     import time
+    #     t = time.time()
+    #
+    #     if use_rioX:
+    #         # Using rioxarray functions
+    #         resampled_arrays = match_cogList_to_template_andStack(self.parent.parent.meta_data['template_path'],
+    #                                                               cog_paths, rs_list)
+    #     else:
+    #         # With rasterio and previously defined methods
+    #         resampled_arrays = match_and_stack_rasters(self.parent.parent.meta_data['template_path'], cog_paths, rs_list, num_threads)
+    #
+    #     add_matched_arrays_to_data_raster(self.parent.parent.meta_data['data_raster_path'], resampled_arrays, bandlist)
+    #
+    #     # capture elapsed time
+    #     elapsed = time.time() - t
+    #     message = "Layers appended to the raster data stack in {} seconds".format(elapsed)
+    #     print(message)
+    #
+    #     QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
+    #     # self.iface.mapCanvas().refreshAllLayers()
+    #     data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
+    #     QgsProject.instance().addMapLayer(data_raster)
+    #     self.cancel()
 
-        # Right now this is just doing the same resampling for all
-        # Todo: Create a flow where the user can select which bands to resample with which method
-        rs_list = [resampling_dict.get(method) for i in range(len(bandlist))]
-        cog_paths = [nationdata_raster_dict[key] for key in bandlist]
-
-
-        import time
-        t = time.time()
-
-        if use_rioX:
-            # Using rioxarray functions
-            resampled_arrays = match_cogList_to_template_andStack(self.parent.parent.meta_data['template_path'],
-                                                                  cog_paths, rs_list)
-        else:
-            # With rasterio and previously defined methods
-            resampled_arrays = match_and_stack_rasters(self.parent.parent.meta_data['template_path'], cog_paths, rs_list, num_threads)
-
-        add_matched_arrays_to_data_raster(self.parent.parent.meta_data['data_raster_path'], resampled_arrays, bandlist)
-
-        # capture elapsed time
-        elapsed = time.time() - t
-        message = "Layers appended to the raster data stack in {} seconds".format(elapsed)
-        print(message)
-
-        QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
-        # self.iface.mapCanvas().refreshAllLayers()
-        data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
-        QgsProject.instance().addMapLayer(data_raster)
-        self.cancel()
-
-    def signals_connection(self):
-        self.buttonBox.accepted.connect(self.run_add_layers)
-        self.buttonBox.rejected.connect(self.cancel)
+    # def signals_connection(self):
+    #     self.buttonBox.accepted.connect(self.run_add_layers)
+    #     self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
         # Todo: this closes the CustomCheckableListWidget but should close the RasterBandSelectionDialog
