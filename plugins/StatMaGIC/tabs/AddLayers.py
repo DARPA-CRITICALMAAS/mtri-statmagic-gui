@@ -18,9 +18,10 @@ from ..constants import resampling_dict
 from ..popups.AddRasterLayer import AddRasterLayer
 from ..popups.addLayersFromExisting import RasterBandSelectionDialog
 from ..popups.addLayersFromCloudfront import CloudFrontSelectionDialog
+from ..popups.rasterLayrers_process_menu import raster_process_menu
 from ..fileops import path_mkdir
 from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
-
+from ..popups.choose_raster_dialog import SelectRasterLayer
 
 class AddLayersTab(TabBase):
     def __init__(self, parent, tabWidget):
@@ -28,6 +29,7 @@ class AddLayersTab(TabBase):
 
         self.parent = parent
         self.iface = self.parent.iface
+        self.target_raster_layer = None
 
         # #### TOP FRAME - Macrostrat Tools ####
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
@@ -80,8 +82,6 @@ class AddLayersTab(TabBase):
 
         AddLayerButtonsLayout = QGridLayout()
 
-
-
         self.addfromCubeButton = QPushButton()
         self.addfromCubeButton.setText('Choose Layers From \n An existing Raster')
         self.addfromCubeButton.clicked.connect(self.chooseLayersFromCubeDialog)
@@ -93,8 +93,15 @@ class AddLayersTab(TabBase):
         self.addfromCloudButton.setToolTip(
             'Opens up a new window with options to select layers to add from CloudFront COGs.')
 
+        self.inspectDataCubeLayers = QPushButton()
+        self.inspectDataCubeLayers.setText('Data Layer Table')
+        self.inspectDataCubeLayers.clicked.connect(self.openDataLayerTable)
+        self.addfromCloudButton.setToolTip(
+            'Opens up a new window with options resample and transform data layers within the data raster.')
+
         AddLayerButtonsLayout.addWidget(self.addfromCubeButton, 0, 0)
         AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 0, 1)
+        AddLayerButtonsLayout.addWidget(self.inspectDataCubeLayers, 1, 0, 1, 2)
 
         bottomFormLayout = QVBoxLayout()
 
@@ -142,6 +149,18 @@ class AddLayersTab(TabBase):
         self.pathlist = []
         self.methodlist = []
         self.desclist = []
+
+    def openDataLayerTable(self):
+        raster_path_popup = SelectRasterLayer(self.parent)
+        raster_path_popup.exec_()
+        print('here')
+        raster = raster_path_popup.chosen_raster
+        print(raster)
+
+        popup = raster_process_menu(self.parent, raster_layer=raster)
+        popup.exec_()
+
+
 
     def addLayerDialog(self):
         popup = AddRasterLayer(self)

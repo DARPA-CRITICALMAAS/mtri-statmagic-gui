@@ -35,6 +35,8 @@ class SelectRasterLayer(QtWidgets.QDialog):
         layout.addWidget(self.buttonBox)
 
         self.comboBox.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.comboBox.allowEmptyLayer()
+        self.comboBox.setCurrentIndex(-1)
         self.signals_connection()
         self.setLayout(layout)
 
@@ -54,7 +56,9 @@ class SelectRasterLayer(QtWidgets.QDialog):
         else:
             print('No selection made')
 
-        self.parent.drop_layer = self.chosen_raster
+
+
+        # self.parent.drop_layer = self.chosen_raster
         self.closingPlugin.emit()
         self.close()
 

@@ -179,6 +179,13 @@ class TrainingPointsTab(TabBase):
 
         addToParentLayout(ta3Frame)
 
+        # ---------- Trying to add buttons for label classes dynamically ------
+        # self.add_label_button = QPushButton()
+        # self.add_label_button.setText("Add Label to grid")
+        # self.add_label_button.clicked.connect(self.add_label_to_grid)
+        #
+        # labelFrame, label_layout = addFrame(self, "Grid", "Panel", "Sunken", 3)
+
 
     # def populate_comboboxes(self):
     #     self.training_layer_combo_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
@@ -300,3 +307,13 @@ class TrainingPointsTab(TabBase):
     def launch_beak(self):
         popup = Beak_PopUp_Menu(self.parent)
         self.sri_menu = popup.show()
+
+    def add_label_to_grid(self):
+        # This should pop up a dialog that asks the user what value the label will have, which
+        # vector data set it will append to, and which field(column) of the vector data will hold
+        # the value. A button is then added to a grid layout with the button text set to f"Draw {value}
+        # polygon. When the added button is pressed the user can draw geometry on the screen and the
+        # geometry and set value is added to the vector dataset.
+        # https://stackoverflow.com/questions/62918743/how-to-create-a-qpushbutton-dynamically-in-qgridlayout
+        # https://stackoverflow.com/questions/49948742/pyqt-add-qpushbutton-dynamically
+        pass

@@ -4,7 +4,8 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
 from .tabs.AWS import AWSTab
-from .tabs.Beak import BeakTab
+# from .tabs.Beak import BeakTab
+# from .tabs.SRI import SRITab
 from .tabs.Geochemistry import GeochemistryTab
 from .tabs.InitiateCMA import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
@@ -12,7 +13,7 @@ from .tabs.TrainingPoints import TrainingPointsTab
 from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
 from .tabs.AddLayers import AddLayersTab
-from .tabs.SRI import SRITab
+
 from .tabs.TA2 import TA2Tab
 from .tabs.Sciencebase import SciencebaseTab
 
@@ -60,8 +61,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
         self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
-        self.sri_tab                = SRITab(self, self.tabWidget)
-        self.beak_tab               = BeakTab(self, self.tabWidget)
+        # self.sri_tab                = SRITab(self, self.tabWidget)
+        # self.beak_tab               = BeakTab(self, self.tabWidget)
         self.ta2_tab                = TA2Tab(self, self.tabWidget)
         self.aws_tab                = AWSTab(self, self.tabWidget)
         self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)

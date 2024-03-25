@@ -32,14 +32,11 @@ class InspectLayersTab(TabBase):
 
 
     def popup_drop_layer_dialogue(self):
-        # Todo: make a popup to select which raster layer will have bands dropped
-        # Probably a simple dialog with a MapLayerComboBox
-        # The raster_layer should be a QgsRasterLayer
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
-        # Todo: I can't figure out why this is self.parent and not self. Works but maybe should be altered....?
-        print(self.parent.drop_layer)
-        popup = RasterBandSelectionDialog(self.parent, raster_layer=self.parent.drop_layer)
+        raster = raster_path_popup.chosen_raster
+
+        popup = RasterBandSelectionDialog(self.parent, raster_layer=raster)
         popup.exec_()
 
     def popup_make_hist_plot(self):
