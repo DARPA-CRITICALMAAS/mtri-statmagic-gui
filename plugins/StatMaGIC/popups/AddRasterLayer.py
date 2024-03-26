@@ -20,37 +20,24 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.parent = parent
         self.initUI()
 
+        self.currentfile = None
+        self.description = None
+
     def initUI(self):
         layout = QtWidgets.QVBoxLayout()
 
-        self.returnList = []
-
         self.comboBox = QgsMapLayerComboBox(self)
-        self.fileInput = QgsFileWidget(self)
         self.descriptionBox = QtWidgets.QLineEdit(self)
-        self.samplingBox = QtWidgets.QComboBox(self)
-        self.inheritDescriptCheck = QtWidgets.QCheckBox(self)
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
-        self.samplingBox.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
-
-        label1 = QtWidgets.QLabel('Get from loaded layer:')
-        label2 = QtWidgets.QLabel('Get from file path:')
-        label3 = QtWidgets.QLabel('Select resampling method:')
-        label4 = QtWidgets.QLabel('Add text description for band name:')
-        label5 = QtWidgets.QLabel('Inherit already defined band descriptions')
+        label1 = QtWidgets.QLabel('Choose layer:')
+        label4 = QtWidgets.QLabel('Add text for band name:')
         label6 = QtWidgets.QLabel('Confirm Selection:')
 
         layout.addWidget(label1)
         layout.addWidget(self.comboBox)
-        layout.addWidget(label2)
-        layout.addWidget(self.fileInput)
-        layout.addWidget(label3)
-        layout.addWidget(self.samplingBox)
         layout.addWidget(label4)
         layout.addWidget(self.descriptionBox)
-        layout.addWidget(label5)
-        layout.addWidget(self.inheritDescriptCheck)
         layout.addWidget(label6)
         layout.addWidget(self.buttonBox)
 
@@ -65,35 +52,8 @@ class AddRasterLayer(QtWidgets.QDialog):
         self.buttonBox.rejected.connect(self.cancel)
 
     def returnLayerInfo(self):
-        # Todo: this needs to have some kind of check number of bands and then act accordingly
-        currentfile = self.comboBox.currentLayer()
-        filepath = self.fileInput.filePath()
-        method = self.samplingBox.currentText()
-        inheritDesc = self.inheritDescriptCheck.isChecked()
-
-        if currentfile:
-            file_source = currentfile.source()
-            self.parent.sourcelist.append('QgsLayer')
-        elif filepath:
-            file_source = filepath
-            self.parent.sourcelist.append('Local File')
-
-        else:
-            print('No selection made')
-
-        if inheritDesc:
-            description = rasterBandDescAslist(file_source)
-            self.parent.desclist.extend(description)
-        else:
-            description = self.descriptionBox.text()
-            self.parent.desclist.append(description)
-
-        self.parent.pathlist.append(file_source)
-
-        # self.parent.methodlist.append(method)
-
-        # self.parent.refreshList(file_source)
-        # self.parent.refreshTable()
+        self.currentfile = self.comboBox.currentLayer().source()
+        self.description = self.descriptionBox.text()
         self.close()
 
     def cancel(self):

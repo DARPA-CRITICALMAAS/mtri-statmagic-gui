@@ -83,7 +83,7 @@ class AddLayersTab(TabBase):
         AddLayerButtonsLayout = QGridLayout()
 
         self.addfromCubeButton = QPushButton()
-        self.addfromCubeButton.setText('Choose Layers From \n An existing Raster')
+        self.addfromCubeButton.setText('Add Layers From \n An existing Raster')
         self.addfromCubeButton.clicked.connect(self.chooseLayersFromCubeDialog)
         self.addfromCubeButton.setToolTip('Opens up a new window with options to select layers to add from a existing  dataset.')
 
@@ -93,32 +93,43 @@ class AddLayersTab(TabBase):
         self.addfromCloudButton.setToolTip(
             'Opens up a new window with options to select layers to add from CloudFront COGs.')
 
-        self.inspectDataCubeLayers = QPushButton()
-        self.inspectDataCubeLayers.setText('Data Layer Table')
-        self.inspectDataCubeLayers.clicked.connect(self.openDataLayerTable)
-        self.addfromCloudButton.setToolTip(
-            'Opens up a new window with options resample and transform data layers within the data raster.')
+        self.addfromCurrentButton = QPushButton()
+        self.addfromCurrentButton.setText('Add Layer from \ncurrent QGIS project')
+        self.addfromCurrentButton.clicked.connect(self.addLayerDialog)
+        self.addfromCloudButton.setToolTip('Opens up window to select from current project layers')
 
         AddLayerButtonsLayout.addWidget(self.addfromCubeButton, 0, 0)
         AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 0, 1)
-        AddLayerButtonsLayout.addWidget(self.inspectDataCubeLayers, 1, 0, 1, 2)
+        AddLayerButtonsLayout.addWidget(self.addfromCurrentButton, 0, 2)
 
         bottomFormLayout = QVBoxLayout()
 
         # Add Layer Button
-        self.addLayerButton = QPushButton()
-        self.addLayerButton.setText('Open Add Layer Dialog And Add To List')
-        self.addLayerButton.clicked.connect(self.addLayerDialog)
-        self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
+        # self.addLayerButton = QPushButton()
+        # self.addLayerButton.setText('Open Add Layer Dialog And Add To List')
+        # self.addLayerButton.clicked.connect(self.addLayerDialog)
+        # self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
 
         # Layer table
-        # self.layer_table = table_combo_widget
-        self.layer_table = QTableWidget(1, 4)
+        self.layer_table = QTableWidget(0, 4)
         self.layer_table.setAlternatingRowColors(True)
-        self.layer_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # Looking at the cloudfront for how to have a mouse right click drop row
+        # Will need to grab the event filter method and select_all as example to complete
+        # self.context_menu = QMenu(self)
+        # self.action_check_all = QAction('Select All', self)
+        # self.action_check_all.triggered.connect(self.select_all)
+        # self.action_uncheck_all = QAction('De-select All', self)
+        # self.action_uncheck_all.triggered.connect(self.deselect_all)
+
+
+        # self.layer_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         # self.layer_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         # self.layer_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.layer_table.setHorizontalHeaderLabels(['Source', 'Band Name', 'Path', 'Resampling'])
+        self.layer_table.setHorizontalHeaderLabels(['Band Name', 'Resampling', 'Path', 'Source'])
+        self.layer_table.setColumnWidth(0, 200)
+        self.layer_table.setColumnWidth(1, 100)
+        self.layer_table.setColumnWidth(2, 75)
+        self.layer_table.setColumnWidth(3, 75)
 
         # Layer List
         # self.addLayerList = QListWidget()
@@ -130,7 +141,7 @@ class AddLayersTab(TabBase):
         self.processAddLayerButton.clicked.connect(self.process_add_raster_list)
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
 
-        bottomFormLayout.addWidget(self.addLayerButton)
+        # bottomFormLayout.addWidget(self.addLayerButton)
         # bottomFormLayout.addWidget(self.addLayerList)
         bottomFormLayout.addWidget(self.layer_table)
         bottomFormLayout.addWidget(self.processAddLayerButton)
@@ -160,8 +171,11 @@ class AddLayersTab(TabBase):
         self.pathlist = []
         self.methodlist = []
         self.desclist = []
+        self.local_band_indices = []
 
     def openDataLayerTable(self):
+        # Todo: This functionality should be exposed at the SRI and BEAK tabs and
+        # switched to have scaling functions for each band in the raster
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
         print('here')
@@ -173,33 +187,43 @@ class AddLayersTab(TabBase):
 
     def addLayerDialog(self):
         popup = AddRasterLayer(self)
-        popup.exec_()
-        # Todo: This next line should only really get run if accept was the dialog result
-        # Todo: Figure out how to determine if close was from accept or cancel
-        self.refreshTable()
+        if popup.exec_() == 0:
+            filepath = popup.currentfile
+            description = popup.description
+            self.pathlist.append(filepath)
+            self.desclist.append(description)
+            self.sourcelist.append('Qgs')
+            self.refreshTable()
 
     def chooseLayersFromCubeDialog(self):
         rasterFilePath = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
         popup = RasterBandSelectionDialog(self.parent, rasterFilePath[0])
-        popup.exec_()
+        if popup.exec_() == 0:
+            band_list = popup.desc_list
+            raster_path = popup.raster_layer_path
+            band_indexs = popup.index_list
+            srs = ['Local' for x in range(len(band_list))]
+            paths = [raster_path for x in range(len(band_list))]
+            self.pathlist.extend(paths)
+            self.desclist.extend(band_list)
+            self.sourcelist.extend(srs)
+            # This will have to get used to select the bands
+            self.local_band_indices.append(band_indexs)
+            self.refreshTable()
 
     def chooseLayersFromCloudDialog(self):
         popup = CloudFrontSelectionDialog(self.parent)
-        popup.exec_()
-        band_list = popup.band_list
-        cog_list = popup.cog_paths
-        print(band_list)
-        srs = ['CloudFront' for x in range(len(band_list))]
-        self.pathlist.extend(cog_list)
-        self.desclist.extend(band_list)
-        self.sourcelist.extend(srs)
-        print(self.desclist)
-
-        self.refreshTable()
-
-
+        if popup.exec_() == 0:
+            band_list = popup.band_list
+            cog_list = popup.cog_paths
+            srs = ['CloudFront' for x in range(len(band_list))]
+            self.pathlist.extend(cog_list)
+            self.desclist.extend(band_list)
+            self.sourcelist.extend(srs)
+            self.refreshTable()
 
     def process_add_raster_list(self):
+        # Todo: Redo this to pull from table
         try:
             template_path = self.parent.meta_data['template_path']
             data_raster_path = self.parent.meta_data['data_raster_path']
@@ -303,26 +327,30 @@ class AddLayersTab(TabBase):
         self.addLayerList.addItem(elem)
 
     def refreshTable(self):
-        # Todo: How to make this remember what is already in table and not rewrite
-        # Don't want to undo table edits
-        # Could just keep a counter that gets updated each time refreshTable is called
-        print(len(self.pathlist))
-        self.layer_table.setRowCount(len(self.pathlist))
-        for i in range(len(self.pathlist)):
-            print(i)
-            print(self.sourcelist[i])
-            print(self.desclist[i])
-            print(self.pathlist[i])
-            self.layer_table.setItem(i, 0, QTableWidgetItem(self.sourcelist[i]))
-            self.layer_table.setItem(i, 1, QTableWidgetItem(self.desclist[i]))
-            self.layer_table.setItem(i, 2, QTableWidgetItem(self.pathlist[i]))
+        print(self.sourcelist)
+        print(self.desclist)
+        # Get current index of last row
+        rowPosition = self.layer_table.rowCount()
+        # Get total amount of layers to be added
+        numLayers = len(self.sourcelist)
+        # Calculate number of rows to add
+        numNewRow = numLayers - rowPosition
+        print(f"starting at row {rowPosition}")
+        # Todo: See here for setting things uneditable
+        # https://stackoverflow.com/questions/7727863/how-to-make-a-cell-in-a-qtablewidget-read-only
 
+        for i in range(numNewRow):
+            print(f"adding to table at row {rowPosition + i}")
+            # print(self.sourcelist[i])
+            print(self.desclist[i])
+            # print(self.pathlist[i])
+            self.layer_table.insertRow(rowPosition + i)
+            self.layer_table.setItem(rowPosition + i, 0, QTableWidgetItem(self.desclist[rowPosition + i]))
+            # Need to construct the combo box for each row
             rs_cb = QComboBox()
             rs_cb.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
-            self.layer_table.setCellWidget(i, 3, rs_cb)
+            rs_cb.setCurrentIndex(1)
+            self.layer_table.setCellWidget(rowPosition + i, 1, rs_cb)
+            self.layer_table.setItem(rowPosition + i, 2, QTableWidgetItem(self.pathlist[rowPosition + i]))
+            self.layer_table.setItem(rowPosition + i, 3, QTableWidgetItem(self.sourcelist[rowPosition + i]))
 
-        # pos = len(self.pathlist) - 1
-        # self.layer_table.setItem(pos, 2, QTableWidgetItem(self.pathlist[pos]))
-        # rs_cb = QComboBox()
-        # rs_cb.addItems(['nearest', 'bilinear', 'cubic', 'cubic_spline', 'lanczos', 'average', 'mode', 'gauss'])
-        # self.layer_table.setCellWidget(pos, 3, rs_cb)

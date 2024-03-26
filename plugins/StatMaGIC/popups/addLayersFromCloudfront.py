@@ -25,7 +25,6 @@ class CloudFrontSelectionDialog(QDialog):
         self.list_widget.set_items(list(nationdata_raster_dict.keys()))
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.list_widget)
-        ## Testing
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.layout.addWidget(self.buttonBox)
 
@@ -57,22 +56,22 @@ class CustomCheckableListWidget(QWidget):
         self.items_le.setReadOnly(True)
         self.lw = QListWidget(self)
         self.lw.setMinimumHeight(100)
-        self.samplingBox = QComboBox(self)
-        self.samplingBox.addItems(['nearest', 'bilinear', 'cubic'])
-        # Add the spinBox for num threads
-        self.num_threads_resamp_spinBox = QSpinBox()
-        self.num_threads_resamp_spinBox.setMaximum(32)
-        self.num_threads_resamp_spinBox.setMinimum(1)
-        self.num_threads_resamp_spinBox.setSingleStep(1)
-        self.num_threads_resamp_spinBox.setValue(1)
-        self.rioXcheck = QCheckBox('Use rioxarray', self)
-        # self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        # self.samplingBox = QComboBox(self)
+        # self.samplingBox.addItems(['nearest', 'bilinear', 'cubic'])
+        # # Add the spinBox for num threads
+        # self.num_threads_resamp_spinBox = QSpinBox()
+        # self.num_threads_resamp_spinBox.setMaximum(32)
+        # self.num_threads_resamp_spinBox.setMinimum(1)
+        # self.num_threads_resamp_spinBox.setSingleStep(1)
+        # self.num_threads_resamp_spinBox.setValue(1)
+        # self.rioXcheck = QCheckBox('Use rioxarray', self)
+        # # self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.layout.addWidget(self.filter_le)
         self.layout.addWidget(self.items_le)
         self.layout.addWidget(self.lw)
-        self.layout.addWidget(self.samplingBox)
-        self.layout.addWidget(self.num_threads_resamp_spinBox)
-        self.layout.addWidget(self.rioXcheck)
+        # self.layout.addWidget(self.samplingBox)
+        # self.layout.addWidget(self.num_threads_resamp_spinBox)
+        # self.layout.addWidget(self.rioXcheck)
         # self.layout.addWidget(self.buttonBox)
 
         self.lw.viewport().installEventFilter(self)
@@ -156,7 +155,6 @@ class CustomCheckableListWidget(QWidget):
     #     use_rioX = self.rioXcheck.isChecked()
     #
     #     # Right now this is just doing the same resampling for all
-    #     # Todo: Create a flow where the user can select which bands to resample with which method
     #     rs_list = [resampling_dict.get(method) for i in range(len(bandlist))]
     #     cog_paths = [nationdata_raster_dict[key] for key in bandlist]
     #

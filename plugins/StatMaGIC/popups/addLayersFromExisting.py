@@ -14,6 +14,8 @@ class RasterBandSelectionDialog(QDialog):
     def __init__(self, parent, raster_layer_path):
         self.parent = parent
         self.iface = parent.iface
+        self.desc_list = None
+        self.index_list = None
         self.raster_layer_path = raster_layer_path
         self.raster_layer = QgsRasterLayer(raster_layer_path)
         QDialog.__init__(self)
@@ -26,6 +28,23 @@ class RasterBandSelectionDialog(QDialog):
         self.list_widget.set_items(band_list)
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.list_widget)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.layout.addWidget(self.buttonBox)
+
+        self.signals_connection()
+
+    def return_bands(self):
+        descs, idxs = self.list_widget.return_checked_items()
+        self.desc_list = descs
+        self.index_list = idxs
+        self.close()
+
+    def signals_connection(self):
+        self.buttonBox.accepted.connect(self.return_bands)
+        self.buttonBox.rejected.connect(self.cancel)
+
+    def cancel(self):
+        self.close()
 
 
 class CustomCheckableListWidget(QWidget):
@@ -41,21 +60,21 @@ class CustomCheckableListWidget(QWidget):
         self.items_le.setReadOnly(True)
         self.lw = QListWidget(self)
         self.lw.setMinimumHeight(100)
-        self.samplingBox = QComboBox(self)
-        self.samplingBox.addItems(['nearest', 'bilinear', 'cubic'])
-        # Add the spinBox for num threads
-        self.num_threads_resamp_spinBox = QSpinBox()
-        self.num_threads_resamp_spinBox.setMaximum(32)
-        self.num_threads_resamp_spinBox.setMinimum(1)
-        self.num_threads_resamp_spinBox.setSingleStep(1)
-        self.num_threads_resamp_spinBox.setValue(1)
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        # self.samplingBox = QComboBox(self)
+        # self.samplingBox.addItems(['nearest', 'bilinear', 'cubic'])
+        # # Add the spinBox for num threads
+        # self.num_threads_resamp_spinBox = QSpinBox()
+        # self.num_threads_resamp_spinBox.setMaximum(32)
+        # self.num_threads_resamp_spinBox.setMinimum(1)
+        # self.num_threads_resamp_spinBox.setSingleStep(1)
+        # self.num_threads_resamp_spinBox.setValue(1)
+        # self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.layout.addWidget(self.filter_le)
         self.layout.addWidget(self.items_le)
         self.layout.addWidget(self.lw)
-        self.layout.addWidget(self.samplingBox)
-        self.layout.addWidget(self.num_threads_resamp_spinBox)
-        self.layout.addWidget(self.buttonBox)
+        # self.layout.addWidget(self.samplingBox)
+        # self.layout.addWidget(self.num_threads_resamp_spinBox)
+        # self.layout.addWidget(self.buttonBox)
 
         self.lw.viewport().installEventFilter(self)
 
@@ -68,7 +87,7 @@ class CustomCheckableListWidget(QWidget):
         self.context_menu.addAction(self.action_check_all)
         self.context_menu.addAction(self.action_uncheck_all)
 
-        self.signals_connection()
+        # self.signals_connection()
 
     def select_all(self):
         for i in range(self.lw.count()):
@@ -124,33 +143,35 @@ class CustomCheckableListWidget(QWidget):
 
     def return_checked_items(self):
         selection = []
+        idxs = []
         for i in range(self.lw.count()):
             item = self.lw.item(i)
             if item.checkState() == Qt.Checked:
                 selection.append(item.text())
+                idxs.append(i)
         selection.sort()
-        return selection
+        return selection, idxs
 
-    def run_add_layers(self):
-        bandlist = self.return_checked_items()
-        # Todo: Fix the bug in resampling. Hardcoded for demo
-        method = rasterio.enums.Resampling.nearest
-        # method = self.samplingBox.currentText()
-        num_threads = self.num_threads_resamp_spinBox.value()
-
-        add_selected_bands_from_source_raster_to_data_raster(self.parent.parent.meta_data['data_raster_path'],
-                                                             self.parent.raster_layer_path, bandlist, method,
-                                                             num_threads)
-
-        QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
-        # self.iface.mapCanvas().refreshAllLayers()
-        data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
-        QgsProject.instance().addMapLayer(data_raster)
-        self.cancel()
-
-    def signals_connection(self):
-        self.buttonBox.accepted.connect(self.run_add_layers)
-        self.buttonBox.rejected.connect(self.cancel)
+    # def run_add_layers(self):
+    #     bandlist = self.return_checked_items()
+    #     # Todo: Fix the bug in resampling. Hardcoded for demo
+    #     method = rasterio.enums.Resampling.nearest
+    #     # method = self.samplingBox.currentText()
+    #     num_threads = self.num_threads_resamp_spinBox.value()
+    #
+    #     add_selected_bands_from_source_raster_to_data_raster(self.parent.parent.meta_data['data_raster_path'],
+    #                                                          self.parent.raster_layer_path, bandlist, method,
+    #                                                          num_threads)
+    #
+    #     QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
+    #     # self.iface.mapCanvas().refreshAllLayers()
+    #     data_raster = QgsRasterLayer(self.parent.parent.meta_data['data_raster_path'], 'DataCube')
+    #     QgsProject.instance().addMapLayer(data_raster)
+    #     self.cancel()
+    #
+    # def signals_connection(self):
+    #     self.buttonBox.accepted.connect(self.run_add_layers)
+    #     self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
         # Todo: this closes the CustomCheckableListWidget but should close the RasterBandSelectionDialog
