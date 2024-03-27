@@ -9,6 +9,7 @@ from rasterio.plot import reshape_as_image
 from shapely.wkt import loads
 import numpy as np
 import geopandas as gpd
+import tempfile
 
 
 from statmagic_backend.utils import polytextreplace, loggingDecorator
@@ -176,7 +177,12 @@ def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
     attr = [attrs[i] for i in indices]
     gdf = gpd.GeoDataFrame(data=attr, geometry=geo, crs=crs.toWkt())
     # Todo: Should this be projected to the project CRS?
-    return QgsVectorLayer(gdf.to_json(), f"Selected Macrostrat {name}", "ogr")
+    tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
+    tfile = tempfile.mkstemp(dir=tfol, suffix='.json', prefix='macrostrat_selection')
+    output_file_path = tfile[1]
+    gdf.to_file(output_file_path, driver="GeoJSON")
+    return QgsVectorLayer(output_file_path, f"Selected Macrostrat {name}", "ogr")
+
 
 
 def set_project_crs(QgsRef):

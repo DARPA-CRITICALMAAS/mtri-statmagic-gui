@@ -223,7 +223,6 @@ class AddLayersTab(TabBase):
             self.refreshTable()
 
     def process_add_raster_list(self):
-        # Todo: Redo this to pull from table
         try:
             template_path = self.parent.meta_data['template_path']
             data_raster_path = self.parent.meta_data['data_raster_path']
@@ -231,19 +230,30 @@ class AddLayersTab(TabBase):
             message = "Error: please create a template raster first."
             self.iface.messageBar().pushMessage(message)
             return
-
         num_threads = self.num_threads_resamp_spinBox.value()
 
-        input_raster_list = self.pathlist
-        method_list = self.methodlist
+        # Set up inputs for the backend
+        raster_paths = self.pathlist
         description_list = self.desclist
+
+        # Extract table items
+        # Make a quick reference to the table
+        table = self.layer_table
+
+        method_list = []
+        for i in range(table.rowCount()):
+            method = table.cellWidget(i, 1).currentText()
+            pass
+
+
+        method_list = self.methodlist
 
         # Todo: Need to be able to handle multiband inputs
         # turn method string to resampling type using the dictionary in helperFuncs
         riomethod_list = [resampling_dict.get(m, m) for m in method_list]
         print(riomethod_list)
 
-        resampled_arrays = match_and_stack_rasters(template_path, input_raster_list, riomethod_list, num_threads=num_threads)
+        resampled_arrays = match_and_stack_rasters(template_path, raster_paths, riomethod_list, num_threads=num_threads)
         add_matched_arrays_to_data_raster(data_raster_path, resampled_arrays, description_list)
 
         self.addLayerList.clear()
