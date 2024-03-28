@@ -87,6 +87,7 @@ def dataframFromSampledPolys(gdf, rasterpath):
     bigdf = pd.concat(dflist)
     return bigdf
 
+
 def rasDF_fromPolyShape(rasterpath, feature, column_names, nodata):
     geom = [feature['geometry']]
     rdarr = mask(rio.open(rasterpath), shapes=geom, crop=True)[0]
@@ -177,12 +178,12 @@ def make_qgsVectorLayer_from_indices(indices, geoms, attrs, crs, name):
     attr = [attrs[i] for i in indices]
     gdf = gpd.GeoDataFrame(data=attr, geometry=geo, crs=crs.toWkt())
     # Todo: Should this be projected to the project CRS?
+    # Todo: shoudl this go to tempfile or the CMA proj dir
     tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
     tfile = tempfile.mkstemp(dir=tfol, suffix='.json', prefix='macrostrat_selection')
     output_file_path = tfile[1]
     gdf.to_file(output_file_path, driver="GeoJSON")
     return QgsVectorLayer(output_file_path, f"Selected Macrostrat {name}", "ogr")
-
 
 
 def set_project_crs(QgsRef):
@@ -212,6 +213,7 @@ def apply_model_to_array(model, array, raster_dict):
 
     return classout
 
+
 def qgis_poly_to_gdf(poly, poly_crs, raster_crs):
     wkt = poly.asWkt()
     shapely_geom = loads(wkt)
@@ -226,6 +228,7 @@ def qgis_poly_to_gdf(poly, poly_crs, raster_crs):
     gdf.to_crs(raster_crs, inplace=True)
     return gdf
 
+
 def shape_raster_array_to_data_array(raster_array, raster_dict, return_mask=False):
     da = np.transpose(raster_array, (1, 2, 0))  # convert from bands, rows, columns to rows, cols, bands
     data2D_full = da.reshape((da.shape[0] * da.shape[1], da.shape[2]))
@@ -239,6 +242,7 @@ def shape_raster_array_to_data_array(raster_array, raster_dict, return_mask=Fals
     else:
         data_nan = np.where(data2D_full == raster_dict['NoData'], np.nan, data2D_full)
         return data_nan
+
 
 def shape_data_array_to_raster_array(data_array, raster_dict, mask_array=None, nodata=None):
     rsizeX, rsizeY = raster_dict['sizeX'], raster_dict['sizeY']

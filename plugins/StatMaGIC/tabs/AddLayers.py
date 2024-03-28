@@ -5,7 +5,7 @@ from shapely import box
 
 from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_tiles, process_tiles, \
     dissolve_vector_files_by_property
-from statmagic_backend.dev.match_stack_raster_tools import match_and_stack_rasters, add_matched_arrays_to_data_raster
+from statmagic_backend.dev.match_stack_raster_tools import *
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
@@ -19,7 +19,7 @@ from ..popups.AddRasterLayer import AddRasterLayer
 from ..popups.addLayersFromExisting import RasterBandSelectionDialog
 from ..popups.addLayersFromCloudfront import CloudFrontSelectionDialog
 from ..popups.rasterLayrers_process_menu import raster_process_menu
-from ..fileops import path_mkdir
+from ..fileops import path_mkdir, kosher
 from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_macrostrat_features_as_qgsLayer
 from ..popups.choose_raster_dialog import SelectRasterLayer
 
@@ -171,11 +171,12 @@ class AddLayersTab(TabBase):
         self.pathlist = []
         self.methodlist = []
         self.desclist = []
-        self.local_band_indices = []
+        self.refreshTable()
 
     def openDataLayerTable(self):
         # Todo: This functionality should be exposed at the SRI and BEAK tabs and
         # switched to have scaling functions for each band in the raster
+        # Todo: Move from this tab
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
         print('here')
@@ -189,6 +190,7 @@ class AddLayersTab(TabBase):
         popup = AddRasterLayer(self)
         if popup.exec_() == 0:
             filepath = popup.currentfile
+            # Todo: Check if the 'Band #' in the text needs to be dropped
             description = popup.description
             self.pathlist.append(filepath)
             self.desclist.append(description)
@@ -203,12 +205,11 @@ class AddLayersTab(TabBase):
             raster_path = popup.raster_layer_path
             band_indexs = popup.index_list
             srs = ['Local' for x in range(len(band_list))]
-            paths = [raster_path for x in range(len(band_list))]
+            paths = [raster_path + '_' + str(x) for x in band_indexs]
+
             self.pathlist.extend(paths)
             self.desclist.extend(band_list)
             self.sourcelist.extend(srs)
-            # This will have to get used to select the bands
-            self.local_band_indices.append(band_indexs)
             self.refreshTable()
 
     def chooseLayersFromCloudDialog(self):
@@ -217,6 +218,7 @@ class AddLayersTab(TabBase):
             band_list = popup.band_list
             cog_list = popup.cog_paths
             srs = ['CloudFront' for x in range(len(band_list))]
+
             self.pathlist.extend(cog_list)
             self.desclist.extend(band_list)
             self.sourcelist.extend(srs)
@@ -235,6 +237,7 @@ class AddLayersTab(TabBase):
         # Set up inputs for the backend
         raster_paths = self.pathlist
         description_list = self.desclist
+        source_list = self.sourcelist
 
         # Extract table items
         # Make a quick reference to the table
@@ -242,31 +245,30 @@ class AddLayersTab(TabBase):
 
         method_list = []
         for i in range(table.rowCount()):
-            method = table.cellWidget(i, 1).currentText()
-            pass
+            method_string = table.cellWidget(i, 1).currentText()
+            method = resampling_dict.get(method_string)
+            method_list.append(method)
 
+        local, cog, order = parse_raster_processing_table_elements(raster_paths, source_list, method_list)
 
-        method_list = self.methodlist
+        local_array_list = match_and_stack_rasters(template_path, local['paths'], local['methods'], local['band'], num_threads)
+        cog_array_list = match_cogList_to_template_andStack(template_path, cog['paths'], cog['methods'])
+        array_stack = reorder_array_lists_to_stack(local_array_list, cog_array_list, order)
+        masked_stack = apply_template_mask_to_array(template_path, array_stack)
+        add_matched_arrays_to_data_raster(data_raster_path, masked_stack, description_list)
 
-        # Todo: Need to be able to handle multiband inputs
-        # turn method string to resampling type using the dictionary in helperFuncs
-        riomethod_list = [resampling_dict.get(m, m) for m in method_list]
-        print(riomethod_list)
-
-        resampled_arrays = match_and_stack_rasters(template_path, raster_paths, riomethod_list, num_threads=num_threads)
-        add_matched_arrays_to_data_raster(data_raster_path, resampled_arrays, description_list)
-
-        self.addLayerList.clear()
+        self.sourcelist.clear()
         self.pathlist.clear()
         self.methodlist.clear()
         self.desclist.clear()
+        # Todo: make a table reset method
+        self.layer_table.setRowCount(0)
 
         message = "Layers appended to the raster data stack"
         QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
         self.iface.mapCanvas().refreshAllLayers()
         data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
         QgsProject.instance().addMapLayer(data_raster)
-
 
         self.iface.messageBar().pushMessage(message)
 
@@ -332,9 +334,6 @@ class AddLayersTab(TabBase):
         qgs_layer_list = return_selected_macrostrat_features_as_qgsLayer()
         for l in qgs_layer_list:
             QgsProject.instance().addMapLayer(l)
-
-    def refreshList(self, elem):
-        self.addLayerList.addItem(elem)
 
     def refreshTable(self):
         print(self.sourcelist)
