@@ -116,7 +116,7 @@ def rasterBandDescAslist(rasterpath):
     return descs
 
 
-@loggingDecorator
+# @loggingDecorator
 def add_macrostrat_vectortilemap_to_project():
     url = 'https://dev.macrostrat.org/tiles/carto/{z}/{x}/{y}'
     options = QgsMapLayerFactory.LayerOptions(

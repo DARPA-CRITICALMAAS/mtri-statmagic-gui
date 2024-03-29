@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import logging
+logger = logging.getLogger("statmagic_backend")
+
 from PyQt5.QtWidgets import QScrollArea, QAbstractScrollArea
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
@@ -34,6 +37,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
 
         self.CMA_WorkflowLog = {}
+
+        self.viewLogsButton = addButton(self.dockWidgetContents, "View Logs", self.viewLogs, align="Left")
 
         self.createTabs()
 
@@ -71,6 +76,10 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         # addToParentLayout(self.tabWidget)
         self.scrollArea.setWidget(self.tabWidget)
         addToParentLayout(self.scrollArea)
+
+    def viewLogs(self):
+        logger.warning("hello world")
+        pass
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
