@@ -2,7 +2,7 @@
 import logging
 logger = logging.getLogger("statmagic_backend")
 
-from PyQt5.QtWidgets import QScrollArea, QAbstractScrollArea
+from PyQt5.QtWidgets import QScrollArea, QAbstractScrollArea, QMessageBox
 from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
@@ -78,7 +78,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         addToParentLayout(self.scrollArea)
 
     def viewLogs(self):
-        logger.warning("hello world")
+        logPopup = QMessageBox()
+        logPopup.setText(logger.handlers[0].stream.__str__())
+        logPopup.exec()
         pass
 
     def closeEvent(self, event):
