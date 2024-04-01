@@ -53,6 +53,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         # create containing widget to allow scroll bars to appear on resize
         self.scrollArea = QScrollArea(self.dockWidgetContents)
         self.scrollArea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        self.scrollArea.setContentsMargins(0,0,0,0)
+        self.scrollArea.setFrameStyle(QScrollArea.NoFrame)
         # self.scrollArea.setLayout(QtWidgets.QVBoxLayout)
 
         # create tab container
