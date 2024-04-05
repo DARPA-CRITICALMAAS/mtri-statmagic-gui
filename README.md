@@ -85,14 +85,14 @@ A controlled working environment has been created to to ensure that the StatMaGI
 <summary><b>Ubuntu users</b></summary>
 
 ```
-mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph somoclu seaborn
+mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph somoclu seaborn rioxarray boto3
 ```
 </details>
 <details>
 <summary><b>Windows users</b></summary>
 
 ```
-mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph seaborn
+mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph seaborn rioxarray boto3
 ```
 </details>
 
