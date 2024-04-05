@@ -19,6 +19,7 @@ from .tabs.AddLayers import AddLayersTab
 
 from .tabs.TA2 import TA2Tab
 from .tabs.Sciencebase import SciencebaseTab
+from .tabs.CollapsiblePractice import CollapsibleTab
 
 
 class StatMaGICDockWidget(QtWidgets.QDockWidget):
@@ -73,6 +74,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.ta2_tab                = TA2Tab(self, self.tabWidget)
         self.aws_tab                = AWSTab(self, self.tabWidget)
         self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)
+        self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
 
         # add tabs to parent
         # addToParentLayout(self.tabWidget)
