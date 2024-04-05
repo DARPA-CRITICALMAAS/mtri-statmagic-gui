@@ -23,6 +23,9 @@ from ..plotting import makePCAplot
 from ..popups.SRI_dialog import SRI_PopUp_Menu
 from ..popups.Beak_dialog import Beak_PopUp_Menu
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class TrainingPointsTab(TabBase):
     def __init__(self, parent, tabWidget):
@@ -197,7 +200,7 @@ class TrainingPointsTab(TabBase):
 
     def sample_raster_with_training_layer(self):
         data_ras = self.data_raster_box.currentLayer()
-        print(data_ras.source())
+        logger.debug(data_ras.source())
         selectedLayer = self.training_layer_box.currentLayer()
         withSelected = self.with_selected_training.isChecked()
         buffer = self.training_buffer_box.value()
@@ -287,7 +290,7 @@ class TrainingPointsTab(TabBase):
         pct_data_plot = self.pctdataplotBox.value()
         plotsubVal = int(100 / pct_data_plot)
         data_sel = self.data_sel_box.currentIndex()
-        print(data_sel)
+        logger.debug(data_sel)
         # TODO: these global variables might not have been defined yet
         if data_sel == 0:
             data_input = self.parent.fullK
@@ -296,7 +299,7 @@ class TrainingPointsTab(TabBase):
         elif data_sel == 2:
             data_input = self.parent.trainingK
         else:
-            print('invalid selection')
+            logger.debug('invalid selection')
         if data_input:
             makePCAplot(data_input, pca_axis_1, pca_axis_2, plotsubVal, data_sel)
 

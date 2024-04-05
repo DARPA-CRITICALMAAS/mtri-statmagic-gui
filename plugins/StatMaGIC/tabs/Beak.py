@@ -22,6 +22,9 @@ from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem, 
 from .TabBase import TabBase
 from ..gui_helpers import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class BeakTab(TabBase):
     def __init__(self, parent, tabWidget):

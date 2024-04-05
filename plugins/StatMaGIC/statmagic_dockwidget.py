@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-logger = logging.getLogger("statmagic_backend")
+gui_logger = logging.getLogger("statmagic_gui")
+backend_logger = logging.getLogger("statmagic_backend")
 
 from PyQt5.QtWidgets import QScrollArea, QAbstractScrollArea, QMessageBox
 from qgis.PyQt.QtCore import pyqtSignal, QRect
@@ -39,7 +40,13 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
         self.CMA_WorkflowLog = {}
 
-        self.viewLogsButton = addButton(self.dockWidgetContents, "View Logs", self.viewLogs, align="Left")
+        # buttonFrame, buttonLayout = addFrame(self.dockWidgetContents, "HBox", "NoFrame", "Plain", 3)
+        buttonWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self.dockWidgetContents)
+
+        self.viewLogsButtonGUI = addButton(buttonWidget, "View GUI Logs", self.viewLogsGUI)
+        self.viewLogsButtonBackend = addButton(buttonWidget, "View Backend Logs", self.viewLogsBackend)
+
+        addToParentLayout(buttonWidget)
 
         self.createTabs()
 
@@ -81,9 +88,15 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.scrollArea.setWidget(self.tabWidget)
         addToParentLayout(self.scrollArea)
 
-    def viewLogs(self):
+    def viewLogsGUI(self):
         logPopup = QMessageBox()
-        logPopup.setText(logger.handlers[0].stream.__str__())
+        logPopup.setText(gui_logger.handlers[0].stream.__str__())
+        logPopup.exec()
+        pass
+
+    def viewLogsBackend(self):
+        logPopup = QMessageBox()
+        logPopup.setText(backend_logger.handlers[0].stream.__str__())
         logPopup.exec()
         pass
 

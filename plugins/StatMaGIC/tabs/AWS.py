@@ -5,6 +5,9 @@ from statmagic_backend.dev.aws_cli import *
 from .TabBase import TabBase
 from ..gui_helpers import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class AWSTab(TabBase):
     def __init__(self, parent, tabWidget):

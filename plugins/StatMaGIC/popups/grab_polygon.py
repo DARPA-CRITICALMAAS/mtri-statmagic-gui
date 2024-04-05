@@ -5,11 +5,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMessageBox
 
-
+import logging
+logger = logging.getLogger("statmagic_gui")
 
 class PolygonMapTool(QgsMapToolEmitPoint):
     def __init__(self, canvas):
-        print('tool init')
+        logger.debug('tool init')
         self.canvas = canvas
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.msg = QMessageBox()
@@ -36,7 +37,7 @@ class PolygonMapTool(QgsMapToolEmitPoint):
     def canvasReleaseEvent(self, e):
         # which the mouse button?
         if e.button() == Qt.LeftButton:
-            print('clicked left')
+            logger.debug('clicked left')
             # left click
             # if it's the first left click, clear the rubberband
             if not self.isDrawing:

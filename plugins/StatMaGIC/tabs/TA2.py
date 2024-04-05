@@ -21,6 +21,9 @@ from shapely import wkt
 from shapely.wkt import loads
 from shapely.errors import WKTReadingError
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class pandasModel(QAbstractTableModel):
 
     def __init__(self, data):
@@ -52,14 +55,14 @@ class TA2Tab(TabBase):
         self.parent = parent
         self.iface = self.parent.iface
 
-        print("Creating TA2 tab")
+        logger.debug("Creating TA2 tab")
         ## Top Frame - Input query and run minmod query
         topFrame, topLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         topFrameLabel = addLabel(topLayout, "Run MinMod Query")
         makeLabelBig(topFrameLabel)
         topFormLayout = QtWidgets.QFormLayout()
 
-        print("Create query input box")
+        logger.debug("Create query input box")
         self.query_type_label = QLabel('Query Type')
         self.query_type_selection_box = QComboBox()
         self.query_type_selection_box.addItems(['MinMod', 'GeoKB'])
@@ -68,14 +71,14 @@ class TA2Tab(TabBase):
         self.query_text_box.setReadOnly(False)
         self.query_text_box.setMaximumHeight(100)
 
-        print("Create run minmod query button")
+        logger.debug("Create run minmod query button")
         self.run_minmod_query_btn = QPushButton()
         self.run_minmod_query_btn.setText('Run MinMod Query')
         self.set_run_query_btn_text()
         self.query_type_selection_box.currentTextChanged.connect(self.set_run_query_btn_text)
         self.run_minmod_query_btn.clicked.connect(self.process_query)
 
-        print("Create layout")
+        logger.debug("Create layout")
         topFormLayout.addRow(self.query_type_label, self.query_type_selection_box)
         topFormLayout.addRow(self.query_text_label, self.query_text_box)
         topFormLayout.addRow(self.run_minmod_query_btn)
@@ -137,15 +140,15 @@ class TA2Tab(TabBase):
             self.run_minmod_query_btn.setText('Run GeoKB Query')
 
     def process_query(self):
-        print("Running minmod query")
+        logger.debug("Running minmod query")
         query = self.query_text_box.toPlainText()
-        print(query)
+        logger.debug(query)
         if self.query_type_selection_box.currentText() == 'MinMod':
             res_df = self.run_minmod_query(query)
         else:
             res_df = self.run_geokb_query(query)
 
-        print(res_df)
+        logger.debug(res_df)
         if res_df is None:
             msgBox = QMessageBox()
             msgBox.setText("Query returned None")
@@ -160,14 +163,14 @@ class TA2Tab(TabBase):
         self.location_feature_combo_box.clear()
         self.location_feature_combo_box.addItems(res_df.columns)
 
-        print("Done running query")
+        logger.debug("Done running query")
 
     def run_minmod_query(self, query, values=False):
-        print("Run MindMod Query")
+        logger.debug("Run MindMod Query")
         return self.run_sparql_query(query, endpoint='https://minmod.isi.edu/sparql', values=values)
 
     def run_geokb_query(self, query, values=False):
-        print("Run GeoKB Query")
+        logger.debug("Run GeoKB Query")
         return self.run_sparql_query(query, endpoint='https://geokb.wikibase.cloud/query/sparql', values=values)
 
     def run_sparql_query(self, query, endpoint='https://minmod.isi.edu/sparql', values=False):
@@ -184,7 +187,7 @@ class TA2Tab(TabBase):
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         \n''' + query
         # send query
-        print("Posting final query :", final_query)
+        logger.debug("Posting final query :", final_query)
         try:
             response = requests.post(
                 url=endpoint,
@@ -197,21 +200,21 @@ class TA2Tab(TabBase):
                 verify=False  # Set to False to bypass SSL verification as per the '-k' in curl
             )
         except requests.exceptions.Timeout:
-            print("Request timed out")
+            logger.debug("Request timed out")
             msgBox = QMessageBox()
             msgBox.setText("Request timed out")
             msgBox.exec()
             return None
 
-        print(response.status_code)
+        logger.debug(response.status_code)
         if response.status_code == 404:
-            print("Endpoint not found")
+            logger.debug("Endpoint not found")
             msgBox = QMessageBox()
             msgBox.setText("Endpoint not found")
             msgBox.exec()
             return None
 
-        #print(response.text)
+        #logger.debug(response.text)
         try:
             qres = response.json()
             if "results" in qres and "bindings" in qres["results"]:
@@ -243,30 +246,30 @@ class TA2Tab(TabBase):
             self.save_response_to_csv_file()
 
     def save_response_to_csv_file(self):
-        print("Saving response as csv")
+        logger.debug("Saving response as csv")
         file_path = self.output_file_text_box.filePath()
         self.last_response.to_csv(file_path, index=False)
 
     def save_response_to_gis_file(self, location_feature):
-        print("Saving path as GeoJSON")
+        logger.debug("Saving path as GeoJSON")
         resp_file_path = Path(self.output_file_text_box.filePath())
         loc_feature = self.location_feature_combo_box.currentText()
-        print("Location feature: ", loc_feature)
+        logger.debug("Location feature: ", loc_feature)
 
         # You will probably need to add code here to convert one of the columns of the response into shapely points,
         # and use that as the geometry column when creating the GeoDataFrame
         df = self.last_response
-        print("Loading location feature to WKT")
+        logger.debug("Loading location feature to WKT")
         df['loc_wkt'] = df[loc_feature].apply(self.safe_wkt_load)
-        print("Creating GeoDataFrame")
-        print(df.head())
+        logger.debug("Creating GeoDataFrame")
+        logger.debug(df.head())
         gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
-        print("Dropping column loc_wkt")
+        logger.debug("Dropping column loc_wkt")
         gdf.drop(columns=['loc_wkt'], inplace=True)
-        print("Saving to file")
+        logger.debug("Saving to file")
         gdf.to_file(resp_file_path, driver="GeoJSON")
 
-        print("Opening file as GIS layer", resp_file_path)
+        logger.debug("Opening file as GIS layer", resp_file_path)
         resp_layer = QgsVectorLayer(str(resp_file_path), resp_file_path.stem, "ogr")
         if not resp_layer.isValid():
             msgBox = QMessageBox()
@@ -274,7 +277,7 @@ class TA2Tab(TabBase):
             msgBox.exec()
             return
         else:
-            print("Adding layer to map")
+            logger.debug("Adding layer to map")
             QgsProject.instance().addMapLayer(resp_layer)
             #self.iface.messageBar().pushMessage(f"Added {resp_file_path.stem} to map", level=QMessageBox.Information)
 
@@ -282,5 +285,5 @@ class TA2Tab(TabBase):
         try:
             return loads(wkt_string)
         except WKTReadingError as e:
-            print(f"Error converting WKT: {e}")
+            logger.debug(f"Error converting WKT: {e}")
             return None

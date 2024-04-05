@@ -13,6 +13,9 @@ from ..popups.grab_rectangle import RectangleMapTool
 from ..popups.ClusterMappingDialog import KmeansClusteringMenu
 from ..popups.choose_raster_dialog import SelectRasterLayer
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class InspectLayersTab(TabBase):
     def __init__(self, parent, tabWidget):
@@ -64,13 +67,13 @@ class InspectLayersTab(TabBase):
     #     self.c.setMapTool(self.t)
     #
     # def drawRectangle(self):
-    #     print('launching Rectangle Tool')
+    #     logger.debug('launching Rectangle Tool')
     #     self.c = self.parent.canvas
     #     self.t = RectangleMapTool(self.c)
     #     self.c.setMapTool(self.t)
     #
     # def print_rect(self):
-    #     print('Rectangle is:', self.t.rectangle())
+    #     logger.debug('Rectangle is:', self.t.rectangle())
     #
     #
 

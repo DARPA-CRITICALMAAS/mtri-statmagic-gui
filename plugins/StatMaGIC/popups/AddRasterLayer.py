@@ -6,6 +6,9 @@ from qgis.core import QgsMapLayerProxyModel
 from qgis.gui import QgsMapLayerComboBox, QgsFileWidget
 from ..layerops import rasterBandDescAslist
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class AddRasterLayer(QtWidgets.QDialog):
 

@@ -9,6 +9,9 @@ from shapely.geometry import box
 from shapely.wkt import loads
 import geopandas as gpd
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class ChooseExtent(QDialog):
 
     closingPlugin = pyqtSignal()

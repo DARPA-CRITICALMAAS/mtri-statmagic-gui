@@ -7,6 +7,9 @@ from PyQt5.QtWidgets import QDialogButtonBox
 from statmagic_backend.dev.match_stack_raster_tools import drop_selected_layers_from_raster
 from qgis.core import QgsRasterLayer, QgsProject
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class RasterBandSelectionDialog(QDialog):
 

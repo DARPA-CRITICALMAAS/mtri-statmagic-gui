@@ -8,8 +8,8 @@ from statmagic_backend.dev.match_stack_raster_tools import *
 from qgis.core import QgsRasterLayer, QgsProject
 from ..constants import nationdata_raster_dict, resampling_dict
 
-
-
+import logging
+logger = logging.getLogger("statmagic_gui")
 
 class CloudFrontSelectionDialog(QDialog):
 
@@ -175,7 +175,7 @@ class CustomCheckableListWidget(QWidget):
     #     # capture elapsed time
     #     elapsed = time.time() - t
     #     message = "Layers appended to the raster data stack in {} seconds".format(elapsed)
-    #     print(message)
+    #     logger.debug(message)
     #
     #     QgsProject.instance().removeMapLayer(QgsProject.instance().mapLayersByName('DataCube')[0])
     #     # self.iface.mapCanvas().refreshAllLayers()

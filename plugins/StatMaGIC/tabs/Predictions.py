@@ -12,6 +12,9 @@ from ..fileops import gdalSave1
 from ..gui_helpers import *
 from ..layerops import addGreyScaleLayer, addVectorLayer
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class PredictionsTab(TabBase):
     def __init__(self, parent, tabWidget):
@@ -66,7 +69,7 @@ class PredictionsTab(TabBase):
                           inference_group)
 
         if to_polys:
-            print('raster and vector')
+            logger.debug('raster and vector')
             tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
             outpath = tfol + '/Threshold_Inference.shp'
             output[1].to_file(outpath)

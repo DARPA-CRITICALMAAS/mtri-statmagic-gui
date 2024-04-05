@@ -20,6 +20,9 @@ from qgis.core import QgsRasterLayer, QgsProject, QgsCoordinateReferenceSystem, 
 
 from ..gui_helpers import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class Beak_PopUp_Menu(QDialog):
 
     def __init__(self, parent):

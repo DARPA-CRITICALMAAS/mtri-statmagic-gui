@@ -19,6 +19,9 @@ import geopandas as gpd
 from ..popups.grab_polygon import PolygonMapTool
 from ..popups.grab_rectangle import RectangleMapTool
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class RasterScatQtPlot(QDialog):
 
@@ -121,8 +124,8 @@ class RasterScatQtPlot(QDialog):
         self.setLayout(self.layout)
 
     def mouseMoved(self, evt):
-        print("Mouse moved")
-        print(evt)
+        logger.debug("Mouse moved")
+        logger.debug(evt)
 
     def highlightFeature(self):
         aoi: QgsVectorLayer = self.vector_selection_box.currentLayer()
@@ -167,13 +170,13 @@ class RasterScatQtPlot(QDialog):
         band2 = self.raster_band2_input.currentBand()
         raster_path = Path(raster.source())
 
-        print(f'Creating histogram of layer {self.raster_selection_box.currentLayer()},'
+        logger.debug(f'Creating histogram of layer {self.raster_selection_box.currentLayer()},'
               f' band {self.raster_band_input.currentBand()},'
               f' within AOI {self.vector_selection_box.currentLayer()},'
               f' #bins = {self.num_bins_input.text()}')
 
         if self.aoi_selection_box.currentIndex() == 4:
-            print('drawing from Polygon')
+            logger.debug('drawing from Polygon')
             if self.PolyTool.geometry() is None:
                 msgBox = QMessageBox()
                 msgBox.setText("You must first draw a polygon to provide an AOI for the histogram")
@@ -203,7 +206,7 @@ class RasterScatQtPlot(QDialog):
                 return
 
         if self.aoi_selection_box.currentIndex() == 3:
-            print('drawing from Rectangle')
+            logger.debug('drawing from Rectangle')
             if self.RectTool.rectangle() is None:
                 msgBox = QMessageBox()
                 msgBox.setText("You must first draw a rectangle to provide an AOI for the histogram")
@@ -231,7 +234,7 @@ class RasterScatQtPlot(QDialog):
                 return
 
         if self.aoi_selection_box.currentIndex() == 2:
-            print('drawing from vector geometry')
+            logger.debug('drawing from vector geometry')
             if self.vector_selection_box.currentLayer() is None:
                 msgBox = QMessageBox()
                 msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")
@@ -256,28 +259,28 @@ class RasterScatQtPlot(QDialog):
                 with rio.open(raster_path) as ds:
                     # Get the coordinates of the AOI feature in the same CRS as the raster
                     # Todo: This method will have to be adjusted to account for irregular geometries to drop values outside the polygons
-                    print("Constructing coordinate transform")
+                    logger.debug("Constructing coordinate transform")
                     min_corner = QgsPoint(extents_rect.xMinimum(), extents_rect.yMinimum())
                     max_corner = QgsPoint(extents_rect.xMaximum(), extents_rect.yMaximum())
                     raster_crs = raster.crs()
                     aoi_crs = aoi.crs()
                     tr = QgsCoordinateTransform(aoi_crs, raster_crs, QgsProject.instance())
 
-                    print("Applying transform")
+                    logger.debug("Applying transform")
                     min_corner.transform(tr)
                     max_corner.transform(tr)
                     min_row, min_col = ds.index(min_corner.x(), min_corner.y())
                     max_row, max_col = ds.index(max_corner.x(), max_corner.y())
-                    print(min_row, min_col, max_row, max_col, max_col - min_col, max_row - min_row)
+                    logger.debug(min_row, min_col, max_row, max_col, max_col - min_col, max_row - min_row)
 
                     # Read the raster band data from within the AOI
-                    print(f'Creating Window('
+                    logger.debug(f'Creating Window('
                           f'{min(min_col, max_col)},{min(min_row, max_row)},'
                           f'{abs(max_col - min_col)},{abs(max_row - min_row)}'
                           f')')
                     win = Window(min(min_col, max_col), min(min_row, max_row),
                                  abs(max_col - min_col), abs(max_row - min_row))
-                    print("Reading band within window")
+                    logger.debug("Reading band within window")
                     dat = ds.read(band1, window=win)
 
             except (RasterioIOError, IOError):
@@ -287,7 +290,7 @@ class RasterScatQtPlot(QDialog):
                 return
 
         if self.aoi_selection_box.currentIndex() == 1:
-            print("Extracting values from full raster")
+            logger.debug("Extracting values from full raster")
             try:
                 with rio.open(raster_path) as ds:
                     dat = ds.read(band1)
@@ -310,7 +313,7 @@ class RasterScatQtPlot(QDialog):
             bounding_gdf.to_crs(raster_crs, inplace=True)
             bounds = bounding_gdf.bounds
 
-            print("Extracting values from canvas")
+            logger.debug("Extracting values from canvas")
             try:
                 with rio.open(raster_path) as ds:
 
@@ -318,7 +321,7 @@ class RasterScatQtPlot(QDialog):
                     max_row, max_col = ds.index(bounds.maxx, bounds.maxy)
                     win = Window(min(min_col[0], max_col[0]), min(min_row[0], max_row[0]),
                                  abs(max_col[0] - min_col[0]), abs(max_row[0] - min_row[0]))
-                    print("Reading band within window")
+                    logger.debug("Reading band within window")
                     dat = ds.read(band1, window=win)
 
 
@@ -339,12 +342,12 @@ class RasterScatQtPlot(QDialog):
         datX = np.delete(dataX, np.where(dataX == nodata))
         datY = np.delete(dataY, np.where(dataY == nodata))
 
-        # print("Computing histogram")
+        # logger.debug("Computing histogram")
         # hist, bin_edges = np.histogram(band_data,
         #                                range=(np.nanmin(band_data), np.nanmax(band_data)),
         #                                bins=int(self.num_bins_input.text()), density=False)
 
-        print("Plotting histogram")
+        logger.debug("Plotting histogram")
         scatter_plot = pg.ScatterPlotItem(
                 size=10,
                 pen=pg.mkPen(None),
@@ -362,7 +365,7 @@ class RasterScatQtPlot(QDialog):
         self.pltItem.setLabel(axis='left', text=f"Band {str(self.raster_band_input.currentBand())}")
         self.pltItem.setLabel(axis='bottom', text=f"Band {str(self.raster_band2_input.currentBand())}")
 
-        print("Display statistics")
+        logger.debug("Display statistics")
         # Todo: add some correlatoin stats or somthing like that
         # self.text_box.setText(f'NumPixels = {band_data.size}\n'
         #                       f'NumNaN = {np.count_nonzero(np.isnan(band_data))}\n'

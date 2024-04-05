@@ -7,6 +7,9 @@ from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_ti
     dissolve_vector_files_by_property
 from statmagic_backend.dev.match_stack_raster_tools import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
 from PyQt5.QtWidgets import QPushButton, QListWidget, QTableWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QHeaderView, QTableWidgetItem
@@ -179,9 +182,9 @@ class AddLayersTab(TabBase):
         # Todo: Move from this tab
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
-        print('here')
+        logger.debug('here')
         raster = raster_path_popup.chosen_raster
-        print(raster)
+        logger.debug(raster)
 
         popup = raster_process_menu(self.parent, raster_layer=raster)
         popup.exec_()
@@ -291,7 +294,7 @@ class AddLayersTab(TabBase):
             'w': bounds.minx[0],
         }
 
-        print(bounds)
+        logger.debug(bounds)
 
         processing_dir = Path(self.parent.meta_data['project_path']) / 'macrostrat'
         path_mkdir(processing_dir)
@@ -336,23 +339,23 @@ class AddLayersTab(TabBase):
             QgsProject.instance().addMapLayer(l)
 
     def refreshTable(self):
-        print(self.sourcelist)
-        print(self.desclist)
+        logger.debug(self.sourcelist)
+        logger.debug(self.desclist)
         # Get current index of last row
         rowPosition = self.layer_table.rowCount()
         # Get total amount of layers to be added
         numLayers = len(self.sourcelist)
         # Calculate number of rows to add
         numNewRow = numLayers - rowPosition
-        print(f"starting at row {rowPosition}")
+        logger.debug(f"starting at row {rowPosition}")
         # Todo: See here for setting things uneditable
         # https://stackoverflow.com/questions/7727863/how-to-make-a-cell-in-a-qtablewidget-read-only
 
         for i in range(numNewRow):
-            print(f"adding to table at row {rowPosition + i}")
-            # print(self.sourcelist[i])
-            print(self.desclist[i])
-            # print(self.pathlist[i])
+            logger.debug(f"adding to table at row {rowPosition + i}")
+            # logger.debug(self.sourcelist[i])
+            logger.debug(self.desclist[i])
+            # logger.debug(self.pathlist[i])
             self.layer_table.insertRow(rowPosition + i)
             self.layer_table.setItem(rowPosition + i, 0, QTableWidgetItem(self.desclist[rowPosition + i]))
             # Need to construct the combo box for each row

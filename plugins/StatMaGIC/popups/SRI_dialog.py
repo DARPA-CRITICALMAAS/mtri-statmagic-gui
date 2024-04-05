@@ -29,6 +29,9 @@ from ..gui_helpers import *
 import rasterio as rio
 from rasterio.windows import Window
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class SRI_PopUp_Menu(QDialog):
 
     def __init__(self, parent):
@@ -117,7 +120,7 @@ class SRI_PopUp_Menu(QDialog):
         extents_feature = aoi_layer.getFeature(1)
         extents_rect = extents_feature.geometry().boundingBox()
 
-        print("Constructing coordinate transform")
+        logger.debug("Constructing coordinate transform")
         min_corner = QgsPoint(extents_rect.xMinimum(), extents_rect.yMinimum())
         max_corner = QgsPoint(extents_rect.xMaximum(), extents_rect.yMaximum())
         raster_crs = raster_layer.crs()
@@ -127,12 +130,12 @@ class SRI_PopUp_Menu(QDialog):
         # Open the input datacube for window reads
         sri_input_tif = rio.open(raster_layer.source())
 
-        print("Applying transform")
+        logger.debug("Applying transform")
         min_corner.transform(tr)
         max_corner.transform(tr)
         min_row, min_col = sri_input_tif.index(min_corner.x(), min_corner.y())
         max_row, max_col = sri_input_tif.index(max_corner.x(), max_corner.y())
-        print(min_row, min_col, max_row, max_col, max_col - min_col, max_row - min_row)
+        logger.debug(min_row, min_col, max_row, max_col, max_col - min_col, max_row - min_row)
 
         # Figure out the AOI in pixel coordinates
         aoi_min_row = min(min_row, max_row)
@@ -149,8 +152,8 @@ class SRI_PopUp_Menu(QDialog):
 
         # Construct the batches required to classify each pixel within the AOI
         num_pixels = aoi_num_pixels_in_row * aoi_num_pixels_in_col
-        print(f'num pixels row {aoi_num_pixels_in_row}')
-        print(f'num pixels col {aoi_num_pixels_in_col}')
+        logger.debug(f'num pixels row {aoi_num_pixels_in_row}')
+        logger.debug(f'num pixels col {aoi_num_pixels_in_col}')
         input_data_cpu = np.zeros(shape=(num_pixels, 73, 33, 33), dtype=float)
         labels_cpu = np.zeros(shape=(num_pixels,), dtype=float)
         locs_cpu = np.zeros(shape=(2, num_pixels), dtype=float)
@@ -163,12 +166,12 @@ class SRI_PopUp_Menu(QDialog):
         locs = torch.from_numpy(locs_cpu).float().to(device)
 
         # Predict step
-        print(device)
+        logger.debug(device)
         batch_idx = 0
         output_p = model.predict_step((input_patch, labels_patch, locs[0], locs[1]), batch_idx)
-        print(f"Long, Lat: {output_p[0, :2]}")
-        print(f"Likelihood, Uncertainty: {output_p[0, 2:4]}")
-        print(f"Feature attributions: {output_p[0, 4:]}")
+        logger.debug(f"Long, Lat: {output_p[0, :2]}")
+        logger.debug(f"Likelihood, Uncertainty: {output_p[0, 2:4]}")
+        logger.debug(f"Feature attributions: {output_p[0, 4:]}")
 
         # Transfer over to CPU
         output_p_cpu = output_p.cpu()
@@ -179,7 +182,7 @@ class SRI_PopUp_Menu(QDialog):
             for j in range(0, aoi_num_pixels_in_row):
                 pred_p_data[0, i, j] = output_p_cpu[i * aoi_num_pixels_in_row + j, 2]
 
-        print(pred_p_data.shape)
-        print(pred_p_data.dtype)
+        logger.debug(pred_p_data.shape)
+        logger.debug(pred_p_data.dtype)
 
 

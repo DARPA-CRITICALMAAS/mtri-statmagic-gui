@@ -20,6 +20,9 @@ from ..gui_helpers import *
 from ..layerops import set_project_crs
 from ..popups.ChooseProjExtentDialog import ChooseExtent
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class InitiateCMATab(TabBase):
     def __init__(self, parent, tabWidget):

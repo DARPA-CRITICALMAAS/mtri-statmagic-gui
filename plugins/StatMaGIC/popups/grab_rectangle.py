@@ -8,10 +8,13 @@ from PyQt5.QtCore import Qt, pyqtSignal
 # From:
 # https://gis.stackexchange.com/questions/407389/rectanglemaptool-for-defining-polygon-using-mouse-click-does-not-work-in-qgis-3
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class RectangleMapTool(QgsMapToolEmitPoint):
     rect_created = pyqtSignal(QgsRectangle)
     def __init__(self, canvas):
-        print('tool init')
+        logger.debug('tool init')
         self.canvas = canvas
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.msg = QMessageBox()
@@ -31,7 +34,7 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.rubberBand.reset(Qgis.GeometryType.Polygon)
 
     def canvasPressEvent(self, e):
-        print('canvas pressed')
+        logger.debug('canvas pressed')
         self.startPoint = self.toMapCoordinates(e.pos())
         self.endPoint = self.startPoint
         self.isEmittingPoint = True

@@ -23,6 +23,30 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
+import logging
+log_format = "%(asctime)s %(levelname)s: %(message)s"
+formatter = logging.Formatter(log_format)
+
+class LogStream:
+    def __init__(self):
+        self.logs = []
+    def write(self, log):
+        self.logs.append(log)
+        print(log)
+    def flush(self):
+        # TODO: figure out why flush gets called when something is logged
+        pass
+    def __str__(self):
+        return "".join(self.logs)
+
+stream = LogStream()
+stream_handler = logging.StreamHandler(stream=stream)
+stream_handler.setFormatter(formatter)
+stream_handler.setLevel(logging.DEBUG)
+logger = logging.getLogger("statmagic_gui")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(stream_handler)
+
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name

@@ -9,6 +9,9 @@ from statmagic_backend.dev.rasterize_training_data import training_vector_raster
 from .TabBase import TabBase
 from ..gui_helpers import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 class RasterizationTab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Rasterization Tools")

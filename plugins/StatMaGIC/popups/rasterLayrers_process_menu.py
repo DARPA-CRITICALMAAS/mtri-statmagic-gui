@@ -7,8 +7,8 @@ from statmagic_backend.dev.match_stack_raster_tools import *
 from qgis.core import QgsRasterLayer, QgsProject
 from ..constants import nationdata_raster_dict, resampling_dict
 
-
-
+import logging
+logger = logging.getLogger("statmagic_gui")
 
 class raster_process_menu(QDialog):
 
