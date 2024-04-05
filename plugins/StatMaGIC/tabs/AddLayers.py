@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import geopandas as gpd
@@ -201,19 +202,20 @@ class AddLayersTab(TabBase):
             self.refreshTable()
 
     def chooseLayersFromCubeDialog(self):
-        rasterFilePath = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
-        popup = RasterBandSelectionDialog(self.parent, rasterFilePath[0])
-        if popup.exec_() == 0:
-            band_list = popup.desc_list
-            raster_path = popup.raster_layer_path
-            band_indexs = popup.index_list
-            srs = ['Local' for x in range(len(band_list))]
-            paths = [raster_path + '_' + str(x) for x in band_indexs]
+        rasterFilePath, _ = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
+        if os.path.exists(rasterFilePath):
+            popup = RasterBandSelectionDialog(self.parent, rasterFilePath)
+            if popup.exec_() == 0:
+                band_list = popup.desc_list
+                raster_path = popup.raster_layer_path
+                band_indexs = popup.index_list
+                srs = ['Local' for x in range(len(band_list))]
+                paths = [raster_path + '_' + str(x) for x in band_indexs]
 
-            self.pathlist.extend(paths)
-            self.desclist.extend(band_list)
-            self.sourcelist.extend(srs)
-            self.refreshTable()
+                self.pathlist.extend(paths)
+                self.desclist.extend(band_list)
+                self.sourcelist.extend(srs)
+                self.refreshTable()
 
     def chooseLayersFromCloudDialog(self):
         popup = CloudFrontSelectionDialog(self.parent)
