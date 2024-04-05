@@ -4,6 +4,9 @@ from .TabBase import TabBase
 from ..gui_helpers import *
 from statmagic_backend.extract.sciencebasetools import fetch_sciencebase_files, recursive_download
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class SciencebaseTab(TabBase):
     def __init__(self, parent, tabWidget):

@@ -19,6 +19,9 @@ from shapely import box
 import pandas as pd
 import geopandas as gpd
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class PCAClusterQtPlot(QDialog):
     def __init__(self, parent):
@@ -27,23 +30,23 @@ class PCAClusterQtPlot(QDialog):
         super(PCAClusterQtPlot, self).__init__(parent)
         QDialog.setWindowTitle(self, "PCA and Cluster Analysis")
 
-        print("Create layout")
+        logger.debug("Create layout")
         self.layout = QGridLayout(self)
         self.area = DockArea()
 
-        print("Create plot dock")
+        logger.debug("Create plot dock")
         self.plot_dock = Dock("PCA and Cluster Analysis", size=(1000, 600))
         self.area.addDock(self.plot_dock, 'left')
 
-        print("Create parameter dock")
+        logger.debug("Create parameter dock")
         self.param_dock = Dock("Parameters", size=(200, 600))
         self.area.addDock(self.param_dock, 'right')
 
-        print("add area to layout")
+        logger.debug("add area to layout")
         self.layout.addWidget(self.area, 0, 0)
-        print("set layout")
+        logger.debug("set layout")
         self.setLayout(self.layout)
-        print("Done")
+        logger.debug("Done")
 
         ### User parameters
         # Pick layer to perform analysis on
@@ -90,7 +93,7 @@ class PCAClusterQtPlot(QDialog):
         self.setLayout(self.layout)
 
     def set_feature_combo_box_items(self, layer: QgsMapLayer):
-        print(layer, layer.type())
+        logger.debug(layer, layer.type())
         self.featureComboBox.clear()
         if layer.type() == QgsMapLayer.VectorLayer:
             self.featureComboBox.addItems([field.name() for field in layer.fields() if field.typeName() in ["Integer", "Real"]])

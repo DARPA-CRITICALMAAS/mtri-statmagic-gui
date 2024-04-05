@@ -8,6 +8,9 @@ import matplotlib
 import pandas as pd
 from statmagic_backend.maths.clustering import unpack_fullK
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
@@ -22,7 +25,7 @@ def makePCAplot(Kdict, pca_axis_1, pca_axis_2, plotsubVal, data_sel):
     elif data_sel == 2:
         labels, km, pca, ras_dict, bool_arr, fitdat, rasBands, nclust = unpack_fullK(Kdict)
     else:
-        print('invalid selection')
+        logger.debug('invalid selection')
 
     fig, axs = plt.subplots(1, 1, figsize=(8, 8), constrained_layout=True)
 
@@ -61,7 +64,7 @@ def makePCAplot(Kdict, pca_axis_1, pca_axis_2, plotsubVal, data_sel):
     # Add arrows to the plot to show the direction of each band in PCA space
 
     for k, band in enumerate(rasBands):
-        print(k, band)
+        logger.debug(k, band)
         # Scale up the size of the arrows
         scale = 10
         axs1.arrow(0, 0, scale * pca_components[pca_axis_1 - 1, k], scale * pca_components[pca_axis_2 - 1, k])
@@ -72,8 +75,8 @@ def makePCAplot(Kdict, pca_axis_1, pca_axis_2, plotsubVal, data_sel):
     axs1.set_ylim([-5, 5])
 
     # Print the projection of each band axis on the two PCA axes we are plotting
-    print(pca_components[pca_axis_1 - 1, :])
-    print(pca_components[pca_axis_2 - 1, :])
+    logger.debug(pca_components[pca_axis_1 - 1, :])
+    logger.debug(pca_components[pca_axis_2 - 1, :])
 
     tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
     plotfile = Path(tempfile.mkstemp(dir=tfol, suffix='.png', prefix='PCAmeanplot')[1])
@@ -92,28 +95,28 @@ def multispec_scatter(df: pd.DataFrame, plot_file: Path):
     :return:
     """
 
-    # print("Starting MultiSpec Scatter Plotter")
-    # print("DF =\n", df.head())
+    # logger.debug("Starting MultiSpec Scatter Plotter")
+    # logger.debug("DF =\n", df.head())
     num_records = df.shape[0]
-    # print("# records = ", num_records)
+    # logger.debug("# records = ", num_records)
 
     # Figure out how many bands are in the dataset
     bands = list(df.keys())
     bands.remove('type_id')
     bands.remove('fid')
     num_bands = len(bands)
-    # print(num_bands, " bands = ", bands)
+    # logger.debug(num_bands, " bands = ", bands)
 
     # Figure out how many classes exist
     classes = list(df['type_id'].unique())
     num_classes = len(classes)
-    # print(num_classes, " classes = ", classes)
+    # logger.debug(num_classes, " classes = ", classes)
 
     # Need to do if there's only 1 class, than to use FID as the coloramp
     # Build a categorical colormap for the classes
     if num_classes == 1:
         levels, categories = pd.factorize(df['fid'])
-        print(len(categories), "#  Cats")
+        logger.debug(len(categories), "#  Cats")
         if len(categories) < 10:
             colors = [plt.cm.Set1(i) for i in levels]
             handles = [matplotlib.patches.Patch(color=plt.cm.Set1(i), label=c) for i, c in enumerate(categories)]

@@ -24,6 +24,9 @@ from statmagic_backend.maths.clustering import kmeans_fit_predict
 from ..fileops import rasterio_write_raster_from_array
 from ..layerops import qgis_poly_to_gdf, shape_data_array_to_raster_array, shape_raster_array_to_data_array
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 # Todo: Implement a similar flow to the other sample_from_... using self.raster_array and self.raster_dict to
 # pass to run_kmeans using sample_from_polygon as example.
@@ -165,23 +168,23 @@ class KmeansClusteringMenu(QDialog):
     def prep_Kmeans(self):
         self.pass_kmeans_checks()
         if self.aoi_selection_box.currentIndex() == 4:
-            print('sampling from drawn Polygon')
+            logger.debug('sampling from drawn Polygon')
             self.sample_from_polygon()
 
         if self.aoi_selection_box.currentIndex() == 3:
-            print('sampling from Rectangle')
+            logger.debug('sampling from Rectangle')
             self.sample_from_rectangle()
 
         if self.aoi_selection_box.currentIndex() == 2:
-            print('sampling from vector geometry')
+            logger.debug('sampling from vector geometry')
             self.sample_from_vector()
 
         if self.aoi_selection_box.currentIndex() == 1:
-            print('sampling from full raster')
+            logger.debug('sampling from full raster')
             self.sample_full_raster()
 
         if self.aoi_selection_box.currentIndex() == 0:
-            print('sampling from canvas extent')
+            logger.debug('sampling from canvas extent')
             self.sample_from_canvas()
 
     def sample_from_polygon(self):
@@ -195,7 +198,7 @@ class KmeansClusteringMenu(QDialog):
         poly_crs = self.parent.canvas.mapSettings().destinationCrs().authid()
         # Get the polygon from the mapTool
         poly = self.PolyTool.geometry()
-        print(poly)
+        logger.debug(poly)
         # Convert the polygon to a GeoDataFrame
         poly_gdf = qgis_poly_to_gdf(poly, poly_crs, raster_crs)
 
@@ -253,7 +256,7 @@ class KmeansClusteringMenu(QDialog):
         aoi = self.vector_selection_box.currentLayer()
         poly_crs = aoi.crs().authid()
         poly = aoi.selectedFeatures()[0].geometry()
-        print(poly)
+        logger.debug(poly)
         raster = self.raster_selection_box.currentLayer()
         raster_path = raster.source()
         self.full_dict = getFullRasterDict_rio(rio.open(raster_path))
@@ -310,7 +313,7 @@ class KmeansClusteringMenu(QDialog):
             raster_array = shape_data_array_to_raster_array(labels, self.raster_dict, mask_array=msk, nodata=0)
             self.raster_dict.update({'NoData': 0})
             output_raster_path = rasterio_write_raster_from_array(raster_array, self.raster_dict)
-            print(output_raster_path)
+            logger.debug(output_raster_path)
 
             groupName = 'KmeansClusterOutputs'
             layerName = ' Kmeans Output'
@@ -358,7 +361,7 @@ class KmeansClusteringMenu(QDialog):
             return
 
         if self.aoi_selection_box.currentIndex() == 2:
-            print('drawing from vector geometry')
+            logger.debug('drawing from vector geometry')
             if self.vector_selection_box.currentLayer() is None:
                 msgBox = QMessageBox()
                 msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")

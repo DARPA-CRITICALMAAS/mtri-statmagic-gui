@@ -11,6 +11,9 @@ import numpy as np
 import geopandas as gpd
 import tempfile
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 from statmagic_backend.utils import polytextreplace, loggingDecorator
 
@@ -102,7 +105,7 @@ def rasDF_fromPolyShape(rasterpath, feature, column_names, nodata):
 def addVectorLayer(vector_path, name, group):
     vlayer = QgsVectorLayer(vector_path, name, "ogr")
     if not vlayer.isValid():
-        print("Layer failed to load!")
+        logger.debug("Layer failed to load!")
     else:
         QgsProject.instance().addMapLayer(vlayer, False)
         group.addLayer(vlayer)
@@ -196,7 +199,7 @@ def apply_model_to_array(model, array, raster_dict):
     pred_data = data_array.reshape(twoDshape)
     bool_arr = np.all(pred_data == raster_dict['NoData'], axis=1)
     if np.count_nonzero(bool_arr == 1) < 1:
-        print('not over no data values')
+        logger.debug('not over no data values')
         scores = model.score_samples(pred_data)
 
     else:
@@ -217,14 +220,14 @@ def apply_model_to_array(model, array, raster_dict):
 def qgis_poly_to_gdf(poly, poly_crs, raster_crs):
     wkt = poly.asWkt()
     shapely_geom = loads(wkt)
-    print(type(shapely_geom))
+    logger.debug(type(shapely_geom))
     if type(shapely_geom) == 'MultiPolygon':
         geom = list(shapely_geom.geoms[0])
     else:
         geom = [shapely_geom]
-    print(geom)
+    logger.debug(geom)
     gdf = gpd.GeoDataFrame(geometry=geom, crs=poly_crs)
-    print(gdf.head())
+    logger.debug(gdf.head())
     gdf.to_crs(raster_crs, inplace=True)
     return gdf
 

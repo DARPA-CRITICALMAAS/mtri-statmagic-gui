@@ -5,6 +5,9 @@ from qgis.core import QgsMapLayerProxyModel, QgsRasterLayer
 from qgis.gui import QgsMapLayerComboBox, QgsFileWidget
 from ..layerops import rasterBandDescAslist
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class SelectRasterLayer(QtWidgets.QDialog):
 
@@ -54,7 +57,7 @@ class SelectRasterLayer(QtWidgets.QDialog):
         elif filepath:
             self.chosen_raster = QgsRasterLayer(filepath)
         else:
-            print('No selection made')
+            logger.debug('No selection made')
 
 
 

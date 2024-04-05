@@ -10,6 +10,9 @@ from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerPro
 from .TabBase import TabBase
 from ..gui_helpers import *
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 
 class GeochemistryTab(TabBase):
     def __init__(self, parent, tabWidget):
@@ -131,19 +134,19 @@ class GeochemistryTab(TabBase):
         element_input = self.element_selection_box.currentText()
 
         if geochem_data_input == 0:
-            print('using black shales database')
+            logger.debug('using black shales database')
             gdf, element_col = prep_black_shales(template_path, element_input)
         elif geochem_data_input == 1:
-            print("using NGDB rock")
+            logger.debug("using NGDB rock")
         else:
-            print('no valid selection')
+            logger.debug('no valid selection')
 
         output_file_path, message = interpolate_gdf_value(gdf, element_col, template_path)
 
         # Save out gdf
         gdf_out = Path(project_path) / 'black_shales.gpkg'
         gdf.to_file(gdf_out, driver='GPKG')
-        print(f'saved to {gdf_out}')
+        logger.debug(f'saved to {gdf_out}')
         vlayer = QgsVectorLayer(str(gdf_out), 'Black Shales Points', "ogr")
         QgsProject.instance().addMapLayer(vlayer)
 

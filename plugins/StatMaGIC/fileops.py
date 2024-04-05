@@ -6,6 +6,9 @@ from osgeo import gdal
 import rasterio as rio
 import numpy as np
 
+import logging
+logger = logging.getLogger("statmagic_gui")
+
 def gdalTransform_to_rasterioAffine(gt):
     a = gt[0]
     b = gt[1]
@@ -55,13 +58,13 @@ def gdalSave(prefix, array2write, bittype, geotransform, projection, nodataval, 
 
     else:
         sizeX, sizeY, sizeZ = array2write.shape[2], array2write.shape[1], array2write.shape[0]
-        # print(f"sizeX, sizeY, sizeZ = {sizeX}, {sizeY}, {sizeZ}")
+        # logger.debug(f"sizeX, sizeY, sizeZ = {sizeX}, {sizeY}, {sizeZ}")
         gtr_ds = gdal.GetDriverByName("GTiff").Create(tfile[1], sizeX, sizeY, sizeZ, bittype)
         gtr_ds.SetGeoTransform(geotransform)
         gtr_ds.SetProjection(projection)
-        # print(descs)
+        # logger.debug(descs)
         for b, desc in zip(range(0, sizeZ), descs):
-            print(b)
+            logger.debug(b)
             name = f"Probability type_id: {desc}"
             data2d = array2write[b, :, :]
             gtr_ds.GetRasterBand(b+1).WriteArray(data2d)
@@ -75,7 +78,7 @@ def gdalSave1(prefix, array2write, bittype, geotransform, projection, nodataval,
     tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
     tfile = tempfile.mkstemp(dir=tfol, suffix='.tif', prefix=prefix)
     if array2write.ndim == 2:
-        print('saving singleband 2d')
+        logger.debug('saving singleband 2d')
         sizeX, sizeY = array2write.shape[1], array2write.shape[0]
         gtr_ds = gdal.GetDriverByName("GTiff").Create(tfile[1], sizeX, sizeY, 1, bittype)
         gtr_ds.SetGeoTransform(geotransform)
@@ -83,7 +86,7 @@ def gdalSave1(prefix, array2write, bittype, geotransform, projection, nodataval,
         gtr_ds.GetRasterBand(1).WriteArray(array2write)
         gtr_ds.GetRasterBand(1).SetNoDataValue(nodataval)
     elif array2write.shape[0] == 1:
-        print('saving singleband 3d')
+        logger.debug('saving singleband 3d')
         sizeX, sizeY, sizeZ = array2write.shape[2], array2write.shape[1], array2write.shape[0]
         gtr_ds = gdal.GetDriverByName("GTiff").Create(tfile[1], sizeX, sizeY, sizeZ, bittype)
         gtr_ds.SetGeoTransform(geotransform)
@@ -92,15 +95,15 @@ def gdalSave1(prefix, array2write, bittype, geotransform, projection, nodataval,
         gtr_ds.GetRasterBand(1).WriteArray(data2d)
         gtr_ds.GetRasterBand(1).SetNoDataValue(nodataval)
     else:
-        print('saving multiband')
+        logger.debug('saving multiband')
         sizeX, sizeY, sizeZ = array2write.shape[2], array2write.shape[1], array2write.shape[0]
-        # print(f"sizeX, sizeY, sizeZ = {sizeX}, {sizeY}, {sizeZ}")
+        # logger.debug(f"sizeX, sizeY, sizeZ = {sizeX}, {sizeY}, {sizeZ}")
         gtr_ds = gdal.GetDriverByName("GTiff").Create(tfile[1], sizeX, sizeY, sizeZ, bittype)
         gtr_ds.SetGeoTransform(geotransform)
         gtr_ds.SetProjection(projection)
-        # print(descs)
+        # logger.debug(descs)
         for b, desc in zip(range(0, sizeZ), descs):
-            print(b)
+            logger.debug(b)
             name = f"Probability type_id: {desc}"
             data2d = array2write[b, :, :]
             gtr_ds.GetRasterBand(b+1).WriteArray(data2d)
@@ -125,9 +128,9 @@ def path_mkdir(path):
     try:
         path.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
-        print("Folder is already there")
+        logger.debug("Folder is already there")
     else:
-        print("Folder was created")
+        logger.debug("Folder was created")
 
 def parse_vector_source(datastr):
     try:
