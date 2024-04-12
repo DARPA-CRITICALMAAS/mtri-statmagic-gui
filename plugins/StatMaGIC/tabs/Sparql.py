@@ -7,6 +7,9 @@ from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerPro
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..widgets.collapsible_box import CollapsibleBox
+from ..popups.sparql_queries.ore_grades_cutoffs import OreGradeCutoffQueryBuilder
+from ..popups.sparql_queries.colocated_coms import ColocatedCommoditiesQueryBuilder
+from statmagic_backend.sparql import sparql_utils
 import statmagic_backend.sparql.sparql_utils
 import pandas as pd
 import geopandas as gpd
@@ -46,16 +49,33 @@ class SparqlTab(TabBase):
         self.parent = parent
         self.iface = self.parent.iface
 
-        self.query_btns = [("Get Commodities", self.clicked_get_commodities_btn), ("btn2", self.clicked_btn), ("btn3", None),
-                           ("btn4", None), ("btn5", self.clicked_btn), ("btn6", None),
-                           ("btn7", None), ("btn8", self.clicked_btn), ("btn9", None)]
+        self.section_title_font = QtGui.QFont()
+        self.section_title_font.setFamily("Ubuntu Mono")
+        self.section_title_font.setPointSize(12)
+        self.section_title_font.setBold(True)
+        self.section_title_font.setWeight(75)
+
+        self.query_btns = [("Commodities", self.clicked_get_commodities_btn, "Get a list of commodities known in the MinMod knowledge graph"),
+                           ("Deposit Types", self.clicked_get_deposit_types_btn, "Get a list of all the Deposit Types in the MinMod knowledge graph"),
+                           ("Ore Grades", self.clicked_get_ore_grades_btn, "Get selected ore values, grades, and cutoffs from all inventories in the MinMod knowledge graph"),
+                           ("Colocated Coms", self.clicked_get_colocated_coms_btn, "Get commodities that appear in the same mineral inventories as a given commodity"),
+                           ("btn5", self.clicked_btn, "Placeholder"),
+                           ("btn6", None, "Placeholder"),
+                           ("btn7", None, "Placeholder"),
+                           ("btn8", self.clicked_btn, "Placeholder"),
+                           ("btn9", None, "Placeholder")]
         self.num_query_btns = len(self.query_btns)
+
+        query_creation_label = QLabel("Create Query")
+        query_creation_label.setFont(self.section_title_font)
+        self.tabLayout.addWidget(query_creation_label)
 
         self.queryFrame = QFrame()
         self.queryLayout = QGridLayout()
         num_cols = 2
-        for i, (btn_name, btn_callback) in enumerate(self.query_btns):
+        for i, (btn_name, btn_callback, btn_tooltip) in enumerate(self.query_btns):
             btn = QPushButton(btn_name)
+            btn.setToolTip(btn_tooltip)
             if btn_callback is not None:
                 btn.clicked.connect(btn_callback)
             self.queryLayout.addWidget(btn, int(i / num_cols), i % num_cols)
@@ -63,9 +83,10 @@ class SparqlTab(TabBase):
         self.queryFrame.setLayout(self.queryLayout)
         self.tabLayout.addWidget(self.queryFrame)
 
-        self.query_edit_box = CollapsibleBox("Advanced Strats")
+        self.query_edit_box = CollapsibleBox("View / Edit Sparql Query")
         self.query_edit_box_layout = QGridLayout()
         self.query_edit_text_box = QTextEdit()
+        self.query_edit_text_box.textChanged.connect(self.query_changed)
         self.query_edit_box_layout.addWidget(self.query_edit_text_box)
         self.query_edit_box.setContentLayout(self.query_edit_box_layout)
         self.tabLayout.addWidget(self.query_edit_box)
@@ -78,12 +99,17 @@ class SparqlTab(TabBase):
         self.run_query_btn = QPushButton()
         self.run_query_btn.setText("Run Query")
         self.run_query_btn.clicked.connect(self.run_query)
+        self.run_query_btn.setDisabled(True)
         self.runLayout.addRow(self.query_type_label, self.query_type_selection_box)
         self.runLayout.addRow(self.run_query_btn)
         self.runFrame.setLayout(self.runLayout)
         self.tabLayout.addWidget(self.runFrame)
 
         ## See the response from the query
+        query_response_label = QLabel("Query Response")
+        query_response_label.setFont(self.section_title_font)
+        self.tabLayout.addWidget(query_response_label)
+
         self.tableFrame = QFrame()
         self.tableLayout = QFormLayout()
         self.resp_view = QTableView()
@@ -91,7 +117,14 @@ class SparqlTab(TabBase):
         self.tableFrame.setLayout(self.tableLayout)
         self.tabLayout.addWidget(self.tableFrame)
 
+        self.response_description_label = QLabel("No Response Available")
+        self.tableLayout.addWidget(self.response_description_label)
+
         ## Convert response to a GIS layer or CSV
+        save_response_label = QLabel("Save Response to File")
+        save_response_label.setFont(self.section_title_font)
+        self.tabLayout.addWidget(save_response_label)
+
         self.convertFrame = QFrame()
         self.convertLayout = QFormLayout()
 
@@ -183,15 +216,42 @@ class SparqlTab(TabBase):
         print("Clicked the button!")
 
     def clicked_get_commodities_btn(self):
-        query = ''' SELECT ?ci ?cm
+        query = ''' SELECT ?ci ?clabel ?cname
                     WHERE {
                         ?ci a :Commodity .
-                        ?ci rdfs:label ?cm .
+                        ?ci rdfs:label ?clabel .
+                        ?ci :name ?cname .
                     } 
                     '''
         self.query_edit_text_box.setText(query)
 
+    def clicked_get_deposit_types_btn(self):
+        query = ''' SELECT ?ci ?cn ?cg ?ce
+                    WHERE {
+                    ?ci a :DepositType .
+                    ?ci rdfs:label ?cn .
+                    ?ci :deposit_group ?cg .
+                    ?ci :environment ?ce .
+                    }
+                    '''
+        self.query_edit_text_box.setText(query)
+
+    def clicked_get_ore_grades_btn(self):
+        popup = OreGradeCutoffQueryBuilder(self)
+        if popup.exec_():
+            self.query_edit_text_box.setText(popup.query)
+        else:
+            logger.info("Ore / Grades / Cutoff popup closed without setting query")
+
+    def clicked_get_colocated_coms_btn(self):
+        popup = ColocatedCommoditiesQueryBuilder(self)
+        if popup.exec_():
+            self.query_edit_text_box.setText(popup.query)
+        else:
+            logger.info("Colocated commodities popup closed without setting query")
+
     def run_query(self):
+        self.response_description_label.setText("No Response Available")
         query = self.query_edit_text_box.toPlainText()
         if self.query_type_selection_box.currentText() == 'MinMod':
             res_df = self.run_minmod_query(query)
@@ -200,12 +260,13 @@ class SparqlTab(TabBase):
 
         if res_df is None:
             msgBox = QMessageBox()
-            msgBox.setText("Query returned None")
+            msgBox.setText("Query returned None\nQuery may be invalid or the Sparql endpoint may be down")
             msgBox.exec()
             self.resp_view.setModel(None)
             return
 
         self.last_response = res_df
+        self.response_description_label.setText("Number of Response Records = "+str(len(self.last_response)))
         model = pandasModel(res_df)
         self.resp_view.setModel(model)
 
@@ -217,4 +278,9 @@ class SparqlTab(TabBase):
         logger.debug("Run GeoKB Query")
         return statmagic_backend.sparql.sparql_utils.run_sparql_query(query, values=True)
 
-
+    def query_changed(self):
+        text = self.query_edit_text_box.toPlainText()
+        if text == "":
+            self.run_query_btn.setDisabled(True)
+        else:
+            self.run_query_btn.setDisabled(False)
