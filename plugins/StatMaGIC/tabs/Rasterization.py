@@ -3,7 +3,7 @@ from qgis.core import QgsProject, QgsFieldProxyModel, QgsMapLayerProxyModel, Qgs
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 
 
-from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, rasterize_vector
+from statmagic_backend.dev.rasterization_functions import qgs_features_to_gdf, vector_proximity_raster, vector_proximity_raster_upgraded, rasterize_vector
 from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
 
 from .TabBase import TabBase
@@ -128,6 +128,7 @@ class RasterizationTab(TabBase):
         gdf.to_crs(self.parent.meta_data['project_CRS'], inplace=True)
 
         output_file_path, message = vector_proximity_raster(gdf, self.parent.meta_data['template_path'])
+        output_file_path, message = vector_proximity_raster_upgraded(gdf, self.parent.meta_data['template_path'])
 
         res = QgsRasterLayer(output_file_path, 'Proximity_Layer')
         # Todo: Make this be added to the top of the TOC
