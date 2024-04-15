@@ -79,11 +79,11 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.predictions_tab        = PredictionsTab(self, self.tabWidget)
         # self.sri_tab                = SRITab(self, self.tabWidget)
         # self.beak_tab               = BeakTab(self, self.tabWidget)
-        self.ta2_tab                = TA2Tab(self, self.tabWidget)
+        #self.ta2_tab                = TA2Tab(self, self.tabWidget)
         self.aws_tab                = AWSTab(self, self.tabWidget)
         self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)
         self.sparql_tab             = SparqlTab(self, self.tabWidget)
-        self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
+        #self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
 
         # add tabs to parent
         # addToParentLayout(self.tabWidget)
