@@ -17,6 +17,7 @@ from .tabs.TrainingPoints import TrainingPointsTab
 from .tabs.Inspect_Raster_Layers import InspectLayersTab
 from .tabs.Rasterization import RasterizationTab
 from .tabs.AddLayers import AddLayersTab
+from .tabs.Start_Tab import HomeTab
 
 from .tabs.TA2 import TA2Tab
 from .tabs.Sciencebase import SciencebaseTab
@@ -70,6 +71,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
 
         # populate tabs
+        self.home_tab = HomeTab(self, self.tabWidget)
         self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
         self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
         self.InspectLayersTab       = InspectLayersTab(self, self.tabWidget)
