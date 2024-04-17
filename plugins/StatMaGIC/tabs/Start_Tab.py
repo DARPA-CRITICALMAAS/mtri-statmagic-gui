@@ -1,7 +1,15 @@
+import json
+import shutil
+from datetime import date
+from pathlib import Path
+
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QTextEdit, QComboBox, QTableView, QCheckBox, QVBoxLayout, QHBoxLayout, QFrame, QFormLayout, QSpacerItem, QGridLayout
 from PyQt5.QtCore import Qt, QAbstractTableModel
 from PyQt5.QtGui import QPalette, QColor
+from qgis._core import QgsRasterLayer, QgsProject
+
+from statmagic_backend.dev.template_raster_user_input import create_template_raster_from_bounds_and_resolution
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..layerops import set_project_crs
@@ -107,55 +115,56 @@ class HomeTab(TabBase):
         pass
 
     def initiate_CMA_workflow(self):
-        username = self.wizard.page(0).UserNameLineEdit.text()
-        logger.debug(f"The username is {username}")
         # Retrieve metadata inputs
-        # username = self.UserNameLineEdit.text()
-        # cma_mineral = self.CMA_mineralLineEdit.text()
-        # comments = self.CommentsText.toPlainText()
-        # input_path = self.proj_dir_input.filePath()
-        # box_crs = self.mQgsProjectionSelectionWidget.crs()
-        # pixel_size = self.pixel_size_input.value()
-        # buffer_distance = self.buffer_dist_spinBox.value()
-        #
-        # today = date.today().isoformat()
-        #
-        # proj_path = Path(input_path, 'CMA_' + cma_mineral)
-        # # Turned to true for dev. TODO Raise flag of some kind if overwriting
-        # proj_path.mkdir(exist_ok=True)
-        # qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgz")
-        # template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
-        # data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
-        # dst_crs = box_crs.authid()
-        #
-        # self.extent_gdf.to_crs(dst_crs, inplace=True)
-        # if buffer_distance > 0:
-        #     self.extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
-        # bounds = self.extent_gdf.total_bounds
-        #
-        # create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
-        #                                                   output_path=template_output_path, clipping_gdf=self.extent_gdf)
-        # shutil.copy(template_output_path, data_raster_path)
-        #
-        # meta_dict = {'username': username, 'mineral': cma_mineral, 'comments': comments, 'date_initiated': today,
-        #              'project_path': str(proj_path), 'project_CRS': str(dst_crs), 'project_bounds': str(bounds),
-        #              'template_path': template_output_path, 'data_raster_path': data_raster_path,
-        #              'qgis_project_file': qgis_proj_file}
-        #
-        # with open(Path(proj_path, 'project_metadata.json'), 'w') as f:
-        #     json.dump(meta_dict, f)
-        #
-        # self.parent.meta_data = meta_dict
-        #
-        # message = f"Project files saved to: {proj_path}"
-        # qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
-        # QgsProject.instance().addMapLayer(qgs_data_raster)
-        # QgsProject.instance().layerTreeRoot().findLayer(qgs_data_raster.id()).setItemVisibilityChecked(False)
-        # QgsProject.instance().setCrs(box_crs)
-        # QgsProject.instance().setFileName(qgis_proj_file)
-        # QgsProject.instance().write()
-        # # QTimer.singleShot(10, set_project_crs(box_crs))
-        # self.iface.messageBar().pushMessage(message)
+        username = self.wizard.field("user_name")
+        # TODO: what is cma_name and how is it different from cma_mineral?
+        cma_name = self.wizard.field("cma_name")
+        cma_mineral = self.wizard.field("cma_mineral")
+        comments = self.wizard.field("comments")
+        input_path = self.wizard.field("input_path")
+        box_crs = self.wizard.field("crs")
+        pixel_size = self.wizard.field("pixel_size")
+        buffer_distance = self.wizard.field("buffer_distance")
+        pass
+
+        today = date.today().isoformat()
+
+        proj_path = Path(input_path, 'CMA_' + cma_mineral)
+        # Turned to true for dev. TODO Raise flag of some kind if overwriting
+        proj_path.mkdir(exist_ok=True)
+        qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgz")
+        template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
+        data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
+        dst_crs = box_crs.authid()
+
+        self.extent_gdf.to_crs(dst_crs, inplace=True)
+        if buffer_distance > 0:
+            self.extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+        bounds = self.extent_gdf.total_bounds
+
+        create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
+                                                          output_path=template_output_path, clipping_gdf=self.extent_gdf)
+        shutil.copy(template_output_path, data_raster_path)
+
+        meta_dict = {'username': username, 'mineral': cma_mineral, 'comments': comments, 'date_initiated': today,
+                     'project_path': str(proj_path), 'project_CRS': str(dst_crs), 'project_bounds': str(bounds),
+                     'template_path': template_output_path, 'data_raster_path': data_raster_path,
+                     'qgis_project_file': qgis_proj_file}
+
+        with open(Path(proj_path, 'project_metadata.json'), 'w') as f:
+            json.dump(meta_dict, f)
+
+        self.parent.meta_data = meta_dict
+
+        message = f"Project files saved to: {proj_path}"
+        qgs_data_raster = QgsRasterLayer(self.parent.meta_data['data_raster_path'], 'DataCube')
+        QgsProject.instance().addMapLayer(qgs_data_raster)
+        QgsProject.instance().layerTreeRoot().findLayer(qgs_data_raster.id()).setItemVisibilityChecked(False)
+        QgsProject.instance().setCrs(box_crs)
+        QgsProject.instance().setFileName(qgis_proj_file)
+        QgsProject.instance().write()
+        # QTimer.singleShot(10, set_project_crs(box_crs))
+        self.iface.messageBar().pushMessage(message)
 
 
 

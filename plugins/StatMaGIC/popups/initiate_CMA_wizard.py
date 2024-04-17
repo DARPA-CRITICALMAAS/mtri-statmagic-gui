@@ -76,10 +76,10 @@ class Page1(QWizardPage):
 
         self.setLayout(layout)
 
-        # self.registerField('user_name*', self.UserNameLineEdit)
-        # self.registerField('cma_name*', self.CMA_NameLineEdit)
-        # self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
-        # self.registerField('comments*', self.CommentsText)
+        self.registerField('user_name*', self.UserNameLineEdit)
+        self.registerField('cma_name*', self.CMA_NameLineEdit)
+        self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
+        self.registerField('comments', self.CommentsText)
 
     def reject(self):
         pass
@@ -99,6 +99,8 @@ class Page2(QWizardPage):
         layout.addWidget(self.proj_dir_input, 0, 1)
 
         self.setLayout(layout)
+
+        self.registerField("input_path", self.proj_dir_input)
 
 class Page3(QWizardPage):
 
@@ -250,3 +252,6 @@ class Page5(QWizardPage):
         # Todo: add some type of dynamic layer size (mb) calculator in here
 
         self.setLayout(layout)
+
+        self.registerField("pixel_size", self.pixel_size)
+        self.registerField("buffer_distance", self.buffer_distance)
