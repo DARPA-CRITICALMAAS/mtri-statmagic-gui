@@ -36,23 +36,12 @@ class ProjectWizard(QWizard):
         self.addPage(Page4(self))
         self.addPage(Page5(self))
         self.setWindowTitle("Initiate CMA Wizard")
-        #
-        # self.setOption(QWizard.NoBackButtonOnStartPage)
-        #
-        # self.setButtonText(QWizard.NextButton, "Next >")
-        # self.setButtonText(QWizard.BackButton, "< Back")
-        # self.setButtonText(QWizard.FinishButton, "Finish")
-
-
-        # logo_image = QImage('path_to_logo.png')
-        # self.setPixmap(QWizard.LogoPixmap, QPixmap.fromImage(logo_image))
-
-        # self.setOption(QWizard.NoCancelButton, True)
-        # self.setWindowFlags(self.windowFlags() | QtCore.Qt.CustomizeWindowHint)
-        # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowCloseButtonHint)
 
     def reject(self):
-        pass
+        # TODO: clean up variables on cancel here
+
+        # we need to call QWizard's reject method to actually close the window
+        super().reject()
 
 
 class Page1(QWizardPage):
