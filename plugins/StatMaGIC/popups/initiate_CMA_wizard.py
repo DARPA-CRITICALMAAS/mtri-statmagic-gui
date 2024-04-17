@@ -29,6 +29,7 @@ class ProjectWizard(QWizard):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
 
         self.addPage(Page1(self))
         self.addPage(Page2(self))
@@ -36,6 +37,10 @@ class ProjectWizard(QWizard):
         self.addPage(Page4(self))
         self.addPage(Page5(self))
         self.setWindowTitle("Initiate CMA Wizard")
+
+        # when the "finish" button on the last page gets clicked,
+        # call the method in StartTab that processes the collected information
+        self.button(QWizard.FinishButton).clicked.connect(self.parent.initiate_CMA_workflow)
 
     def reject(self):
         # TODO: clean up variables on cancel here
@@ -48,6 +53,7 @@ class Page1(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle('Initiate CMA Wizard')
         self.setSubTitle('Define metadata, geospatial settings, and properties for this CMA.')
 
@@ -81,6 +87,7 @@ class Page1(QWizardPage):
 class Page2(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle('Select Project Directory')
         self.setSubTitle('Choose the directory where your project data will be stored.')
 
@@ -97,6 +104,7 @@ class Page3(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle('Project Coordinate System')
         self.setSubTitle(
             'Choosing an appropriate projection is important to ensure accurate distance and area measurements.')
@@ -125,6 +133,7 @@ class Page3(QWizardPage):
 class Page4(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle('Define Spatial Extent')
         self.setSubTitle('Choose from the options to define the spatial extent of your project.')
         layout = QVBoxLayout()
@@ -216,6 +225,7 @@ class Page4(QWizardPage):
 class Page5(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle('Define the spatial resolution for the project and add an optinal buffer')
         self.setSubTitle('The spatial resolution will affect the memory requirements for the raster data'
                          'and geoprocessing times.')
@@ -240,7 +250,3 @@ class Page5(QWizardPage):
         # Todo: add some type of dynamic layer size (mb) calculator in here
 
         self.setLayout(layout)
-
-# def runNewProjectWizard():
-#     d = ProjectWizard()
-#     d.exec()

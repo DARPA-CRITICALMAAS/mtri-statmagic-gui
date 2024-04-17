@@ -87,8 +87,8 @@ class HomeTab(TabBase):
 
 
     def launch_CMA_wizard(self):
-        w = ProjectWizard()
-        w.exec()
+        self.wizard = ProjectWizard(self)
+        self.wizard.exec()
         # Will need to figure out how to retrieve all of the inputs from the Wizard and pass to
         # self.initiate_CMA_workflow(
 
@@ -107,7 +107,8 @@ class HomeTab(TabBase):
         pass
 
     def initiate_CMA_workflow(self):
-        pass
+        username = self.wizard.page(0).UserNameLineEdit.text()
+        logger.debug(f"The username is {username}")
         # Retrieve metadata inputs
         # username = self.UserNameLineEdit.text()
         # cma_mineral = self.CMA_mineralLineEdit.text()
