@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+
+from qgis._core import QgsProject
+
 gui_logger = logging.getLogger("statmagic_gui")
 backend_logger = logging.getLogger("statmagic_backend")
 
@@ -35,20 +38,24 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.iface = parent.iface
         self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
-        # self.resize(200, 300)
         self.dockWidgetContents = QtWidgets.QWidget(self)
         self.dockWidgetLayout = QtWidgets.QVBoxLayout()
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
 
         self.CMA_WorkflowLog = {}
 
-        # buttonFrame, buttonLayout = addFrame(self.dockWidgetContents, "HBox", "NoFrame", "Plain", 3)
         buttonWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self.dockWidgetContents)
 
         self.viewLogsButtonGUI = addButton(buttonWidget, "View GUI Logs", self.viewLogsGUI)
         self.viewLogsButtonBackend = addButton(buttonWidget, "View Backend Logs", self.viewLogsBackend)
 
         addToParentLayout(buttonWidget)
+
+        # Connect callback so we can detect when the user adds a layer
+        QgsProject.instance().legendLayersAdded.connect(self.onLayersAdded)
+        QgsProject.instance().layersAdded.connect(self.onLayersAdded)
+        QgsProject.instance().layersRemoved.connect(self.onLayersRemoved)
+        QgsProject.instance().crsChanged.connect(self.onNewCRS)
 
         self.createTabs()
 
@@ -85,7 +92,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.aws_tab                = AWSTab(self, self.tabWidget)
         self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)
         self.sparql_tab             = SparqlTab(self, self.tabWidget)
-        #self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
+        # self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
 
         # add tabs to parent
         # addToParentLayout(self.tabWidget)
@@ -103,6 +110,19 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         logPopup.setText(backend_logger.handlers[0].stream.__str__())
         logPopup.exec()
         pass
+
+    def onLayersAdded(self, layers):
+        """ Callback for when the user adds layers to the QGIS project. """
+        gui_logger.info(f"User added the following layers: {layers}")
+
+    def onLayersRemoved(self, layers):
+        """ Callback for when the user removes layers from the QGIS project. """
+        gui_logger.info(f"User removed the following layers: {layers}")
+
+    def onNewCRS(self):
+        """ Callback for when the Coordinate Reference System has changed. """
+        crs = QgsProject.instance().crs()
+        gui_logger.warning(f"Project CRS changed to {crs}")
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
