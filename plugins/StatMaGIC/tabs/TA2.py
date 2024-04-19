@@ -140,7 +140,6 @@ class TA2Tab(TabBase):
             self.run_minmod_query_btn.setText('Run GeoKB Query')
 
     def process_query(self):
-        logger.debug("Running minmod query")
         query = self.query_text_box.toPlainText()
         logger.debug(query)
         if self.query_type_selection_box.currentText() == 'MinMod':
@@ -163,14 +162,14 @@ class TA2Tab(TabBase):
         self.location_feature_combo_box.clear()
         self.location_feature_combo_box.addItems(res_df.columns)
 
-        logger.debug("Done running query")
+        logger.info("Done running query")
 
     def run_minmod_query(self, query, values=False):
-        logger.debug("Run MindMod Query")
+        logger.info("Running MindMod Query")
         return self.run_sparql_query(query, endpoint='https://minmod.isi.edu/sparql', values=values)
 
     def run_geokb_query(self, query, values=False):
-        logger.debug("Run GeoKB Query")
+        logger.debug("Running GeoKB Query")
         return self.run_sparql_query(query, endpoint='https://geokb.wikibase.cloud/query/sparql', values=values)
 
     def run_sparql_query(self, query, endpoint='https://minmod.isi.edu/sparql', values=False):
@@ -246,12 +245,12 @@ class TA2Tab(TabBase):
             self.save_response_to_csv_file()
 
     def save_response_to_csv_file(self):
-        logger.debug("Saving response as csv")
+        logger.info("Saving response as csv")
         file_path = self.output_file_text_box.filePath()
         self.last_response.to_csv(file_path, index=False)
 
     def save_response_to_gis_file(self, location_feature):
-        logger.debug("Saving path as GeoJSON")
+        logger.info("Saving path as GeoJSON")
         resp_file_path = Path(self.output_file_text_box.filePath())
         loc_feature = self.location_feature_combo_box.currentText()
         logger.debug("Location feature: ", loc_feature)
@@ -259,17 +258,17 @@ class TA2Tab(TabBase):
         # You will probably need to add code here to convert one of the columns of the response into shapely points,
         # and use that as the geometry column when creating the GeoDataFrame
         df = self.last_response
-        logger.debug("Loading location feature to WKT")
+        logger.info("Loading location feature to WKT")
         df['loc_wkt'] = df[loc_feature].apply(self.safe_wkt_load)
-        logger.debug("Creating GeoDataFrame")
+        logger.info("Creating GeoDataFrame")
         logger.debug(df.head())
         gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
-        logger.debug("Dropping column loc_wkt")
+        logger.info("Dropping column loc_wkt")
         gdf.drop(columns=['loc_wkt'], inplace=True)
-        logger.debug("Saving to file")
+        logger.info("Saving to file")
         gdf.to_file(resp_file_path, driver="GeoJSON")
 
-        logger.debug("Opening file as GIS layer", resp_file_path)
+        logger.info("Opening file as GIS layer", resp_file_path)
         resp_layer = QgsVectorLayer(str(resp_file_path), resp_file_path.stem, "ogr")
         if not resp_layer.isValid():
             msgBox = QMessageBox()
@@ -277,7 +276,6 @@ class TA2Tab(TabBase):
             msgBox.exec()
             return
         else:
-            logger.debug("Adding layer to map")
             QgsProject.instance().addMapLayer(resp_layer)
             #self.iface.messageBar().pushMessage(f"Added {resp_file_path.stem} to map", level=QMessageBox.Information)
 
@@ -285,5 +283,5 @@ class TA2Tab(TabBase):
         try:
             return loads(wkt_string)
         except WKTReadingError as e:
-            logger.debug(f"Error converting WKT: {e}")
+            logger.error(f"Error converting WKT: {e}")
             return None

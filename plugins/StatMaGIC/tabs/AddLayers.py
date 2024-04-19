@@ -183,9 +183,8 @@ class AddLayersTab(TabBase):
         # Todo: Move from this tab
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
-        logger.debug('here')
         raster = raster_path_popup.chosen_raster
-        logger.debug(raster)
+        logger.debug(f"User chose raster {raster}")
 
         popup = raster_process_menu(self.parent, raster_layer=raster)
         popup.exec_()
@@ -341,8 +340,8 @@ class AddLayersTab(TabBase):
             QgsProject.instance().addMapLayer(l)
 
     def refreshTable(self):
-        logger.debug(self.sourcelist)
-        logger.debug(self.desclist)
+        logger.debug(f"sourcelist: {self.sourcelist}")
+        logger.debug(f"desclist: {self.desclist}")
         # Get current index of last row
         rowPosition = self.layer_table.rowCount()
         # Get total amount of layers to be added
@@ -355,9 +354,7 @@ class AddLayersTab(TabBase):
 
         for i in range(numNewRow):
             logger.debug(f"adding to table at row {rowPosition + i}")
-            # logger.debug(self.sourcelist[i])
             logger.debug(self.desclist[i])
-            # logger.debug(self.pathlist[i])
             self.layer_table.insertRow(rowPosition + i)
             self.layer_table.setItem(rowPosition + i, 0, QTableWidgetItem(self.desclist[rowPosition + i]))
             # Need to construct the combo box for each row

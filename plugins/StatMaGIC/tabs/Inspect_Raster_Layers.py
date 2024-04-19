@@ -32,8 +32,6 @@ class InspectLayersTab(TabBase):
         self.pca_cluster_button = addButton(self, "PCA and Cluster Analysis", self.popup_pca_cluster_analysis)
         self.spatial_kmeans_button = addButton(self, "Spatial K-Means Mapping", self.popup_spatial_kmeans_analysis)
 
-
-
     def popup_drop_layer_dialogue(self):
         raster_path_popup = SelectRasterLayer(self.parent)
         raster_path_popup.exec_()
