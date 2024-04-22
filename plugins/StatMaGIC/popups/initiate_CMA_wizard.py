@@ -1,7 +1,10 @@
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QWizard,QSpinBox, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QTextEdit, QMessageBox
 from qgis.gui import QgsProjectionSelectionTreeWidget, QgsFileWidget, QgsMapLayerComboBox
-from PyQt5 import QtCore
+from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtCore import Qt
 from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsPoint, Qgis, QgsFeature, QgsGeometry, QgsDistanceArea
+
+
 from shapely.geometry import box
 from shapely.wkt import loads
 import geopandas as gpd
@@ -153,14 +156,15 @@ class Page4(QWizardPage):
         self.drawPolyButton.setToolTip('Click points on the canvas to create a polygon to define bounds')
 
         self.captureButton = QPushButton(self)
-        self.captureButton.setText('Capture From Canvas')
+        self.captureButton.setText('Capture Current Extent')
         self.captureButton.clicked.connect(self.capture_canvas_extent)
         self.captureButton.setToolTip('Click points on the canvas to create a polygon to define bounds')
 
         self.label0 = QLabel('Select From Loaded Layer')
 
         self.selectfromLayerBox = QgsMapLayerComboBox(self)
-        self.selectfromLayerBox.setPlaceholderText('Choose From Layer...')
+        self.selectfromLayerBox.setPlaceholderText('Choose Layer...')
+        self.selectfromLayerBox.setCurrentIndex(0)
         self.selectfromLayerBox.setToolTip('Uses the rectangular extent of layer to define bounds')
 
         label1 = QLabel('Use Selected Feature')
@@ -172,29 +176,46 @@ class Page4(QWizardPage):
         self.process_layerBox.clicked.connect(self.get_extent_from_LayerComboBox)
         self.process_layerBox.setToolTip('Will pull the geometry from the selected layer to define bounds')
 
-        label2 = QLabel('Select From File')
-        self.fileInput = QgsFileWidget(self)
+        # label2 = QLabel('Select From File')
+        # self.fileInput = QgsFileWidget(self)
 
-        self.DeterminedExtentText = QLineEdit(self)
+        # self.DeterminedExtentText = QLineEdit(self)
+        self.DeterminedExtentText = QLabel(self)
+        self.DeterminedExtentText.setText('Extent Not Yet Defined')
+
+
+        # self.section_title_font = QtGui.QFont()
+        # self.section_title_font.setFamily("Ubuntu Mono")
+        # self.section_title_font.setPointSize(12)
+        # self.section_title_font.setBold(True)
+        # self.section_title_font.setWeight(75)
+        # query_creation_label = QLabel("Create Query")
+        # query_creation_label.setFont(self.section_title_font)
 
         # layout = QVBoxLayout()
         layout = QGridLayout()
-        layout.addWidget(QLabel('Draw on the canvas'), 0, 0)
+
+        layout.addWidget(QLabel('Using the Canvas'), 0, 0)
         # RESUME HERE FOR ADDING A PRETTIER LAYOUT\
         # Think about having a button for adding a few baselayers as well
-        layout.addWidget(self.drawRectButton)
-        layout.addWidget(self.drawPolyButton)
-        layout.addWidget(self.captureButton)
-        layout.addWidget(self.label0)
-        layout.addWidget(self.selectfromLayerBox)
-        layout.addWidget(label1)
-        layout.addWidget(self.useSelectedFeatureCheck)
-        layout.addWidget(self.process_layerBox)
-        layout.addWidget(label2)
-        layout.addWidget(self.fileInput)
-        layout.addWidget(self.DeterminedExtentText)
+        layout.addWidget(self.drawRectButton, 1, 0)
+        layout.addWidget(self.drawPolyButton, 1, 1)
+        layout.addWidget(self.captureButton, 1, 2)
+
+        layout.addWidget(QLabel('Select From Loaded Layer'), 2, 0)
+        # layout.addWidget(self.label0)
+        layout.addWidget(self.selectfromLayerBox, 3, 0)
+        layout.addWidget(label1, 3, 1)
+        layout.addWidget(self.useSelectedFeatureCheck, 3, 2)
+        layout.addWidget(self.process_layerBox, 4, 0)
+        # layout.addWidget(label2)
+        # layout.addWidget(self.fileInput)
+        layout.addWidget(self.DeterminedExtentText, 5, 0, 1, 3)
 
         self.setLayout(layout)
+
+        self.project_bounds = None
+
 
     def capture_canvas_extent(self):
         self.crs_epsg = QgsProject.instance().crs().authid()
@@ -204,6 +225,7 @@ class Page4(QWizardPage):
         shapelyBox = box(*bbc)
         self.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
         self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
+
 
     def get_extent_from_LayerComboBox(self):
         selectedLayer = self.selectfromLayerBox.currentLayer()
@@ -225,14 +247,16 @@ class Page4(QWizardPage):
 
 
     def drawRect(self):
-        self.c = self.parent.canvas
+        self.c = self.parent.parent.canvas
         self.RectTool = RectangleMapTool(self.c)
         self.c.setMapTool(self.RectTool)
+        self.DeterminedExtentText.setText('Bounds Drawn From Rectangle')
 
     def drawPoly(self):
-        self.c = self.parent.canvas
+        self.c = self.parent.parent.canvas
         self.PolyTool = PolygonMapTool(self.c)
         self.c.setMapTool(self.PolyTool)
+        self.DeterminedExtentText.setText('Bounds Drawn From Polygon')
 
     def returnExtent(self):
         # self.parent.extent_gdf = self.extent_gdf
