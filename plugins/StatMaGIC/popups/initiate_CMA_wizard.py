@@ -5,6 +5,8 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsPoint, Qgis, QgsF
 from shapely.geometry import box
 from shapely.wkt import loads
 import geopandas as gpd
+from ..popups.grab_polygon import PolygonMapTool
+from ..popups.grab_rectangle import RectangleMapTool
 # modified from https://north-road.com/2018/03/09/implementing-an-in-house-new-project-wizard-for-qgis/
 
 # icon_path = '/home/nyall/nr_logo.png'
@@ -138,12 +140,17 @@ class Page4(QWizardPage):
         self.parent = parent
         self.setTitle('Define Spatial Extent')
         self.setSubTitle('Choose from the options to define the spatial extent of your project.')
-        layout = QVBoxLayout()
 
-        self.drawButton = QPushButton(self)
-        self.drawButton.setText('Draw On Canvas')
-        self.drawButton.clicked.connect(self.draw_on_canvas)
-        self.drawButton.setToolTip('Click points on the canvas to create a polygon to define bounds')
+
+        self.drawRectButton = QPushButton(self)
+        self.drawRectButton.setText('Draw Rectangle')
+        self.drawRectButton.clicked.connect(self.drawRect)
+        self.drawRectButton.setToolTip('Click and pull to create a rectangle to define bounds')
+
+        self.drawPolyButton = QPushButton(self)
+        self.drawPolyButton.setText('Draw Polygon')
+        self.drawPolyButton.clicked.connect(self.drawPoly)
+        self.drawPolyButton.setToolTip('Click points on the canvas to create a polygon to define bounds')
 
         self.captureButton = QPushButton(self)
         self.captureButton.setText('Capture From Canvas')
@@ -170,7 +177,11 @@ class Page4(QWizardPage):
 
         self.DeterminedExtentText = QLineEdit(self)
 
-
+        # layout = QVBoxLayout()
+        layout = QGridLayout
+        layout.addWidget(QLabel('Draw on the canvas'), 0, 0)
+        # RESUME HERE FOR ADDING A PRETTIER LAYOUT\
+        # Think about having a button for adding a few baselayers as well
         layout.addWidget(self.drawButton)
         layout.addWidget(self.captureButton)
         layout.addWidget(self.label0)
@@ -211,17 +222,22 @@ class Page4(QWizardPage):
             self.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
             self.DeterminedExtentText.setText('Bounds Pulled From Selected Layer Extent')
 
+
+    def drawRect(self):
+        self.c = self.parent.canvas
+        self.RectTool = RectangleMapTool(self.c)
+        self.c.setMapTool(self.RectTool)
+
+    def drawPoly(self):
+        self.c = self.parent.canvas
+        self.PolyTool = PolygonMapTool(self.c)
+        self.c.setMapTool(self.PolyTool
+
     def returnExtent(self):
         # self.parent.extent_gdf = self.extent_gdf
         # self.parent.src_crs = self.crs_epsg
         # self.close()
         pass
-
-    def draw_on_canvas(self):
-        pass
-        # bb = self.parent.canvas.extent()
-        # bb.asWktCoordinates()
-        # bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
 
 
 class Page5(QWizardPage):

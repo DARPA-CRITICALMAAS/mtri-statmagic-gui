@@ -96,7 +96,7 @@ class HomeTab(TabBase):
 
     def launch_CMA_wizard(self):
         self.wizard = ProjectWizard(self)
-        self.wizard.exec()
+        self.wizard.show()
         # Will need to figure out how to retrieve all of the inputs from the Wizard and pass to
         # self.initiate_CMA_workflow(
 
@@ -118,6 +118,8 @@ class HomeTab(TabBase):
         # Retrieve metadata inputs
         username = self.wizard.field("user_name")
         # TODO: what is cma_name and how is it different from cma_mineral?
+        # my thinking was that the name might be somthing like "National Scale of Porphry Copper"
+        # and the mineral would be something like "Porphry Copper".
         cma_name = self.wizard.field("cma_name")
         cma_mineral = self.wizard.field("cma_mineral")
         comments = self.wizard.field("comments")
@@ -125,6 +127,13 @@ class HomeTab(TabBase):
         box_crs = self.wizard.field("crs")
         pixel_size = self.wizard.field("pixel_size")
         buffer_distance = self.wizard.field("buffer_distance")
+
+        print(cma_name)
+        print(cma_mineral)
+        print(input_path)
+        print(box_crs)
+        print(pixel_size)
+
         pass
 
         today = date.today().isoformat()
