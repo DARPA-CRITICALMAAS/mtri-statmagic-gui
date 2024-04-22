@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 
 
 class TabBase(QtWidgets.QWidget):
-    def __init__(self, parent, tabWidget, tabName):
+    def __init__(self, parent, tabWidget, tabName, isEnabled=True):
         # create tab
         super().__init__(parent)
         self.setObjectName(tabName)
@@ -20,3 +20,4 @@ class TabBase(QtWidgets.QWidget):
         # add tab to reference objects
         tabWidget.addTab(self, "")
         tabWidget.setTabText(tabWidget.indexOf(self), tabName)
+        tabWidget.setTabEnabled(tabWidget.indexOf(self), isEnabled)

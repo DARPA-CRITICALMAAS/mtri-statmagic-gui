@@ -17,8 +17,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 class PredictionsTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Predictions")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Predictions", isEnabled)
 
         self.parent = parent
 

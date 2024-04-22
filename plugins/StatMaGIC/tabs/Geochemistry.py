@@ -15,8 +15,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 class GeochemistryTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Geochemistry")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Geochemistry", isEnabled)
 
         self.parent = parent
         self.iface = self.parent.iface

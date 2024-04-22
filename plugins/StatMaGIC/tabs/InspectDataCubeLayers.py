@@ -18,8 +18,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 class InspectDataCubeLayersTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Inspect DataCube Layers")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Inspect DataCube Layers", isEnabled)
 
         self.parent = parent
         self.iface = self.parent.iface

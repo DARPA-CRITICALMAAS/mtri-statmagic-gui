@@ -13,8 +13,8 @@ import logging
 logger = logging.getLogger("statmagic_gui")
 
 class RasterizationToolsTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Rasterization Tools")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Rasterization Tools", isEnabled)
 
         self.parent = parent
         self.iface = self.parent.iface

@@ -75,7 +75,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
         # populate tabs
         self.home_tab                   = HomeTab(self, self.tabWidget)
-        self.initiateCMA_tab            = InitiateCMATab(self, self.tabWidget)
+        self.initiateCMA_tab            = InitiateCMATab(self, self.tabWidget, isEnabled=False)
         self.addLayers_tab              = AddLayersTab(self, self.tabWidget)
         self.inspectDataCubeLayers_tab  = InspectDataCubeLayersTab(self, self.tabWidget)
         self.rasterizationTools_tab     = RasterizationToolsTab(self, self.tabWidget)

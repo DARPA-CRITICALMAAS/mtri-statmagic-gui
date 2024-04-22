@@ -43,8 +43,8 @@ class pandasModel(QAbstractTableModel):
 
 
 class SparqlTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Sparql")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Sparql", isEnabled)
 
         self.parent = parent
         self.iface = self.parent.iface

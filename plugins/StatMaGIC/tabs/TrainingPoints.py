@@ -28,8 +28,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 class TrainingPointsTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Training Points")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Training Points", isEnabled)
 
         self.parent = parent
         self.iso_forest = None

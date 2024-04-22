@@ -178,11 +178,12 @@ class Page4(QWizardPage):
         self.DeterminedExtentText = QLineEdit(self)
 
         # layout = QVBoxLayout()
-        layout = QGridLayout
+        layout = QGridLayout()
         layout.addWidget(QLabel('Draw on the canvas'), 0, 0)
         # RESUME HERE FOR ADDING A PRETTIER LAYOUT\
         # Think about having a button for adding a few baselayers as well
-        layout.addWidget(self.drawButton)
+        layout.addWidget(self.drawRectButton)
+        layout.addWidget(self.drawPolyButton)
         layout.addWidget(self.captureButton)
         layout.addWidget(self.label0)
         layout.addWidget(self.selectfromLayerBox)

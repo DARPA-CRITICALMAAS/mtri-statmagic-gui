@@ -28,8 +28,8 @@ from ..layerops import add_macrostrat_vectortilemap_to_project, return_selected_
 from ..popups.choose_raster_dialog import SelectRasterLayer
 
 class AddLayersTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "Add Layers")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "Add Layers", isEnabled)
 
         self.parent = parent
         self.iface = self.parent.iface

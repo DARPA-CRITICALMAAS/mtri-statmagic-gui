@@ -1,14 +1,18 @@
 """
 Credit where credit is due: https://stackoverflow.com/questions/52615115/how-to-create-collapsible-box-in-pyqt
 """
+import logging
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+logger = logging.getLogger("statmagic_gui")
 
 
 class CollapsibleBox(QtWidgets.QWidget):
     def __init__(self, title="", parent=None):
         super(CollapsibleBox, self).__init__(parent)
-        print("Creating collapse box")
+        logger.debug("Creating collapse box")
 
         self.toggle_button = QtWidgets.QToolButton(
             text=title, checkable=True, checked=False

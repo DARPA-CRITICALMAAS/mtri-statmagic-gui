@@ -10,8 +10,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 class AWSTab(TabBase):
-    def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "AWS")
+    def __init__(self, parent, tabWidget, isEnabled=True):
+        super().__init__(parent, tabWidget, "AWS", isEnabled)
         self.parent = parent
         self.iface = self.parent.iface
 
