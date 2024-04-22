@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger("statmagic_gui")
 
 
-class InspectLayersTab(TabBase):
+class InspectDataCubeLayersTab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Inspect DataCube Layers")
 
@@ -31,8 +31,6 @@ class InspectLayersTab(TabBase):
         self.scatter_plot_button = addButton(self, "Raster Scatter Plot", self.popup_make_scatter_plot)
         self.pca_cluster_button = addButton(self, "PCA and Cluster Analysis", self.popup_pca_cluster_analysis)
         self.spatial_kmeans_button = addButton(self, "Spatial K-Means Mapping", self.popup_spatial_kmeans_analysis)
-
-
 
     def popup_drop_layer_dialogue(self):
         raster_path_popup = SelectRasterLayer(self.parent)

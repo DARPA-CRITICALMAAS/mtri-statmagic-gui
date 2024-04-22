@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+
+from qgis._core import QgsProject
+
 gui_logger = logging.getLogger("statmagic_gui")
 backend_logger = logging.getLogger("statmagic_backend")
 
@@ -8,20 +11,16 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 
 from .gui_helpers import *
 from .tabs.AWS import AWSTab
-# from .tabs.Beak import BeakTab
-# from .tabs.SRI import SRITab
 from .tabs.Geochemistry import GeochemistryTab
 from .tabs.InitiateCMA import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
 from .tabs.TrainingPoints import TrainingPointsTab
-from .tabs.Inspect_Raster_Layers import InspectLayersTab
-from .tabs.Rasterization import RasterizationTab
+from .tabs.InspectDataCubeLayers import InspectDataCubeLayersTab
+from .tabs.RasterizationTools import RasterizationToolsTab
 from .tabs.AddLayers import AddLayersTab
-from .tabs.Start_Tab import HomeTab
+from .tabs.Home import HomeTab
 
-from .tabs.TA2 import TA2Tab
 from .tabs.Sciencebase import SciencebaseTab
-from .tabs.CollapsiblePractice import CollapsibleTab
 from .tabs.Sparql import SparqlTab
 
 
@@ -35,20 +34,24 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.iface = parent.iface
         self.canvas = self.iface.mapCanvas()
         self.setObjectName("StatMaGICDockWidget")
-        # self.resize(200, 300)
         self.dockWidgetContents = QtWidgets.QWidget(self)
         self.dockWidgetLayout = QtWidgets.QVBoxLayout()
         self.dockWidgetContents.setLayout(self.dockWidgetLayout)
 
         self.CMA_WorkflowLog = {}
 
-        # buttonFrame, buttonLayout = addFrame(self.dockWidgetContents, "HBox", "NoFrame", "Plain", 3)
         buttonWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self.dockWidgetContents)
 
         self.viewLogsButtonGUI = addButton(buttonWidget, "View GUI Logs", self.viewLogsGUI)
         self.viewLogsButtonBackend = addButton(buttonWidget, "View Backend Logs", self.viewLogsBackend)
 
         addToParentLayout(buttonWidget)
+
+        # Connect callback so we can detect when the user adds a layer
+        QgsProject.instance().legendLayersAdded.connect(self.onLayersAdded)
+        QgsProject.instance().layersAdded.connect(self.onLayersAdded)
+        QgsProject.instance().layersRemoved.connect(self.onLayersRemoved)
+        QgsProject.instance().crsChanged.connect(self.onNewCRS)
 
         self.createTabs()
 
@@ -71,21 +74,17 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.tabWidget = QtWidgets.QTabWidget(self.dockWidgetContents)
 
         # populate tabs
-        self.home_tab = HomeTab(self, self.tabWidget)
-        self.initiateCMA_tab = InitiateCMATab(self, self.tabWidget)
-        self.addLayers_tab          = AddLayersTab(self, self.tabWidget)
-        self.InspectLayersTab       = InspectLayersTab(self, self.tabWidget)
-        self.rasterize_tab          = RasterizationTab(self, self.tabWidget)
-        self.geochemistry_tab       = GeochemistryTab(self, self.tabWidget)
-        self.trainingPoints_tab     = TrainingPointsTab(self, self.tabWidget)
-        self.predictions_tab        = PredictionsTab(self, self.tabWidget)
-        # self.sri_tab                = SRITab(self, self.tabWidget)
-        # self.beak_tab               = BeakTab(self, self.tabWidget)
-        #self.ta2_tab                = TA2Tab(self, self.tabWidget)
-        self.aws_tab                = AWSTab(self, self.tabWidget)
-        self.sciencebase_tab        = SciencebaseTab(self, self.tabWidget)
-        self.sparql_tab             = SparqlTab(self, self.tabWidget)
-        #self.collapsible_tab = CollapsibleTab(self, self.tabWidget)
+        self.home_tab                   = HomeTab(self, self.tabWidget)
+        self.initiateCMA_tab            = InitiateCMATab(self, self.tabWidget)
+        self.addLayers_tab              = AddLayersTab(self, self.tabWidget)
+        self.inspectDataCubeLayers_tab  = InspectDataCubeLayersTab(self, self.tabWidget)
+        self.rasterizationTools_tab     = RasterizationToolsTab(self, self.tabWidget)
+        self.geochemistry_tab           = GeochemistryTab(self, self.tabWidget)
+        self.trainingPoints_tab         = TrainingPointsTab(self, self.tabWidget)
+        self.predictions_tab            = PredictionsTab(self, self.tabWidget)
+        self.aws_tab                    = AWSTab(self, self.tabWidget)
+        self.sciencebase_tab            = SciencebaseTab(self, self.tabWidget)
+        self.sparql_tab                 = SparqlTab(self, self.tabWidget)
 
         # add tabs to parent
         # addToParentLayout(self.tabWidget)
@@ -103,6 +102,19 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         logPopup.setText(backend_logger.handlers[0].stream.__str__())
         logPopup.exec()
         pass
+
+    def onLayersAdded(self, layers):
+        """ Callback for when the user adds layers to the QGIS project. """
+        gui_logger.info(f"User added the following layers: {layers}")
+
+    def onLayersRemoved(self, layers):
+        """ Callback for when the user removes layers from the QGIS project. """
+        gui_logger.info(f"User removed the following layers: {layers}")
+
+    def onNewCRS(self):
+        """ Callback for when the Coordinate Reference System has changed. """
+        crs = QgsProject.instance().crs()
+        gui_logger.warning(f"Project CRS changed to {crs}")
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

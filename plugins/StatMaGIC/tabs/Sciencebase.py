@@ -20,8 +20,6 @@ class SciencebaseTab(TabBase):
         self.itemID.setText("6193e9f3d34eb622f68f13a5")
         addToParentLayout(IdentifierFrame)
 
-
-
         ##### SEARCH FRAME #####
         searchFrame, searchLayout = addFrame(self, "VBox", "Panel", "Sunken", 3)
         searchFormLayout = QtWidgets.QFormLayout()
@@ -29,10 +27,7 @@ class SciencebaseTab(TabBase):
         addWidgetFromLayoutAndAddToParent(searchFormLayout, searchFrame)
         addToParentLayout(searchFrame)
 
-
-
         ##### ITEM FRAME #####
-
         itemFrame, itemFrameLayout = addFrame(self, "VBox", "NoFrame", "Plain", 3)
 
         self.itemList = addListWidget(itemFrame)

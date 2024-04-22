@@ -23,7 +23,7 @@ logger = logging.getLogger("statmagic_gui")
 
 class HomeTab(TabBase):
     def __init__(self, parent, tabWidget):
-        super().__init__(parent, tabWidget, "StatMagic Home")
+        super().__init__(parent, tabWidget, "StatMaGIC Home")
         self.parent = parent
         self.iface = self.parent.iface
 

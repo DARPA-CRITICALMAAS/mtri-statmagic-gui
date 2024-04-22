@@ -12,7 +12,7 @@ from ..gui_helpers import *
 import logging
 logger = logging.getLogger("statmagic_gui")
 
-class RasterizationTab(TabBase):
+class RasterizationToolsTab(TabBase):
     def __init__(self, parent, tabWidget):
         super().__init__(parent, tabWidget, "Rasterization Tools")
 
