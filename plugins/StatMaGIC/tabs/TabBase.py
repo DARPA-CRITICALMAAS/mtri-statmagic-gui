@@ -18,6 +18,13 @@ class TabBase(QtWidgets.QWidget):
         self.setLayout(self.tabLayout)
 
         # add tab to reference objects
-        tabWidget.addTab(self, "")
-        tabWidget.setTabText(tabWidget.indexOf(self), tabName)
-        tabWidget.setTabEnabled(tabWidget.indexOf(self), isEnabled)
+        self.tabWidget = tabWidget
+        self.tabWidget.addTab(self, "")
+        self.tabWidget.setTabText(tabWidget.indexOf(self), tabName)
+        self.tabWidget.setTabEnabled(tabWidget.indexOf(self), isEnabled)
+
+    def enable(self):
+        self.tabWidget.setTabEnabled(self.tabWidget.indexOf(self), True)
+
+    def disable(self):
+        self.tabWidget.setTabEnabled(self.tabWidget.indexOf(self), False)
