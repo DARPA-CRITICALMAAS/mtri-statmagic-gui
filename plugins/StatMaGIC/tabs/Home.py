@@ -97,8 +97,6 @@ class HomeTab(TabBase):
     def launch_CMA_wizard(self):
         self.wizard = ProjectWizard(self)
         self.wizard.show()
-        # Will need to figure out how to retrieve all of the inputs from the Wizard and pass to
-        # self.initiate_CMA_workflow(
 
 
     def set_project_json(self):
@@ -128,11 +126,11 @@ class HomeTab(TabBase):
         pixel_size = self.wizard.field("pixel_size")
         buffer_distance = self.wizard.field("buffer_distance")
 
-        print(cma_name)
-        print(cma_mineral)
-        print(input_path)
-        print(box_crs)
-        print(pixel_size)
+        logger.debug(cma_name)
+        logger.debug(cma_mineral)
+        logger.debug(input_path)
+        logger.debug(box_crs)
+        logger.debug(pixel_size)
 
         pass
 

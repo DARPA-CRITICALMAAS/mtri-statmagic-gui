@@ -231,7 +231,7 @@ class Page4(QWizardPage):
     def drawPoly(self):
         self.c = self.parent.canvas
         self.PolyTool = PolygonMapTool(self.c)
-        self.c.setMapTool(self.PolyTool
+        self.c.setMapTool(self.PolyTool)
 
     def returnExtent(self):
         # self.parent.extent_gdf = self.extent_gdf
