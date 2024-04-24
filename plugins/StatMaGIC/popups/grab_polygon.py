@@ -1,7 +1,7 @@
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint, QgsRubberBand
 from qgis.core import QgsWkbTypes, QgsPoint, QgsGeometry, QgsFeature, Qgis
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMessageBox
 
@@ -9,6 +9,7 @@ import logging
 logger = logging.getLogger("statmagic_gui")
 
 class PolygonMapTool(QgsMapToolEmitPoint):
+    poly_created = pyqtSignal(QgsFeature)
     def __init__(self, canvas):
         logger.debug('tool init')
         self.canvas = canvas
@@ -62,6 +63,8 @@ class PolygonMapTool(QgsMapToolEmitPoint):
             feat.setGeometry(polygon)
             self.rubberBand.setToGeometry(polygon)
             self.rubberBand.show()
+            if feat is not None:
+                self.poly_created.emit(feat)
             # layer = iface.activeLayer()
             # f = layer.getFeature(0)
             # prov1 = layer.dataProvider()

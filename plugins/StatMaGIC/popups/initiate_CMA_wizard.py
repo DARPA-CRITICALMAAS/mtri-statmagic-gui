@@ -82,10 +82,17 @@ class Page1(QWizardPage):
         layout.addWidget(self.CommentsText, 3, 1)
 
         self.setLayout(layout)
+        #
+        # self.registerField('user_name*', self.UserNameLineEdit)
+        # self.registerField('cma_name*', self.CMA_NameLineEdit)
+        # self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
+        # self.registerField('comments', self.CommentsText)
+        #
 
-        self.registerField('user_name*', self.UserNameLineEdit)
-        self.registerField('cma_name*', self.CMA_NameLineEdit)
-        self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
+        # Delete this when done testing
+        self.registerField('user_name', self.UserNameLineEdit)
+        self.registerField('cma_name', self.CMA_NameLineEdit)
+        self.registerField('cma_mineral', self.CMA_MineralLineEdit)
         self.registerField('comments', self.CommentsText)
 
     def reject(self):
@@ -175,7 +182,7 @@ class Page4(QWizardPage):
 
         self.selectfromLayerBox = QgsMapLayerComboBox(self)
         self.selectfromLayerBox.setPlaceholderText('Choose Layer...')
-        self.selectfromLayerBox.setCurrentIndex(0)
+        # self.selectfromLayerBox.setCurrentIndex(0)
         self.selectfromLayerBox.setToolTip('Uses the rectangular extent of layer to define bounds')
 
         label1 = QLabel('Use Selected Feature')
@@ -248,20 +255,36 @@ class Page4(QWizardPage):
 
         if self.useSelectedFeatureCheck.isChecked():
             sel = selectedLayer.selectedFeatures()[0]
-            # TODO: This should be backend?
             shapely_poly = loads(sel.geometry().asWkt())
-            self.extent_gdf = gpd.GeoDataFrame(geometry=[shapely_poly], crs=self.crs_epsg)
-            self.DeterminedExtentText.setText('Bounds And Geometry Pulled From Selected Features')
+            self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapely_poly], crs=self.crs_epsg)
+            # self.DeterminedExtentText.setText('Bounds And Geometry Pulled From Selected Features')
+            geotext = self.parent.extent_gdf.geometry.to_string()
+            self.DeterminedExtentText.setText(geotext)
         else:
-            self.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
-            self.DeterminedExtentText.setText('Bounds Pulled From Selected Layer Extent')
+            self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
+            geotext = self.parent.extent_gdf.geometry.to_string()
+            # self.DeterminedExtentText.setText('Bounds Pulled From Selected Layer Extent')
+            self.DeterminedExtentText.setText(geotext)
 
 
     def drawRect(self):
         self.c = self.parent.parent.canvas
         self.RectTool = RectangleMapTool(self.c)
         self.c.setMapTool(self.RectTool)
-        self.DeterminedExtentText.setText('Bounds Drawn From Rectangle')
+
+        # Alex how can we make this wait for the rect_created Signal from RectangleMapTool
+        # Before continuing
+
+
+        bb = self.RectTool.rectangle()
+        self.crs_epsg = self.parent.parent.canvas.mapSettings().destinationCrs().authid()
+        # Try below if above doesn't work
+        # self.crs_epsg = QgsProject.instance().crs().authid()
+        bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
+        self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[box(*bbc)], crs=self.crs_epsg)
+        geotext = self.parent.extent_gdf.geometry.to_string()
+        self.DeterminedExtentText.setText(geotext)
+        # self.DeterminedExtentText.setText('Bounds Drawn From Rectangle')
 
     def drawPoly(self):
         self.c = self.parent.parent.canvas
