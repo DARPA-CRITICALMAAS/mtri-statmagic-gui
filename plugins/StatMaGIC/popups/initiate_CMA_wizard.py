@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QWizard,QSpinBox, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QTextEdit, QMessageBox
 from qgis.gui import QgsProjectionSelectionTreeWidget, QgsFileWidget, QgsMapLayerComboBox
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtCore import Qt
-from qgis.core import QgsProject, QgsVectorLayer, QgsField, QgsPoint, Qgis, QgsFeature, QgsGeometry, QgsDistanceArea
 
+from qgis.core import QgsProject, QgsUnitTypes
+from qgis.PyQt import QtGui
 
 from shapely.geometry import box
 from shapely.wkt import loads
@@ -13,23 +12,8 @@ from ..popups.grab_rectangle import RectangleMapTool
 from pathlib import Path
 # modified from https://north-road.com/2018/03/09/implementing-an-in-house-new-project-wizard-for-qgis/
 
-# icon_path = '/home/nyall/nr_logo.png'
 
-'''
-Theres still a lot to figure out here but the workflow is well defined. Don't expect much to work
-at this point. Particulaly the extent defintion start. It's mostly just getting the GUI elements and the QWizard Widget setup. 
 
-I expect there will need to be a bit of setup for doing parent type stuff to access the canvas for 
-capturing and the canvas drawing tools. 
-
-You'll see there's a bit of stuff commented out for having fields required before passing on, and an example
-of it working for the projection selection. 
-
-For Cleanliness it might be better to make each page it's own file and import as well
-
-Also need help on unpacking all hte defined inputs back into Start_Tab to run the initiate CMA function
-
-'''
 
 class ProjectWizard(QWizard):
 
@@ -44,8 +28,6 @@ class ProjectWizard(QWizard):
         self.addPage(Page5(self))
         self.setWindowTitle("Initiate CMA Wizard")
 
-        # when the "finish" button on the last page gets clicked,
-        # call the method in StartTab that processes the collected information
         self.extent_gdf = None
         self.button(QWizard.FinishButton).clicked.connect(self.parent.initiate_CMA_workflow)
 
@@ -162,6 +144,11 @@ class Page4(QWizardPage):
         self.setTitle('Define Spatial Extent')
         self.setSubTitle('Choose from the options to define the spatial extent of your project.')
 
+        self.section_title_font = QtGui.QFont()
+        self.section_title_font.setFamily("Ubuntu Mono")
+        self.section_title_font.setPointSize(14)
+        self.section_title_font.setBold(True)
+        self.section_title_font.setWeight(75)
 
         self.drawRectButton = QPushButton(self)
         self.drawRectButton.setText('Draw Rectangle')
@@ -178,15 +165,19 @@ class Page4(QWizardPage):
         self.captureButton.clicked.connect(self.capture_canvas_extent)
         self.captureButton.setToolTip('Click points on the canvas to create a polygon to define bounds')
 
-        self.label0 = QLabel('Select From Loaded Layer')
+        label0 = QLabel('Option 1: Use the Canvas')
+        label1 = QLabel('Option 2: Use a Loaded Layer')
+        label0.setFont(self.section_title_font)
+        label1.setFont(self.section_title_font)
 
         self.selectfromLayerBox = QgsMapLayerComboBox(self)
         self.selectfromLayerBox.setPlaceholderText('Choose Layer...')
         # self.selectfromLayerBox.setCurrentIndex(0)
         self.selectfromLayerBox.setToolTip('Uses the rectangular extent of layer to define bounds')
 
-        label1 = QLabel('Use Selected Feature')
+
         self.useSelectedFeatureCheck = QCheckBox(self)
+        self.useSelectedFeatureCheck.setText("Use Selected Feature")
         self.useSelectedFeatureCheck.setToolTip('Will only consider the selected feature for determining extent')
 
         self.process_layerBox = QPushButton()
@@ -194,46 +185,31 @@ class Page4(QWizardPage):
         self.process_layerBox.clicked.connect(self.get_extent_from_LayerComboBox)
         self.process_layerBox.setToolTip('Will pull the geometry from the selected layer to define bounds')
 
-        # label2 = QLabel('Select From File')
-        # self.fileInput = QgsFileWidget(self)
-
-        # self.DeterminedExtentText = QLineEdit(self)
         self.DeterminedExtentText = QLabel(self)
         self.DeterminedExtentText.setText('Extent Not Yet Defined')
 
-
-        # self.section_title_font = QtGui.QFont()
-        # self.section_title_font.setFamily("Ubuntu Mono")
-        # self.section_title_font.setPointSize(12)
-        # self.section_title_font.setBold(True)
-        # self.section_title_font.setWeight(75)
-        # query_creation_label = QLabel("Create Query")
-        # query_creation_label.setFont(self.section_title_font)
-
-        # layout = QVBoxLayout()
         layout = QGridLayout()
 
-        layout.addWidget(QLabel('Using the Canvas'), 0, 0)
-        # RESUME HERE FOR ADDING A PRETTIER LAYOUT\
-        # Think about having a button for adding a few baselayers as well
+        layout.addWidget(label0, 0, 0)
         layout.addWidget(self.drawRectButton, 1, 0)
         layout.addWidget(self.drawPolyButton, 1, 1)
         layout.addWidget(self.captureButton, 1, 2)
 
-        layout.addWidget(QLabel('Select From Loaded Layer'), 2, 0)
-        # layout.addWidget(self.label0)
-        layout.addWidget(self.selectfromLayerBox, 3, 0)
-        layout.addWidget(label1, 3, 1)
-        layout.addWidget(self.useSelectedFeatureCheck, 3, 2)
-        layout.addWidget(self.process_layerBox, 4, 0)
-        # layout.addWidget(label2)
-        # layout.addWidget(self.fileInput)
-        layout.addWidget(self.DeterminedExtentText, 5, 0, 1, 3)
+        # layout.setRowStretch(2, 1)
+        layout.addWidget(QLabel(""), 2, 0)
+
+        layout.addWidget(label1, 3, 0)
+        layout.addWidget(self.selectfromLayerBox, 4, 0)
+        layout.addWidget(self.useSelectedFeatureCheck, 4, 1)
+        layout.addWidget(self.process_layerBox, 5, 0, 1, 2)
+
+        # layout.setRowStretch(6, 1)
+        layout.addWidget(QLabel(""), 6, 0)
+        layout.addWidget(QLabel(""), 7, 0)
+
+        layout.addWidget(self.DeterminedExtentText, 8, 0)
 
         self.setLayout(layout)
-
-        self.project_bounds = None
-
 
     def capture_canvas_extent(self):
         self.crs_epsg = QgsProject.instance().crs().authid()
@@ -243,7 +219,6 @@ class Page4(QWizardPage):
         shapelyBox = box(*bbc)
         self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
         self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
-
 
     def get_extent_from_LayerComboBox(self):
         selectedLayer = self.selectfromLayerBox.currentLayer()
@@ -266,12 +241,10 @@ class Page4(QWizardPage):
             # self.DeterminedExtentText.setText('Bounds Pulled From Selected Layer Extent')
             self.DeterminedExtentText.setText(geotext)
 
-
     def drawRect(self):
         self.c = self.parent.parent.canvas
         self.RectTool = RectangleMapTool(self.c)
         self.c.setMapTool(self.RectTool)
-
         self.RectTool.rect_created.connect(self.captureRect)
 
     def captureRect(self):
@@ -289,13 +262,17 @@ class Page4(QWizardPage):
         self.c = self.parent.parent.canvas
         self.PolyTool = PolygonMapTool(self.c)
         self.c.setMapTool(self.PolyTool)
-        self.DeterminedExtentText.setText('Bounds Drawn From Polygon')
+        self.PolyTool.poly_created.connect(self.capturePoly)
 
-    def returnExtent(self):
-        # self.parent.extent_gdf = self.extent_gdf
-        # self.parent.src_crs = self.crs_epsg
-        # self.close()
-        pass
+    def capturePoly(self):
+        poly = self.PolyTool.geometry()
+        self.crs_epsg = self.parent.parent.canvas.mapSettings().destinationCrs().authid()
+        wkt = poly.asWkt()
+        shapely_geom = loads(wkt)
+        self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=self.crs_epsg)
+        geotext = self.parent.extent_gdf.geometry.to_string()
+        self.DeterminedExtentText.setText(geotext)
+        # self.DeterminedExtentText.setText('Bounds Drawn From Polygon')
 
 
 class Page5(QWizardPage):
@@ -317,15 +294,15 @@ class Page5(QWizardPage):
         self.buffer_distance.setValue(0)
 
         self.unit_label = QLabel()
-        linear_unit = self.parent.field("crs")
-        self.unit_label.setText(linear_unit)
 
         layout = QGridLayout()
-        # Todo: add units from crs.linearUnit()
-        layout.addWidget(QLabel('Pixel Size ____'), 0, 0)
-        layout.addWidget(self.pixel_size, 0, 1)
-        layout.addWidget(QLabel('Buffer Distance'), 1, 0)
-        layout.addWidget(self.buffer_distance, 1, 1)
+        layout.addWidget(self.unit_label, 0, 0)
+        layout.addWidget(QLabel(""), 1, 0)
+        layout.addWidget(QLabel('Pixel Size'), 2, 0)
+        layout.addWidget(self.pixel_size, 2, 1)
+        layout.addWidget(QLabel('Buffer Distance'), 3, 0)
+        layout.addWidget(self.buffer_distance, 3, 1)
+
 
         # Todo: add some type of dynamic layer size (mb) calculator in here
 
@@ -333,3 +310,9 @@ class Page5(QWizardPage):
 
         self.registerField("pixel_size", self.pixel_size)
         self.registerField("buffer_distance", self.buffer_distance)
+
+    def initializePage(self):
+        crs = self.field("crs")
+        linear_unit = QgsUnitTypes.encodeUnit(crs.mapUnits())
+        self.unit_label.setText(f"Based on the CRS selected the values are in: {linear_unit}")
+        super().initializePage()

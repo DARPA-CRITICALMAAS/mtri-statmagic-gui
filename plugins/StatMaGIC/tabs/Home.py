@@ -3,18 +3,14 @@ import shutil
 from datetime import date
 from pathlib import Path
 
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QTextEdit, QComboBox, QTableView, QCheckBox, QVBoxLayout, QHBoxLayout, QFrame, QFormLayout, QSpacerItem, QGridLayout
-from PyQt5.QtCore import Qt, QAbstractTableModel
-from PyQt5.QtGui import QPalette, QColor
-from qgis._core import QgsRasterLayer, QgsProject
+from PyQt5.QtWidgets import QPushButton, QLabel, QFrame, QGridLayout, QFileDialog
+from qgis.core import QgsRasterLayer, QgsProject, QgsUnitTypes
 
 from statmagic_backend.dev.template_raster_user_input import create_template_raster_from_bounds_and_resolution
 from .TabBase import TabBase
-from ..gui_helpers import *
+from qgis.PyQt import QtGui
 from ..layerops import set_project_crs
-from ..popups.ChooseProjExtentDialog import ChooseExtent
-# from ..popups.initiate_CMA_wizard import Wizard
+
 from ..popups.initiate_CMA_wizard import ProjectWizard
 
 import logging
@@ -52,11 +48,13 @@ class HomeTab(TabBase):
         self.resumeCMA_Button.clicked.connect(self.set_project_json)
         self.resumeCMA_Button.setToolTip(
             'Opens up a dialog to select a json project file to resume a CMA')
+        # self.resumeCMA_Button.setEnabled(False)
 
         self.editCMA_Button = QPushButton()
         self.editCMA_Button.setText('Edit CMA')
         self.editCMA_Button.clicked.connect(self.edit_CMA_dialog)
         self.editCMA_Button.setToolTip('Opens up dialog to edit CMA metadata')
+        self.editCMA_Button.setEnabled(False)
 
         home_buttons_Layout.addWidget(self.initCMA_Button, 0, 0)
         home_buttons_Layout.addWidget(self.resumeCMA_Button, 0, 1)
@@ -82,10 +80,12 @@ class HomeTab(TabBase):
         self.viewTutorial_Button = QPushButton()
         self.viewTutorial_Button.setText('Launch Tutorial')
         self.viewTutorial_Button.clicked.connect(self.launch_tutorial)
+        self.viewTutorial_Button.setEnabled(False)
 
         self.viewDocs_Button = QPushButton()
         self.viewDocs_Button.setText('View Documentation Pages')
         self.viewDocs_Button.clicked.connect(self.open_docs_page)
+        self.viewDocs_Button.setEnabled(False)
 
         help_buttons_Layout.addWidget(self.viewTutorial_Button, 0, 0)
         help_buttons_Layout.addWidget(self.viewDocs_Button, 0, 1)
@@ -101,7 +101,17 @@ class HomeTab(TabBase):
 
     def set_project_json(self):
         # Grab and modify from last function on InitiateCMA.py
-        pass
+        jsonFilePath, _ = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
+        if Path(jsonFilePath).exists():
+            print(jsonFilePath)
+            with open(Path(jsonFilePath), 'r') as f:
+                self.parent.meta_data = json.loads(f.read())
+            qgis_proj_file = self.parent.meta_data["qgis_project_file"]
+            QgsProject.instance().read(qgis_proj_file)
+            self.iface.messageBar().pushMessage(f"Files loaded from: {jsonFilePath}")
+            
+
+
 
     def edit_CMA_dialog(self):
         pass
@@ -127,7 +137,8 @@ class HomeTab(TabBase):
         buffer_distance = self.wizard.field("buffer_distance")
         extent_gdf = self.wizard.extent_gdf
         print(extent_gdf)
-        print(box_crs.mapUnits())
+
+        print(QgsUnitTypes.encodeUnit(box_crs.mapUnits()))
 
         logger.debug(cma_name)
         logger.debug(cma_mineral)
