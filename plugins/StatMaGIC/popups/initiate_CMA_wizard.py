@@ -10,6 +10,7 @@ from shapely.wkt import loads
 import geopandas as gpd
 from ..popups.grab_polygon import PolygonMapTool
 from ..popups.grab_rectangle import RectangleMapTool
+from pathlib import Path
 # modified from https://north-road.com/2018/03/09/implementing-an-in-house-new-project-wizard-for-qgis/
 
 # icon_path = '/home/nyall/nr_logo.png'
@@ -45,6 +46,7 @@ class ProjectWizard(QWizard):
 
         # when the "finish" button on the last page gets clicked,
         # call the method in StartTab that processes the collected information
+        self.extent_gdf = None
         self.button(QWizard.FinishButton).clicked.connect(self.parent.initiate_CMA_workflow)
 
     def reject(self):
@@ -106,6 +108,15 @@ class Page2(QWizardPage):
         self.setLayout(layout)
 
         self.registerField("input_path", self.proj_dir_input)
+        self.proj_dir_input.fileChanged.connect(self.dir_selected)
+
+    def dir_selected(self):
+        self.setField("input_path", self.proj_dir_input.filePath())
+        self.completeChanged.emit()
+
+    def isComplete(self):
+        return Path(self.proj_dir_input.filePath()).is_dir()
+
 
 class Page3(QWizardPage):
 
@@ -223,7 +234,7 @@ class Page4(QWizardPage):
         bb.asWktCoordinates()
         bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
         shapelyBox = box(*bbc)
-        self.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
+        self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
         self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
 
 

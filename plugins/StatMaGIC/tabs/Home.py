@@ -125,14 +125,14 @@ class HomeTab(TabBase):
         box_crs = self.wizard.field("crs")
         pixel_size = self.wizard.field("pixel_size")
         buffer_distance = self.wizard.field("buffer_distance")
+        extent_gdf = self.wizard.extent_gdf
+        print(extent_gdf)
 
         logger.debug(cma_name)
         logger.debug(cma_mineral)
         logger.debug(input_path)
         logger.debug(box_crs)
         logger.debug(pixel_size)
-
-        pass
 
         today = date.today().isoformat()
 
@@ -144,13 +144,15 @@ class HomeTab(TabBase):
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
         dst_crs = box_crs.authid()
 
-        self.extent_gdf.to_crs(dst_crs, inplace=True)
+        # Here is where to pick up
+        # Can do away with the self and just refer to the variable 
+        extent_gdf.to_crs(dst_crs, inplace=True)
         if buffer_distance > 0:
-            self.extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
-        bounds = self.extent_gdf.total_bounds
+            extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+        bounds = extent_gdf.total_bounds
 
         create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
-                                                          output_path=template_output_path, clipping_gdf=self.extent_gdf)
+                                                          output_path=template_output_path, clipping_gdf=extent_gdf)
         shutil.copy(template_output_path, data_raster_path)
 
         meta_dict = {'username': username, 'mineral': cma_mineral, 'comments': comments, 'date_initiated': today,
