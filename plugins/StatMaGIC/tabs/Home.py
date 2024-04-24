@@ -109,9 +109,6 @@ class HomeTab(TabBase):
             qgis_proj_file = self.parent.meta_data["qgis_project_file"]
             QgsProject.instance().read(qgis_proj_file)
             self.iface.messageBar().pushMessage(f"Files loaded from: {jsonFilePath}")
-            
-
-
 
     def edit_CMA_dialog(self):
         pass
@@ -155,12 +152,9 @@ class HomeTab(TabBase):
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
         dst_crs = box_crs.authid()
-
-        # Here is where to pick up
-        # Can do away with the self and just refer to the variable 
         extent_gdf.to_crs(dst_crs, inplace=True)
         if buffer_distance > 0:
-            extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+            extent_gdf.geometry = extent_gdf.buffer(buffer_distance)
         bounds = extent_gdf.total_bounds
 
         create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
