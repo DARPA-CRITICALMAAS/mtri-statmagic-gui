@@ -272,10 +272,9 @@ class Page4(QWizardPage):
         self.RectTool = RectangleMapTool(self.c)
         self.c.setMapTool(self.RectTool)
 
-        # Alex how can we make this wait for the rect_created Signal from RectangleMapTool
-        # Before continuing
+        self.RectTool.rect_created.connect(self.captureRect)
 
-
+    def captureRect(self):
         bb = self.RectTool.rectangle()
         self.crs_epsg = self.parent.parent.canvas.mapSettings().destinationCrs().authid()
         # Try below if above doesn't work
