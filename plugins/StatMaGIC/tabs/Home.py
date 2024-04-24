@@ -127,6 +127,7 @@ class HomeTab(TabBase):
         buffer_distance = self.wizard.field("buffer_distance")
         extent_gdf = self.wizard.extent_gdf
         print(extent_gdf)
+        print(box_crs.mapUnits())
 
         logger.debug(cma_name)
         logger.debug(cma_mineral)

@@ -317,6 +317,10 @@ class Page5(QWizardPage):
         self.buffer_distance.setSingleStep(50)
         self.buffer_distance.setValue(0)
 
+        self.unit_label = QLabel()
+        linear_unit = self.parent.field("crs")
+        self.unit_label.setText(linear_unit)
+
         layout = QGridLayout()
         # Todo: add units from crs.linearUnit()
         layout.addWidget(QLabel('Pixel Size ____'), 0, 0)
