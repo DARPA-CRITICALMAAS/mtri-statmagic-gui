@@ -98,7 +98,6 @@ class HomeTab(TabBase):
         self.wizard = ProjectWizard(self)
         self.wizard.show()
 
-
     def set_project_json(self):
         # Grab and modify from last function on InitiateCMA.py
         jsonFilePath, _ = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
@@ -152,7 +151,8 @@ class HomeTab(TabBase):
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))
         dst_crs = box_crs.authid()
-        extent_gdf.to_crs(dst_crs, inplace=True)
+        if extent_gdf.crs != dst_crs:
+            extent_gdf.to_crs(dst_crs, inplace=True)
         if buffer_distance > 0:
             extent_gdf.geometry = extent_gdf.buffer(buffer_distance)
         bounds = extent_gdf.total_bounds

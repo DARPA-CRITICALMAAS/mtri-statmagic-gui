@@ -65,6 +65,8 @@ class PolygonMapTool(QgsMapToolEmitPoint):
             self.rubberBand.show()
             if feat is not None:
                 self.poly_created.emit(feat)
+            # Keep this for future reference. Will be useful for on the fly vector layer editing
+            # eg. adding negative labels
             # layer = iface.activeLayer()
             # f = layer.getFeature(0)
             # prov1 = layer.dataProvider()
