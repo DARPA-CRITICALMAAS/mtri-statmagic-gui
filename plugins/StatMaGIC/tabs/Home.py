@@ -160,7 +160,7 @@ class HomeTab(TabBase):
         # Can do away with the self and just refer to the variable 
         extent_gdf.to_crs(dst_crs, inplace=True)
         if buffer_distance > 0:
-            extent_gdf.geometry = self.extent_gdf.buffer(buffer_distance)
+            extent_gdf.geometry = extent_gdf.buffer(buffer_distance)
         bounds = extent_gdf.total_bounds
 
         create_template_raster_from_bounds_and_resolution(bounds=bounds, target_crs=dst_crs, pixel_size=pixel_size,
