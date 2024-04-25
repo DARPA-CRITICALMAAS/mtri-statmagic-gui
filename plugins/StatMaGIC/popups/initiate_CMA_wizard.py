@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPushButton, QCheckBox, QWizard,QSpinBox, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QTextEdit, QMessageBox
 from qgis.gui import QgsProjectionSelectionTreeWidget, QgsFileWidget, QgsMapLayerComboBox
 
-from qgis.core import QgsProject, QgsUnitTypes
+from qgis.core import QgsProject, QgsUnitTypes, QgsMapLayerProxyModel
 from qgis.PyQt import QtGui
 
 from shapely.geometry import box
@@ -9,7 +9,9 @@ from shapely.wkt import loads
 import geopandas as gpd
 from ..popups.grab_polygon import PolygonMapTool
 from ..popups.grab_rectangle import RectangleMapTool
+from ..popups.add_drop_layers.wizard_add_layers_to_proj import AddLayerToProject
 from pathlib import Path
+import math
 # modified from https://north-road.com/2018/03/09/implementing-an-in-house-new-project-wizard-for-qgis/
 
 
@@ -29,6 +31,7 @@ class ProjectWizard(QWizard):
         self.setWindowTitle("Initiate CMA Wizard")
 
         self.extent_gdf = None
+        self.bounds = None
         self.button(QWizard.FinishButton).clicked.connect(self.parent.initiate_CMA_workflow)
 
     def reject(self):
@@ -64,18 +67,18 @@ class Page1(QWizardPage):
         layout.addWidget(self.CommentsText, 3, 1)
 
         self.setLayout(layout)
-        #
-        # self.registerField('user_name*', self.UserNameLineEdit)
-        # self.registerField('cma_name*', self.CMA_NameLineEdit)
-        # self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
-        # self.registerField('comments', self.CommentsText)
-        #
+
+        self.registerField('user_name*', self.UserNameLineEdit)
+        self.registerField('cma_name*', self.CMA_NameLineEdit)
+        self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
+        self.registerField('comments', self.CommentsText)
+
 
         # Delete this when done testing
-        self.registerField('user_name', self.UserNameLineEdit)
-        self.registerField('cma_name', self.CMA_NameLineEdit)
-        self.registerField('cma_mineral', self.CMA_MineralLineEdit)
-        self.registerField('comments', self.CommentsText)
+        # self.registerField('user_name', self.UserNameLineEdit)
+        # self.registerField('cma_name', self.CMA_NameLineEdit)
+        # self.registerField('cma_mineral', self.CMA_MineralLineEdit)
+        # self.registerField('comments', self.CommentsText)
 
     def reject(self):
         pass
@@ -140,6 +143,7 @@ class Page3(QWizardPage):
 class Page4(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.parent = parent
         self.setTitle('Define Spatial Extent')
         self.setSubTitle('Choose from the options to define the spatial extent of your project.')
@@ -171,6 +175,11 @@ class Page4(QWizardPage):
         label1.setFont(self.section_title_font)
 
         self.selectfromLayerBox = QgsMapLayerComboBox(self)
+        # TODO: Figure out how to filter out TileServer or WMS files
+        self.selectfromLayerBox.setFilters(QgsMapLayerProxyModel.RasterLayer | QgsMapLayerProxyModel.VectorLayer)
+        self.selectfromLayerBox.allowEmptyLayer()
+        self.selectfromLayerBox.setCurrentIndex(-1)
+
         self.selectfromLayerBox.setPlaceholderText('Choose Layer...')
         # self.selectfromLayerBox.setCurrentIndex(0)
         self.selectfromLayerBox.setToolTip('Uses the rectangular extent of layer to define bounds')
@@ -185,8 +194,11 @@ class Page4(QWizardPage):
         self.process_layerBox.clicked.connect(self.get_extent_from_LayerComboBox)
         self.process_layerBox.setToolTip('Will pull the geometry from the selected layer to define bounds')
 
+        self.ExtentSourceText = QLabel(self)
+        self.ExtentSourceText.setText('Extent Not Yet Defined')
+
         self.DeterminedExtentText = QLabel(self)
-        self.DeterminedExtentText.setText('Extent Not Yet Defined')
+        self.DeterminedExtentText.setText('')
 
         layout = QGridLayout()
 
@@ -206,10 +218,17 @@ class Page4(QWizardPage):
         # layout.setRowStretch(6, 1)
         layout.addWidget(QLabel(""), 6, 0)
         layout.addWidget(QLabel(""), 7, 0)
-
-        layout.addWidget(self.DeterminedExtentText, 8, 0)
-
+        layout.addWidget(self.ExtentSourceText, 8, 0)
+        layout.addWidget(self.DeterminedExtentText, 9, 0)
         self.setLayout(layout)
+
+    def initializePage(self):
+        # Todo: It would be nice if the previous page disappeared before this came up
+        super().initializePage()
+        if QgsProject.instance().count() == 0:
+            popup = AddLayerToProject(self)
+            popup.exec()
+
 
     def capture_canvas_extent(self):
         self.crs_epsg = QgsProject.instance().crs().authid()
@@ -218,7 +237,12 @@ class Page4(QWizardPage):
         bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
         shapelyBox = box(*bbc)
         self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
-        self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
+        if self.parent.extent_gdf.crs.to_string() != self.field("crs").authid():
+            self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
+        geotext = self.parent.extent_gdf.geometry.to_string()
+        self.DeterminedExtentText.setText(geotext)
+        # self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
+        self.parent.bounds = self.parent.extent_gdf.total_bounds
 
     def get_extent_from_LayerComboBox(self):
         selectedLayer = self.selectfromLayerBox.currentLayer()
@@ -232,14 +256,17 @@ class Page4(QWizardPage):
             sel = selectedLayer.selectedFeatures()[0]
             shapely_poly = loads(sel.geometry().asWkt())
             self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapely_poly], crs=self.crs_epsg)
-            # self.DeterminedExtentText.setText('Bounds And Geometry Pulled From Selected Features')
-            geotext = self.parent.extent_gdf.geometry.to_string()
-            self.DeterminedExtentText.setText(geotext)
+            if self.parent.extent_gdf.crs.to_string() != self.field("crs").authid():
+                self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
+            self.ExtentSourceText.setText('Bounds And Geometry Pulled From Selected Features')
         else:
             self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[shapelyBox], crs=self.crs_epsg)
-            geotext = self.parent.extent_gdf.geometry.to_string()
-            # self.DeterminedExtentText.setText('Bounds Pulled From Selected Layer Extent')
-            self.DeterminedExtentText.setText(geotext)
+            if self.parent.extent_gdf.crs.to_string() != self.field("crs").authid():
+                self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
+            self.ExtentSourceText.setText('Bounds Pulled From Selected Layer Extent')
+        geotext = self.parent.extent_gdf.geometry.to_string()
+        self.DeterminedExtentText.setText(geotext)
+        self.parent.bounds = self.parent.extent_gdf.total_bounds
 
     def drawRect(self):
         self.c = self.parent.parent.canvas
@@ -250,13 +277,14 @@ class Page4(QWizardPage):
     def captureRect(self):
         bb = self.RectTool.rectangle()
         self.crs_epsg = self.parent.parent.canvas.mapSettings().destinationCrs().authid()
-        # Try below if above doesn't work
-        # self.crs_epsg = QgsProject.instance().crs().authid()
         bbc = [bb.xMinimum(), bb.yMinimum(), bb.xMaximum(), bb.yMaximum()]
         self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[box(*bbc)], crs=self.crs_epsg)
+        if self.parent.extent_gdf.crs.to_string() != self.field("crs").authid():
+            self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
         geotext = self.parent.extent_gdf.geometry.to_string()
         self.DeterminedExtentText.setText(geotext)
-        # self.DeterminedExtentText.setText('Bounds Drawn From Rectangle')
+        self.ExtentSourceText.setText('Bounds Drawn From Rectangle')
+        self.parent.bounds = self.parent.extent_gdf.total_bounds
 
     def drawPoly(self):
         self.c = self.parent.parent.canvas
@@ -270,9 +298,12 @@ class Page4(QWizardPage):
         wkt = poly.asWkt()
         shapely_geom = loads(wkt)
         self.parent.extent_gdf = gpd.GeoDataFrame(geometry=[list(shapely_geom.geoms)[0]], crs=self.crs_epsg)
+        if self.parent.extent_gdf.crs.to_string() != self.field("crs").authid():
+            self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
         geotext = self.parent.extent_gdf.geometry.to_string()
         self.DeterminedExtentText.setText(geotext)
-        # self.DeterminedExtentText.setText('Bounds Drawn From Polygon')
+        self.ExtentSourceText.setText('Bounds Drawn From Polygon')
+        self.parent.bounds = self.parent.extent_gdf.total_bounds
 
 
 class Page5(QWizardPage):
@@ -287,24 +318,25 @@ class Page5(QWizardPage):
         self.pixel_size.setRange(1, 10000)
         self.pixel_size.setSingleStep(50)
         self.pixel_size.setValue(100)
+        self.pixel_size.valueChanged.connect(self.calc_memory_allocation)
 
         self.buffer_distance = QSpinBox()
         self.buffer_distance.setRange(0, 10000)
         self.buffer_distance.setSingleStep(50)
-        self.buffer_distance.setValue(0)
+        # self.buffer_distance.setValue(0)
 
         self.unit_label = QLabel()
+        self.approx_size_label = QLabel()
 
         layout = QGridLayout()
         layout.addWidget(self.unit_label, 0, 0)
         layout.addWidget(QLabel(""), 1, 0)
         layout.addWidget(QLabel('Pixel Size'), 2, 0)
         layout.addWidget(self.pixel_size, 2, 1)
-        layout.addWidget(QLabel('Buffer Distance'), 3, 0)
+        layout.addWidget(QLabel('Buffer Distance (Optional)'), 3, 0)
         layout.addWidget(self.buffer_distance, 3, 1)
-
-
-        # Todo: add some type of dynamic layer size (mb) calculator in here
+        layout.addWidget(QLabel(""), 4, 0)
+        layout.addWidget(self.approx_size_label, 5, 0)
 
         self.setLayout(layout)
 
@@ -315,4 +347,27 @@ class Page5(QWizardPage):
         crs = self.field("crs")
         linear_unit = QgsUnitTypes.encodeUnit(crs.mapUnits())
         self.unit_label.setText(f"Based on the CRS selected the values are in: {linear_unit}")
+        self.calc_memory_allocation()
         super().initializePage()
+
+
+    def calc_memory_allocation(self):
+        bounds = self.parent.bounds
+        pixel_size = self.pixel_size.value()
+        coord_west, coord_south, coord_east, coord_north = bounds[0], bounds[1], bounds[2], bounds[3]
+
+        raster_width = math.ceil(abs(coord_west - coord_east) / pixel_size)
+        raster_height = math.ceil(abs(coord_north - coord_south) / pixel_size)
+
+        bytesize = raster_width * raster_height * 4
+        statement = f"Each layer will be approximately {int(round(bytesize * 0.000001))} MB"
+        self.approx_size_label.setText(statement)
+        # only for dev. will be deleted
+        print(f"Bounds: {bounds}")
+        print(f"raster width: {raster_width}")
+        print(f"raster height: {raster_height}")
+        print(statement)
+
+
+
+
