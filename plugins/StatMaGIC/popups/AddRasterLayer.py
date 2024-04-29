@@ -57,7 +57,7 @@ class AddRasterLayer(QtWidgets.QDialog):
     def returnLayerInfo(self):
         self.currentfile = self.comboBox.currentLayer().source()
         self.description = self.descriptionBox.text()
-        self.close()
+        self.accept()
 
     def cancel(self):
-        self.close()
+        self.reject()

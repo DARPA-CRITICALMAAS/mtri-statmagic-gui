@@ -100,8 +100,8 @@ class HomeTab(TabBase):
 
     def set_project_json(self):
         # Grab and modify from last function on InitiateCMA.py
-        jsonFilePath, _ = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
-        if Path(jsonFilePath).exists():
+        jsonFilePath, filter = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
+        if Path(jsonFilePath).exists() and filter:
             print(jsonFilePath)
             with open(Path(jsonFilePath), 'r') as f:
                 self.parent.meta_data = json.loads(f.read())

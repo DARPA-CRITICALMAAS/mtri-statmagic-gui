@@ -192,7 +192,7 @@ class AddLayersTab(TabBase):
     def addLayerDialog(self):
         # Todo: Find out why cancel is still adding to the table
         popup = AddRasterLayer(self)
-        if popup.exec_() == 0:
+        if popup.exec_():
             filepath = popup.currentfile
             # Todo: Check if the 'Band #' in the text needs to be dropped
             description = popup.description
@@ -205,7 +205,7 @@ class AddLayersTab(TabBase):
         rasterFilePath, _ = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
         if os.path.exists(rasterFilePath):
             popup = RasterBandSelectionDialog(self.parent, rasterFilePath)
-            if popup.exec_() == 0:
+            if popup.exec_():
                 band_list = popup.desc_list
                 raster_path = popup.raster_layer_path
                 band_indexs = popup.index_list
@@ -219,7 +219,7 @@ class AddLayersTab(TabBase):
 
     def chooseLayersFromCloudDialog(self):
         popup = CloudFrontSelectionDialog(self.parent)
-        if popup.exec_() == 0:
+        if popup.exec_():
             band_list = popup.band_list
             cog_list = popup.cog_paths
             srs = ['CloudFront' for x in range(len(band_list))]

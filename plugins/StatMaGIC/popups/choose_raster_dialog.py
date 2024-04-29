@@ -63,8 +63,8 @@ class SelectRasterLayer(QtWidgets.QDialog):
 
         # self.parent.drop_layer = self.chosen_raster
         self.closingPlugin.emit()
-        self.close()
+        self.accept()
 
     def cancel(self):
         self.closingPlugin.emit()
-        self.close()
+        self.reject()

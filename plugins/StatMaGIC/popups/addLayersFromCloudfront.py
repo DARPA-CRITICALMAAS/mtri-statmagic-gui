@@ -33,15 +33,14 @@ class CloudFrontSelectionDialog(QDialog):
     def return_bands(self):
         self.band_list = self.list_widget.return_checked_items()
         self.cog_paths = [nationdata_raster_dict[key] for key in self.band_list]
-        self.close()
+        self.accept()
 
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.return_bands)
         self.buttonBox.rejected.connect(self.cancel)
 
-
     def cancel(self):
-        self.close()
+        self.reject()
 
 class CustomCheckableListWidget(QWidget):
 
