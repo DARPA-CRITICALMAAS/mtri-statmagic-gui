@@ -190,6 +190,7 @@ class AddLayersTab(TabBase):
         popup.exec_()
 
     def addLayerDialog(self):
+        # Todo: Find out why cancel is still adding to the table
         popup = AddRasterLayer(self)
         if popup.exec_() == 0:
             filepath = popup.currentfile

@@ -142,7 +142,7 @@ class Beak_PopUp_Menu(QDialog):
             "som_x": self.som_x.value(),
             "som_y": self.som_y.value(),
             "epochs": self.epochs.value(),
-            "kmeans": str(self.kmeansCheckBox.isChecked()).lower(),
+            "kmeans": self.kmeansCheckBox.isChecked(),
             "kmeans_init": self.kmeans_init.value(),
             "kmeans_min": self.kmeans_min.value(),
             "kmeans_max": self.kmeans_max.value(),
