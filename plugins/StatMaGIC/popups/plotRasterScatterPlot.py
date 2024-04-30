@@ -259,6 +259,7 @@ class RasterScatQtPlot(QDialog):
                 with rio.open(raster_path) as ds:
                     # Get the coordinates of the AOI feature in the same CRS as the raster
                     # Todo: This method will have to be adjusted to account for irregular geometries to drop values outside the polygons
+                    # See methods used in the kmeans clustering stuff
                     logger.debug("Constructing coordinate transform")
                     min_corner = QgsPoint(extents_rect.xMinimum(), extents_rect.yMinimum())
                     max_corner = QgsPoint(extents_rect.xMaximum(), extents_rect.yMaximum())

@@ -129,8 +129,8 @@ class CustomCheckableListWidget(QWidget):
         raster_path = raster_layer.source()
         drop_selected_layers_from_raster(raster_path, bandlist)
         QgsProject.instance().removeMapLayer(raster_layer)
-        data_raster = QgsRasterLayer(raster_path)
-        QgsProject.instance().addMapLayer(data_raster, 'Raster Data')
+        data_raster = QgsRasterLayer(raster_path, 'DataCube')
+        QgsProject.instance().addMapLayer(data_raster)
         self.cancel()
 
     def signals_connection(self):

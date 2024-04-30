@@ -34,6 +34,10 @@ class InspectDataCubeLayersTab(TabBase):
         self.pca_cluster_button = addButton(self, "PCA and Cluster Analysis", self.popup_pca_cluster_analysis)
         self.spatial_kmeans_button = addButton(self, "Spatial K-Means Mapping", self.popup_spatial_kmeans_analysis)
 
+        self.scatter_plot_button.setEnabled(False)
+        self.raster_pca_button.setEnabled(False)
+        self.pca_cluster_button.setEnabled(False)
+
     def popup_drop_layer_dialogue(self):
         raster_path_popup = SelectRasterLayer(self.parent)
         if raster_path_popup.exec_():
