@@ -12,7 +12,6 @@ from qgis.PyQt.QtCore import pyqtSignal, QRect
 from .gui_helpers import *
 from .tabs.AWS import AWSTab
 from .tabs.Geochemistry import GeochemistryTab
-from .tabs.InitiateCMA import InitiateCMATab
 from .tabs.Predictions import PredictionsTab
 from .tabs.TrainingPoints import TrainingPointsTab
 from .tabs.InspectDataCubeLayers import InspectDataCubeLayersTab
@@ -78,7 +77,6 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
         # populate tabs
         self.home_tab                   = HomeTab(self, self.tabWidget)
-        self.initiateCMA_tab            = InitiateCMATab(self, self.tabWidget, isEnabled=False)
         self.addLayers_tab              = AddLayersTab(self, self.tabWidget)
         self.inspectDataCubeLayers_tab  = InspectDataCubeLayersTab(self, self.tabWidget)
         self.rasterizationTools_tab     = RasterizationToolsTab(self, self.tabWidget)
