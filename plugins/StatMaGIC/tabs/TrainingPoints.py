@@ -221,6 +221,7 @@ class TrainingPointsTab(TabBase):
             df = dataframFromSampledPolys(gdf, data_ras.source())
 
         self.training_df = df
+        print(self.training_df)
 
     def train_iso(self):
         if self.iso_forest is not None:

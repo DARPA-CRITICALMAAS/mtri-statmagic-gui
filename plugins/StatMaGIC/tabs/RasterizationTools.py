@@ -127,7 +127,7 @@ class RasterizationToolsTab(TabBase):
         gdf = qgs_features_to_gdf(selectedLayer, selected=withSelected)
         gdf.to_crs(self.parent.meta_data['project_CRS'], inplace=True)
 
-        output_file_path, message = vector_proximity_raster(gdf, self.parent.meta_data['template_path'])
+        # output_file_path, message = vector_proximity_raster(gdf, self.parent.meta_data['template_path'])
         output_file_path, message = vector_proximity_raster_upgraded(gdf, self.parent.meta_data['template_path'])
 
         res = QgsRasterLayer(output_file_path, 'Proximity_Layer')
