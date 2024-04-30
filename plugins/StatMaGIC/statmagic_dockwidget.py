@@ -117,7 +117,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def onNewCRS(self):
         """ Callback for when the Coordinate Reference System has changed. """
         crs = QgsProject.instance().crs()
-        gui_logger.warning(f"Project CRS changed from {self.currentCRS} to {crs}")
+        gui_logger.warning(f"Project CRS changed from {self.currentCRS.authid()} to {crs.authid()}")
         self.currentCRS = crs
 
     def closeEvent(self, event):
