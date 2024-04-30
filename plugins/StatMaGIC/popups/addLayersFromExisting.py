@@ -39,14 +39,14 @@ class RasterBandSelectionDialog(QDialog):
         descs, idxs = self.list_widget.return_checked_items()
         self.desc_list = descs
         self.index_list = idxs
-        self.close()
+        self.accept()
 
     def signals_connection(self):
         self.buttonBox.accepted.connect(self.return_bands)
         self.buttonBox.rejected.connect(self.cancel)
 
     def cancel(self):
-        self.close()
+        self.reject()
 
 
 class CustomCheckableListWidget(QWidget):

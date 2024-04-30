@@ -40,6 +40,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
         self.CMA_WorkflowLog = {}
 
+        # mainly used to track CRS changes
+        self.currentCRS = QgsProject.instance().crs()
+
         buttonWidget = addWidgetFromLayout(QtWidgets.QHBoxLayout(), self.dockWidgetContents)
 
         self.viewLogsButtonGUI = addButton(buttonWidget, "View GUI Logs", self.viewLogsGUI)
@@ -48,7 +51,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         addToParentLayout(buttonWidget)
 
         # Connect callback so we can detect when the user adds a layer
-        QgsProject.instance().legendLayersAdded.connect(self.onLayersAdded)
+        # QgsProject.instance().legendLayersAdded.connect(self.onLayersAdded)
         QgsProject.instance().layersAdded.connect(self.onLayersAdded)
         QgsProject.instance().layersRemoved.connect(self.onLayersRemoved)
         QgsProject.instance().crsChanged.connect(self.onNewCRS)
@@ -79,7 +82,7 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
         self.addLayers_tab              = AddLayersTab(self, self.tabWidget)
         self.inspectDataCubeLayers_tab  = InspectDataCubeLayersTab(self, self.tabWidget)
         self.rasterizationTools_tab     = RasterizationToolsTab(self, self.tabWidget)
-        self.geochemistry_tab           = GeochemistryTab(self, self.tabWidget)
+        self.geochemistry_tab           = GeochemistryTab(self, self.tabWidget, isEnabled=False)
         self.trainingPoints_tab         = TrainingPointsTab(self, self.tabWidget)
         self.predictions_tab            = PredictionsTab(self, self.tabWidget)
         self.aws_tab                    = AWSTab(self, self.tabWidget)
@@ -114,7 +117,8 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def onNewCRS(self):
         """ Callback for when the Coordinate Reference System has changed. """
         crs = QgsProject.instance().crs()
-        gui_logger.warning(f"Project CRS changed to {crs}")
+        gui_logger.warning(f"Project CRS changed from {self.currentCRS} to {crs}")
+        self.currentCRS = crs
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

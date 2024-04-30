@@ -36,11 +36,11 @@ class InspectDataCubeLayersTab(TabBase):
 
     def popup_drop_layer_dialogue(self):
         raster_path_popup = SelectRasterLayer(self.parent)
-        raster_path_popup.exec_()
-        raster = raster_path_popup.chosen_raster
+        if raster_path_popup.exec_():
+            raster = raster_path_popup.chosen_raster
 
-        popup = RasterBandSelectionDialog(self.parent, raster_layer=raster)
-        popup.exec_()
+            popup = RasterBandSelectionDialog(self.parent, raster_layer=raster)
+            popup.exec_()
 
     def popup_make_hist_plot(self):
         popup = RasterHistQtPlot(self.parent)
