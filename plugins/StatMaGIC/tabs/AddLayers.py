@@ -241,7 +241,7 @@ class AddLayersTab(TabBase):
 
         # Set up inputs for the backend
         raster_paths = self.pathlist
-        description_list = self.desclist
+        # description_list = self.desclist
         source_list = self.sourcelist
 
         # Extract table items
@@ -253,6 +253,11 @@ class AddLayersTab(TabBase):
             method_string = table.cellWidget(i, 1).currentText()
             method = resampling_dict.get(method_string)
             method_list.append(method)
+
+        description_list = []
+        for i in range(table.rowCount()):
+            desc = table.item(i, 0).text()
+            description_list.append(desc)
 
         local, cog, order = parse_raster_processing_table_elements(raster_paths, source_list, method_list)
 
