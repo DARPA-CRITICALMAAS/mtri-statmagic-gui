@@ -285,13 +285,13 @@ class KmeansClusteringMenu(QDialog):
         self.raster_array = rio.open(raster_path).read()
         self.run_kmeans()
 
-
     def sample_from_canvas(self):
         r_ds = gdal.Open(self.raster_selection_box.currentLayer().source())
         self.full_dict = getFullRasterDict(r_ds)
         self.raster_dict = getCanvasRasterDict(self.full_dict, self.parent.canvas.extent())
         self.raster_array = r_ds.ReadAsArray(self.raster_dict['Xoffset'], self.raster_dict['Yoffset'],
                                         self.raster_dict['sizeX'], self.raster_dict['sizeY'])
+        self.run_kmeans()
 
     def run_kmeans(self):
 
@@ -377,7 +377,6 @@ class KmeansClusteringMenu(QDialog):
                 msgBox.setText("You must select a feature from the vector layer")
                 msgBox.exec()
                 return
-
 
     def updateEnabled(self):
         pass
