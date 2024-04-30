@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QPushButton, QCheckBox, QWizard,QSpinBox, QWizardPage, QLabel, QLineEdit, QVBoxLayout, QGridLayout, QTextEdit, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QCheckBox, QWizard, QSpinBox, QWizardPage, QLabel, QLineEdit, QVBoxLayout, \
+    QGridLayout, QTextEdit, QMessageBox, QTextBrowser
+from qgis._gui import QgsMapToolPan
 from qgis.gui import QgsProjectionSelectionTreeWidget, QgsFileWidget, QgsMapLayerComboBox
 
 from qgis.core import QgsProject, QgsUnitTypes, QgsMapLayerProxyModel
@@ -22,21 +24,22 @@ class ProjectWizard(QWizard):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self.iface = self.parent.iface
+
+        self.setWindowTitle("Initiate CMA Wizard")
+
+        self.extent_gdf = None
+        self.bounds = None
 
         self.addPage(Page1(self))
         self.addPage(Page2(self))
         self.addPage(Page3(self))
         self.addPage(Page4(self))
         self.addPage(Page5(self))
-        self.setWindowTitle("Initiate CMA Wizard")
 
-        self.extent_gdf = None
-        self.bounds = None
         self.button(QWizard.FinishButton).clicked.connect(self.parent.initiate_CMA_workflow)
 
     def reject(self):
-        # TODO: clean up variables on cancel here
-
         # we need to call QWizard's reject method to actually close the window
         super().reject()
 
@@ -73,12 +76,17 @@ class Page1(QWizardPage):
         self.registerField('cma_mineral*', self.CMA_MineralLineEdit)
         self.registerField('comments', self.CommentsText)
 
+        self.CommentsText.textChanged.connect(self.commentsTyped)
+
 
         # Delete this when done testing
         # self.registerField('user_name', self.UserNameLineEdit)
         # self.registerField('cma_name', self.CMA_NameLineEdit)
         # self.registerField('cma_mineral', self.CMA_MineralLineEdit)
         # self.registerField('comments', self.CommentsText)
+
+    def commentsTyped(self):
+        self.setField("comments", self.CommentsText.toPlainText())
 
     def reject(self):
         pass
@@ -93,21 +101,20 @@ class Page2(QWizardPage):
         self.proj_dir_input = QgsFileWidget()
         self.proj_dir_input.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
 
+        self.registerField("input_path*", self.proj_dir_input, "filePath", self.proj_dir_input.fileChanged)
+        self.proj_dir_input.fileChanged.connect(self.dir_selected)
+
         layout = QGridLayout()
         layout.addWidget(QLabel('Select Directory'), 0, 0)
         layout.addWidget(self.proj_dir_input, 0, 1)
 
         self.setLayout(layout)
 
-        self.registerField("input_path", self.proj_dir_input)
-        self.proj_dir_input.fileChanged.connect(self.dir_selected)
-
     def dir_selected(self):
         self.setField("input_path", self.proj_dir_input.filePath())
-        self.completeChanged.emit()
 
     def isComplete(self):
-        return Path(self.proj_dir_input.filePath()).is_dir()
+        return bool(self.proj_dir_input.filePath())
 
 
 class Page3(QWizardPage):
@@ -143,8 +150,9 @@ class Page3(QWizardPage):
 class Page4(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
-
         self.parent = parent
+        self.iface = self.parent.iface
+
         self.setTitle('Define Spatial Extent')
         self.setSubTitle('Choose from the options to define the spatial extent of your project.')
 
@@ -197,8 +205,11 @@ class Page4(QWizardPage):
         self.ExtentSourceText = QLabel(self)
         self.ExtentSourceText.setText('Extent Not Yet Defined')
 
-        self.DeterminedExtentText = QLabel(self)
-        self.DeterminedExtentText.setText('')
+        self.DeterminedExtentText = QTextBrowser()
+        self.DeterminedExtentText.setReadOnly(True)
+
+        # self.DeterminedExtentText = QLabel(self)
+        # self.DeterminedExtentText.setText('')
 
         layout = QGridLayout()
 
@@ -222,6 +233,9 @@ class Page4(QWizardPage):
         layout.addWidget(self.DeterminedExtentText, 9, 0)
         self.setLayout(layout)
 
+        self.registerField("DeterminedExtentText*", self.DeterminedExtentText, "toPlainText", self.DeterminedExtentText.textChanged)
+        self.DeterminedExtentText.textChanged.connect(self.onTextChange)
+
     def initializePage(self):
         # Todo: It would be nice if the previous page disappeared before this came up
         super().initializePage()
@@ -241,7 +255,7 @@ class Page4(QWizardPage):
             self.parent.extent_gdf.to_crs(self.field("crs").authid(), inplace=True)
         geotext = self.parent.extent_gdf.geometry.to_string()
         self.DeterminedExtentText.setText(geotext)
-        # self.DeterminedExtentText.setText('Bounds Pulled From Canvas Extent')
+        self.ExtentSourceText.setText('Bounds Pulled From Canvas Extent')
         self.parent.bounds = self.parent.extent_gdf.total_bounds
 
     def get_extent_from_LayerComboBox(self):
@@ -305,11 +319,18 @@ class Page4(QWizardPage):
         self.ExtentSourceText.setText('Bounds Drawn From Polygon')
         self.parent.bounds = self.parent.extent_gdf.total_bounds
 
+    def onTextChange(self):
+        self.setField("DeterminedExtentText", self.DeterminedExtentText.toPlainText())
+
+    def isComplete(self):
+        return bool(self.DeterminedExtentText.toPlainText())
+
 
 class Page5(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self.iface = self.parent.iface
         self.setTitle('Define the spatial resolution for the project and add an optinal buffer')
         self.setSubTitle('The spatial resolution will affect the memory requirements for the raster data'
                          'and geoprocessing times.')
@@ -344,6 +365,8 @@ class Page5(QWizardPage):
         self.registerField("buffer_distance", self.buffer_distance)
 
     def initializePage(self):
+        # turn off rectangle or polygon selection from previous page if present
+        self.iface.actionPan().trigger()
         crs = self.field("crs")
         linear_unit = QgsUnitTypes.encodeUnit(crs.mapUnits())
         self.unit_label.setText(f"Based on the CRS selected the values are in: {linear_unit}")

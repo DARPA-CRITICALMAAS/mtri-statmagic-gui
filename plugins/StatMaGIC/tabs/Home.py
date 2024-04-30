@@ -48,7 +48,6 @@ class HomeTab(TabBase):
         self.resumeCMA_Button.clicked.connect(self.set_project_json)
         self.resumeCMA_Button.setToolTip(
             'Opens up a dialog to select a json project file to resume a CMA')
-        # self.resumeCMA_Button.setEnabled(False)
 
         self.editCMA_Button = QPushButton()
         self.editCMA_Button.setText('Edit CMA')
@@ -102,7 +101,7 @@ class HomeTab(TabBase):
         # Grab and modify from last function on InitiateCMA.py
         jsonFilePath, filter = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
         if Path(jsonFilePath).exists() and filter:
-            print(jsonFilePath)
+            logger.debug(jsonFilePath)
             with open(Path(jsonFilePath), 'r') as f:
                 self.parent.meta_data = json.loads(f.read())
             qgis_proj_file = self.parent.meta_data["qgis_project_file"]
@@ -121,9 +120,6 @@ class HomeTab(TabBase):
     def initiate_CMA_workflow(self):
         # Retrieve metadata inputs
         username = self.wizard.field("user_name")
-        # TODO: what is cma_name and how is it different from cma_mineral?
-        # my thinking was that the name might be somthing like "National Scale of Porphry Copper"
-        # and the mineral would be something like "Porphry Copper".
         cma_name = self.wizard.field("cma_name")
         cma_mineral = self.wizard.field("cma_mineral")
         comments = self.wizard.field("comments")
