@@ -14,7 +14,8 @@ from ..layerops import set_project_crs
 from ..popups.initiate_CMA_wizard import ProjectWizard
 
 import logging
-logger = logging.getLogger("statmagic_gui")
+gui_logger = logging.getLogger("statmagic_gui")
+backend_logger = logging.getLogger("statmagic_backend")
 
 
 class HomeTab(TabBase):
@@ -101,7 +102,7 @@ class HomeTab(TabBase):
         # Grab and modify from last function on InitiateCMA.py
         jsonFilePath, filter = QFileDialog.getOpenFileName(self, "", "Select JSON", "JSON (*.json)")
         if Path(jsonFilePath).exists() and filter:
-            logger.debug(jsonFilePath)
+            gui_logger.debug(jsonFilePath)
             with open(Path(jsonFilePath), 'r') as f:
                 self.parent.meta_data = json.loads(f.read())
             qgis_proj_file = self.parent.meta_data["qgis_project_file"]
@@ -117,6 +118,18 @@ class HomeTab(TabBase):
     def open_docs_page(self):
         pass
 
+    def flush_logs(self, logger, logfile):
+        # create logfile and flush existing logs to it
+        with open(logfile, "w") as newLog:
+            newLog.write(logger.handlers[0].stream.__str__())
+        # future logs will be written both to file and to the in-memory buffer
+        log_format = "%(asctime)s %(levelname)s: %(message)s"
+        formatter = logging.Formatter(log_format)
+        file_handler = logging.FileHandler(logfile)
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
+
     def initiate_CMA_workflow(self):
         # Retrieve metadata inputs
         username = self.wizard.field("user_name")
@@ -128,21 +141,27 @@ class HomeTab(TabBase):
         pixel_size = self.wizard.field("pixel_size")
         buffer_distance = self.wizard.field("buffer_distance")
         extent_gdf = self.wizard.extent_gdf
-        print(extent_gdf)
 
-        print(QgsUnitTypes.encodeUnit(box_crs.mapUnits()))
-
-        logger.debug(cma_name)
-        logger.debug(cma_mineral)
-        logger.debug(input_path)
-        logger.debug(box_crs)
-        logger.debug(pixel_size)
+        gui_logger.debug(extent_gdf)
+        gui_logger.debug(QgsUnitTypes.encodeUnit(box_crs.mapUnits()))
+        gui_logger.debug(cma_name)
+        gui_logger.debug(cma_mineral)
+        gui_logger.debug(input_path)
+        gui_logger.debug(box_crs)
+        gui_logger.debug(pixel_size)
 
         today = date.today().isoformat()
 
         proj_path = Path(input_path, 'CMA_' + cma_mineral)
         # Turned to true for dev. TODO Raise flag of some kind if overwriting
         proj_path.mkdir(exist_ok=True)
+
+        # now that we have the project path, we can flush existing logs to file
+        gui_logfile = Path(proj_path) / "gui.log"
+        backend_logfile = Path(proj_path) / "backend.log"
+        self.flush_logs(gui_logger, gui_logfile)
+        self.flush_logs(backend_logger, backend_logfile)
+
         qgis_proj_file = str(Path(proj_path) / f"{cma_mineral}.qgz")
         template_output_path = str(Path(proj_path, cma_mineral + '_template_raster.tif'))
         data_raster_path = str(Path(proj_path, cma_mineral + '_data_raster.tif'))

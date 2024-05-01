@@ -17,8 +17,6 @@ import math
 # modified from https://north-road.com/2018/03/09/implementing-an-in-house-new-project-wizard-for-qgis/
 
 
-
-
 class ProjectWizard(QWizard):
 
     def __init__(self, parent=None):

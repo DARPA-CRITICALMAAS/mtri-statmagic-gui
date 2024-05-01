@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from urllib.parse import parse_qsl
 
 from qgis._core import QgsProject
 
@@ -106,7 +107,22 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
 
     def onLayersAdded(self, layers):
         """ Callback for when the user adds layers to the QGIS project. """
-        gui_logger.info(f"User added the following layers: {layers}")
+        for layer in layers:
+            # derive human-readable layer type from the class name
+            layer_type = (type(layer).__name__
+                          .replace("Qgs", "")
+                          .replace("Layer", " Layer")
+                          .lower())
+
+            layer_name = layer.name()
+            layer_path = layer.dataProvider().dataSourceUri()
+
+            # if the layer path is a URL with parameters, extract just the URL
+            layer_dict = dict(parse_qsl(layer_path))
+            if layer_dict:
+                layer_path = layer_dict["url"]
+
+            gui_logger.info(f"User added a {layer_type} '{layer_name}' <{layer_path}>")
 
     def onLayersRemoved(self, layers):
         """ Callback for when the user removes layers from the QGIS project. """
@@ -115,7 +131,9 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
     def onNewCRS(self):
         """ Callback for when the Coordinate Reference System has changed. """
         crs = QgsProject.instance().crs()
-        gui_logger.warning(f"Project CRS changed from {self.currentCRS.authid()} to {crs.authid()}")
+        oldcrs = f"{self.currentCRS.authid()} '{self.currentCRS.description()}'"
+        newcrs = f"{crs.authid()} '{crs.description()}'"
+        gui_logger.warning(f"Project CRS changed from {oldcrs} to {newcrs}")
         self.currentCRS = crs
 
     def closeEvent(self, event):
