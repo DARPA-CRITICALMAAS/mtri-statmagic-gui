@@ -50,7 +50,7 @@ class OreGradeCutoffQueryBuilder(QDialog):
                         f'WHERE \u007b\n' + \
                         f'?s :mineral_inventory ?o_inv .\n' + \
                         f'?o_inv :category ?cat .\n' + \
-                        f'?o_inv :commodity [ :name "{self.ore_selection.currentText()}"@en ] .\n' + \
+                        f'?o_inv :commodity [ :name "{self.ore_selection.currentText()}" ] .\n' + \
                         f'?o_inv :ore [ :ore_value ?ore ] .\n' + \
                         f'?o_inv :grade [ :grade_value ?grade ] .\n' + \
                         f'?o_inv :cutoff_grade [ :grade_value ?cutoff_grade ] .\n' + \
