@@ -230,6 +230,12 @@ class AddLayersTab(TabBase):
             self.refreshTable()
 
     def process_add_raster_list(self):
+        # Todo: There should be some stringent checking to see if each selected layer has
+        # - defined CRS
+        # - is within the target bounds
+        # - a specified transform
+        # - a set nodata value
+        # If these aren't set they should either try some auto defaults or drop from the list and notify the user
         try:
             template_path = self.parent.meta_data['template_path']
             data_raster_path = self.parent.meta_data['data_raster_path']

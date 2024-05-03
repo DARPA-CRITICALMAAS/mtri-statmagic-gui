@@ -332,13 +332,13 @@ class KmeansClusteringMenu(QDialog):
     def pass_kmeans_checks(self):
         if self.raster_selection_box.currentLayer() is None:
             msgBox = QMessageBox()
-            msgBox.setText("You must select a valid raster layer for the histogram")
+            msgBox.setText("You must select a valid raster layer")
             msgBox.exec()
             return
 
         if Path(self.raster_selection_box.currentLayer().source()).exists() is False:
             msgBox = QMessageBox()
-            msgBox.setText("You must select a valid raster layer for the histogram")
+            msgBox.setText("You must select a valid raster layer")
             msgBox.exec()
             return
 
@@ -364,7 +364,7 @@ class KmeansClusteringMenu(QDialog):
             logger.debug('drawing from vector geometry')
             if self.vector_selection_box.currentLayer() is None:
                 msgBox = QMessageBox()
-                msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")
+                msgBox.setText("You must select a valid vector / polygon layer to provide an AOI")
                 msgBox.exec()
                 return
 
