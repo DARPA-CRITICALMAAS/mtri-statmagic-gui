@@ -73,18 +73,6 @@ class RasterScatQtPlot(QDialog):
         self.aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry',
                                              'Rectangle', 'Polygon'])
 
-        # Select number of bins in the histogram
-        bins_label = QLabel("# Bins")
-        # self.num_bins_input = QLineEdit(self)
-        # validator = QIntValidator()
-        # validator.setRange(2, 50)
-        # self.num_bins_input.setValidator(validator)
-        # self.num_bins_input.setText("10")
-        # Changed this to a spinBox
-        self.num_bins_input = QSpinBox()
-        self.num_bins_input.setValue(10)
-        self.num_bins_input.setRange(10, 100)
-        self.num_bins_input.setSingleStep(5)
 
         # Buttons to draw area
         self.drawRectButton = QPushButton()
@@ -110,7 +98,7 @@ class RasterScatQtPlot(QDialog):
         self.layer_select_layout.addRow(band2_label, self.raster_band2_input)
         self.layer_select_layout.addRow(aoi_label, self.aoi_selection_box)
         self.layer_select_layout.addRow(vector_label, self.vector_selection_box)
-        self.layer_select_layout.addRow(bins_label, self.num_bins_input)
+        # self.layer_select_layout.addRow(bins_label, self.num_bins_input)
         self.layer_select_layout.addWidget(self.drawRectButton)
         self.layer_select_layout.addWidget(self.drawPolyButton)
         self.layer_select_layout.addWidget(self.run_hist_btn)
@@ -158,22 +146,24 @@ class RasterScatQtPlot(QDialog):
             msgBox.exec()
             return
 
-        if self.num_bins_input.text() == '':
-            msgBox = QMessageBox()
-            msgBox.setText("You must select a valid number of bins for the histogram")
-            msgBox.exec()
-            return
+        # if self.num_bins_input.text() == '':
+        #     msgBox = QMessageBox()
+        #     msgBox.setText("You must select a valid number of bins for the histogram")
+        #     msgBox.exec()
+        #     return
 
         # Grab the user specified parameters from the panel widgets
         raster: QgsRasterLayer = self.raster_selection_box.currentLayer()
-        band1 = self.raster_band_input.currentBand()
-        band2 = self.raster_band2_input.currentBand()
+        # band1 = self.raster_band_input.currentBand()
+        # band2 = self.raster_band2_input.currentBand()
+        band1 = self.raster_band_input.currentIndex()
+        band2 = self.raster_band2_input.currentIndex()
+
         raster_path = Path(raster.source())
 
-        logger.debug(f'Creating histogram of layer {self.raster_selection_box.currentLayer()},'
-              f' band {self.raster_band_input.currentBand()},'
-              f' within AOI {self.vector_selection_box.currentLayer()},'
-              f' #bins = {self.num_bins_input.text()}')
+        print(f'X - Band {band1}')
+        print(f'Y - Band {band2}')
+
 
         if self.aoi_selection_box.currentIndex() == 4:
             logger.debug('drawing from Polygon')
@@ -334,26 +324,33 @@ class RasterScatQtPlot(QDialog):
 
         # Deal with nodata values
         nodata = rio.open(raster_path).nodata
+        from ..fileops import dill, kosher
+        kosher({'x': datX, 'y': datY, 'nd': nodata}, '/home/jagraham/Documents/Local_work/statMagic/devtest/scatter')
+
         self.plot_raster_scatter(datX, datY, nodata, raster.name())
 
 
     def plot_raster_scatter(self, dataX, dataY, nodata, Name):
         dataX = np.ravel(dataX)
         dataY = np.ravel(dataY)
-        datX = np.delete(dataX, np.where(dataX == nodata))
-        datY = np.delete(dataY, np.where(dataY == nodata))
+        xmask = np.where(dataX == nodata, True, False)
+        ymask = np.where(dataY == nodata, True, False)
+
+        mask = np.logical_or(xmask, ymask)
+        datX = np.delete(dataX, mask)
+        datY = np.delete(dataY, mask)
 
         # logger.debug("Computing histogram")
         # hist, bin_edges = np.histogram(band_data,
         #                                range=(np.nanmin(band_data), np.nanmax(band_data)),
         #                                bins=int(self.num_bins_input.text()), density=False)
 
-        logger.debug("Plotting histogram")
+        logger.debug("Plotting ScatterPlot")
         scatter_plot = pg.ScatterPlotItem(
-                size=10,
-                pen=pg.mkPen(None),
-                brush=pg.mkBrush(255, 255, 255, 20),
-                # hoverable=True,
+                size=1,
+                # pen=pg.mkPen(None),
+                # brush=pg.mkBrush(255, 255, 255, 20),
+                hoverable=True,
                 # hoverSymbol='s',
                 # hoverSize=15,
                 # hoverPen=pg.mkPen('r', width=2),
