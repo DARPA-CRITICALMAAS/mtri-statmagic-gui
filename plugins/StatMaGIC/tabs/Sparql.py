@@ -79,13 +79,13 @@ class SparqlTab(TabBase):
             if btn_callback is not None:
                 btn.clicked.connect(btn_callback)
             self.queryLayout.addWidget(btn, int(i / num_cols), i % num_cols)
-
         self.queryFrame.setLayout(self.queryLayout)
         self.tabLayout.addWidget(self.queryFrame)
 
         self.query_edit_box = CollapsibleBox("View / Edit Sparql Query")
-        self.query_edit_box_layout = QGridLayout()
+        self.query_edit_box_layout = QVBoxLayout()
         self.query_edit_text_box = QTextEdit()
+        self.query_edit_text_box.setMaximumHeight(100)
         self.query_edit_text_box.textChanged.connect(self.query_changed)
         self.query_edit_box_layout.addWidget(self.query_edit_text_box)
         self.query_edit_box.setContentLayout(self.query_edit_box_layout)
@@ -113,8 +113,11 @@ class SparqlTab(TabBase):
         self.tableFrame = QFrame()
         self.tableLayout = QFormLayout()
         self.resp_view = QTableView()
+        #self.resp_view.setMinimumHeight(300)
+        #self.resp_view.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableLayout.addRow(self.resp_view)
         self.tableFrame.setLayout(self.tableLayout)
+        #self.tableLayout.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldsStayAtSizeHint)
         self.tabLayout.addWidget(self.tableFrame)
 
         self.response_description_label = QLabel("No Response Available")
@@ -148,6 +151,8 @@ class SparqlTab(TabBase):
         self.convertLayout.addWidget(self.save_response_btn)
         self.convertFrame.setLayout(self.convertLayout)
         self.tabLayout.addWidget(self.convertFrame)
+
+        self.tabLayout.addStretch(1)
 
         self.last_response = None
 
