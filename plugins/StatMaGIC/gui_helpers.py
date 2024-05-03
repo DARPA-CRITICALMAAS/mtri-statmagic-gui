@@ -436,6 +436,16 @@ def addQgsFieldComboBoxToForm(formLayout, text):
     return comboBox
 
 
+def addQgsFileWidgetToForm(formLayout, text, directory=False, filter=None):
+    fileWidget = QgsFileWidget()
+    if directory:
+        fileWidget.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+    if filter is not None:
+        fileWidget.setFilter(filter)
+    addFormItem(formLayout, text, fileWidget)
+    return fileWidget
+
+
 def _createCheckBox(parent, text, isChecked):
     checkBoxWidget = QtWidgets.QCheckBox(parent)
     checkBoxWidget.setText(text)
