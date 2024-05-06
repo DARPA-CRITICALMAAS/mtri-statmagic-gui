@@ -36,6 +36,10 @@ QMessage is closed
 Also I imagine that there are more standard ways to pass the data to the plotting function so please feel free to 
 improve on that aspect as well.
 '''
+class NoPlotForYouException(BaseException):
+    """ Custom exception to hijack control flow if a plot can't be made. """
+    pass
+
 class RasterScatQtPlot(QDialog):
 
     def __init__(self, parent):
@@ -206,6 +210,9 @@ class RasterScatQtPlot(QDialog):
 
     def drawRect(self):
         self.c = self.parent.canvas
+        # clear any previous rectangle before enabling new rectangle selection
+        if hasattr(self, "RectTool") and self.RectTool.isActive():
+            self.RectTool.deactivate()
         self.RectTool = RectangleMapTool(self.c)
         self.c.setMapTool(self.RectTool)
 
@@ -219,66 +226,75 @@ class RasterScatQtPlot(QDialog):
             msgBox = QMessageBox()
             msgBox.setText("You must select a valid raster layer")
             msgBox.exec()
-            return
+            raise NoPlotForYouException()
 
         if Path(self.raster_selection_box.currentLayer().source()).exists() is False:
             msgBox = QMessageBox()
             msgBox.setText("You must select a valid raster layer")
             msgBox.exec()
-            return
+            raise NoPlotForYouException()
 
         if self.roi_selection_box.currentIndex() == 2:
             if self.vector_selection_box.currentLayer() is None:
                 msgBox = QMessageBox()
                 msgBox.setText("You must select a valid vector / polygon layer to provide an roi")
                 msgBox.exec()
-                return
+                raise NoPlotForYouException()
 
             cl = self.vector_selection_box.currentLayer()
             if len(cl.selectedFeatures()) < 1:
                 msgBox = QMessageBox()
                 msgBox.setText("You must select a feature from the vector layer")
                 msgBox.exec()
-                return
+                raise NoPlotForYouException()
 
     def pass_ROI_checks(self):
-
         if self.roi_selection_box.currentIndex() == 3:
             try:
                 r = self.RectTool.rectangle()
+                # if RectTool was never initialized, this throws AttributeError
+                # if RectTool has been used, but deactivated, r will be empty
+                # since this doesn't throw AttributeError, we have to throw it
+                if r is None:
+                    # TODO: find a better control flow mechanism than this
+                    raise AttributeError()
             except AttributeError:
                 msgBox = QMessageBox()
                 msgBox.setText("You must first draw a rectangle to provide an roi of which to sample data")
                 msgBox.exec()
-                return
+                raise NoPlotForYouException()
 
         if self.roi_selection_box.currentIndex() == 4:
             try:
                 r = self.PolyTool.geometry()
+                if r is None:
+                    raise AttributeError()
             except AttributeError:
                 msgBox = QMessageBox()
                 msgBox.setText("You must first draw a polygon to provide an roi of which to sample data")
                 msgBox.exec()
-            return
+                raise NoPlotForYouException()
 
     def do_plot(self):
-        self.pass_valid_Checks()
-        self.parse_plot_params()
-        if self.roi_selection_box.currentIndex() == 4:
-            datX, datY = self.sample_from_poly()
+        try:
+            self.pass_valid_Checks()
+            self.parse_plot_params()
+            if self.roi_selection_box.currentIndex() == 4:
+                datX, datY = self.sample_from_poly()
 
-        if self.roi_selection_box.currentIndex() == 3:
-            datX, datY = self.sample_from_rect()
+            if self.roi_selection_box.currentIndex() == 3:
+                datX, datY = self.sample_from_rect()
 
-        if self.roi_selection_box.currentIndex() == 2:
-            datX, datY = self.sample_from_vector()
+            if self.roi_selection_box.currentIndex() == 2:
+                datX, datY = self.sample_from_vector()
 
-        if self.roi_selection_box.currentIndex() == 1:
-            datX, datY = self.sample_full_raster()
+            if self.roi_selection_box.currentIndex() == 1:
+                datX, datY = self.sample_full_raster()
 
-        if self.roi_selection_box.currentIndex() == 0:
-            datX, datY = self.sample_from_canvas()
-
+            if self.roi_selection_box.currentIndex() == 0:
+                datX, datY = self.sample_from_canvas()
+        except NoPlotForYouException:
+            return
 
         self.make_plot(datX, datY, self.nodata, self.raster.name())
 
@@ -315,7 +331,6 @@ class RasterScatQtPlot(QDialog):
         return datX, datY
 
     def sample_from_vector(self):
-
         poly_crs = self.roi_vector.crs().authid()
         poly = self.roi_vector.selectedFeatures()[0].geometry()
         raster_crs = self.raster.crs().authid()
