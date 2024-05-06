@@ -20,16 +20,25 @@ class AWSTab(TabBase):
         self.profiles = {"ta4-shared": "macrostrat", "map-inbox": "macrostrat", "statmagic": "mtri"}
         self.endpoints = {"macrostrat": "https://s3.macrostrat.chtc.io", "mtri": ""}
 
-        ##### ENDPOINT FRAME #####
-        #endpointFrame, endpointLayout = addFrame(self, "VBox", "NoFrame", "Plain", 3)
+        ##### CONFIGURE AWS CREDENTIALS FRAME #####
+        '''
+        cfgFrame, cfgLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
 
-        # topFrameLabel = addLabel(endpointLayout, "SPECIFY ENDPOINT")
-        # makeLabelBig(topFrameLabel)
+        cfgFrameLabel = addLabel(cfgLayout, "Enter AWS Credentials:  ")
 
-        #self.endpointURL = addLineEdit(endpointFrame, "Endpoint URL:")
-        #self.endpointURL.setText("https://s3.macrostrat.chtc.io")
+        self.cfgButtonMacrostrat = QPushButton()
+        self.cfgButtonMacrostrat.setText("Macrostrat")
+        #self.cfgButtonMacrostrat.clicked.connect(self.cfgMacrostrat)
 
-        #addToParentLayout(endpointFrame)
+        self.cfgButtonMTRI = QPushButton()
+        self.cfgButtonMTRI.setText("MTRI")
+        #self.cfgButtonMTRI.clicked.connect(self.cfgMTRI)
+
+        cfgLayout.addWidget(self.cfgButtonMacrostrat)
+        cfgLayout.addWidget(self.cfgButtonMTRI)
+        
+        addToParentLayout(cfgFrame)
+        # '''
 
         ##### SEARCH BUCKET FRAME #####
 
@@ -43,6 +52,8 @@ class AWSTab(TabBase):
         self.bucket = addComboBoxToForm(searchFormLayout, "Bucket to Search:", buckets)
 
         self.filePattern = addLineEditToForm(searchFormLayout, "File Pattern:")
+        self.filePattern.setToolTip(
+            'Search for files containing the entered text (case-sensitive)')
         self.subFolder = addLineEditToForm(searchFormLayout, "Limit to Subdirectory:")
         self.recursive = addCheckboxToForm(searchFormLayout, "Recursive")
 
@@ -59,12 +70,12 @@ class AWSTab(TabBase):
         self.addLayerList = addListWidget(layerListFrame)
         self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
 
-        self.selectDirButton = QPushButton()
-        self.selectDirButton.setText('Select Download Destination')
-        self.selectDirButton.clicked.connect(self.chooseFolder)
-        self.selectDirButton.setToolTip(
-            'Opens up a new window to select download destination')
-        layerListLayout.addWidget(self.selectDirButton)
+        downloadFormLayout = QtWidgets.QFormLayout()
+        self.folder = QgsFileWidget()
+        self.folder.setStorageMode(QgsFileWidget.StorageMode.GetDirectory)
+        addFormItem(downloadFormLayout, "Download Destination:", self.folder)
+        self.make_subdirs = addCheckboxToForm(downloadFormLayout, "Make Subdirectories")
+        addWidgetFromLayoutAndAddToParent(downloadFormLayout, layerListFrame)
 
         self.downloadLayersButton = addButton(layerListFrame, "Download Layers From Bucket", self.download_layers)
 
@@ -81,16 +92,12 @@ class AWSTab(TabBase):
         self.uploadBucket = addComboBoxToForm(uploadFormLayout, "Bucket:", buckets)
         self.uploadFolder = addLineEditToForm(uploadFormLayout, "Subdirectory:")
 
-        self.selectFileButton = QPushButton()
-        self.selectFileButton.setText('Select File')
-        self.selectFileButton.clicked.connect(self.chooseFiles)
-        self.selectFileButton.setToolTip(
-            'Opens up a new window with options to select files to upload')
-        uploadFormLayout.addWidget(self.selectFileButton)
+        self.uploadFile = QgsFileWidget()
+        addFormItem(uploadFormLayout, "File to Upload:", self.uploadFile)
 
         addWidgetFromLayoutAndAddToParent(uploadFormLayout, uploadFrame)
 
-        self.uploadButton = addButton(uploadFrame, "Upload Files to Bucket", self.upload_files)
+        self.uploadButton = addButton(uploadFrame, "Upload Files to Bucket", self.upload_file)
 
         addToParentLayout(uploadFrame)
 
@@ -107,39 +114,31 @@ class AWSTab(TabBase):
         for file in files:
             self.addLayerList.addItem(file)
 
-    def chooseFolder(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.Directory)
-        dialog.setViewMode(QFileDialog.Detail)
-        if dialog.exec_():
-            self.downloadFolder = dialog.selectedFiles()[0]
-
-    def chooseFiles(self):
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.ExistingFiles)
-        dialog.setViewMode(QFileDialog.Detail)
-        if dialog.exec_():
-            self.filesToUpload = dialog.selectedFiles()
-
-    def upload_files(self):
+    def upload_file(self):
+        filename = self.uploadFile.filePath()
         bucket = self.uploadBucket.currentText()
         profile = self.profiles[bucket]
         endpoint = self.endpoints[profile]
         path = self.uploadFolder.text()
-        for filename in self.filesToUpload:
-            if path:
-                obj_name = path + '/' + Path(filename).name
-                upload_successful = upload(profile, endpoint, filename, bucket, object_name=obj_name)
-            else:
-                upload_successful = upload(profile, endpoint, filename, bucket)
+        if path:
+            obj_name = str(Path(path).joinpath(Path(filename).name))
+        else:
+            obj_name = Path(filename).name
+        upload_successful = upload(profile, endpoint, filename, bucket, object_name=obj_name)
         pass
 
     def download_layers(self):
         layers = extractListWidgetItems(self.addLayerList)
+        download_folder = self.folder.filePath()
+        subdirs = self.make_subdirs.isChecked()
         bucket = self.bucket.currentText()
         profile = self.profiles[bucket]
         endpoint = self.endpoints[profile]
         for layer in layers:
-            filename = self.downloadFolder + '/' + Path(layer).name
-            download_successful = download(profile, endpoint, bucket, layer, filename)
+            if subdirs:
+                filepath = Path(download_folder).joinpath(Path(layer))
+                filepath.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                filepath = Path(download_folder).joinpath(Path(layer).name)
+            download_successful = download(profile, endpoint, bucket, layer, str(filepath))
         pass
