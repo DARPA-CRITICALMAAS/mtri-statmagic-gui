@@ -117,10 +117,13 @@ class StatMaGICDockWidget(QtWidgets.QDockWidget):
             layer_name = layer.name()
             layer_path = layer.dataProvider().dataSourceUri()
 
-            # if the layer path is a URL with parameters, extract just the URL
-            layer_dict = dict(parse_qsl(layer_path))
-            if layer_dict:
-                layer_path = layer_dict["url"]
+            # if the layer path has "://" in it, it's probably a URL
+            if "://" in layer_path:
+                # but the string might contain irrelevant URL parameters
+                layer_dict = dict(parse_qsl(layer_path))
+                if layer_dict:
+                    # so we just want the web address part
+                    layer_path = layer_dict["url"]
 
             gui_logger.info(f"User added a {layer_type} '{layer_name}' <{layer_path}>")
 
