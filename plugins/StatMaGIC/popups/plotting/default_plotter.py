@@ -1,13 +1,11 @@
-from qgis.PyQt.QtWidgets import QDialog, QLineEdit, QTextEdit
-from qgis.PyQt.QtWidgets import QAction, QMessageBox
+from qgis.PyQt.QtWidgets import QDialog, QTextEdit, QVBoxLayout, QMessageBox
 from qgis.gui import QgsMapLayerComboBox, QgsRasterBandComboBox
-from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QGridLayout, QFormLayout, QLabel, QPushButton, QComboBox, QSpinBox
+from PyQt5.QtWidgets import QGridLayout, QFormLayout, QLabel, QPushButton, QComboBox
 import pyqtgraph as pg
-from rasterio import RasterioIOError
+
 
 from qgis.core import QgsRasterLayer, QgsVectorLayer, QgsProject, QgsMapLayerProxyModel
-from qgis.core import QgsPoint, QgsCoordinateTransform
+
 from pathlib import Path
 import rasterio as rio
 from rasterio.windows import Window, from_bounds
@@ -23,7 +21,21 @@ from ...layerops import qgis_poly_to_gdf
 import logging
 logger = logging.getLogger("statmagic_gui")
 
+'''
+Joe and/or Alex - Take a good look through here and change things as needed for better design, signalling, etc.
+The goal is to have this be a template for more plotting functions, so that a designer can simply change out the 
+make_plot function and the widgets required for input (raster bands, vector layers, etc) and all the data fetching
+functions (sample from ____) are good to go to pass data into the plotting function.
 
+Of course I did a lot of this, then saw on stack exchange reference to QStackedWidget, which might be the best 
+choice for this dynamic GUI stuff, but I didn't yet explore. 
+
+The other thing I need help with is how to stop the continuation if one of the pass_Checks methods after the
+QMessage is closed
+
+Also I imagine that there are more standard ways to pass the data to the plotting function so please feel free to 
+improve on that aspect as well.
+'''
 class RasterScatQtPlot(QDialog):
 
     def __init__(self, parent):
@@ -39,9 +51,9 @@ class RasterScatQtPlot(QDialog):
         self.band2 = None
         self.raster_path = None
         self.nodata = None
-        self.aoi_vector = None
+        self.roi_vector = None
 
-        self.updateEnabled()
+        self.roi_selection_box.currentIndexChanged.connect(self.updateGui)
 
     def initUI(self):
 
@@ -53,7 +65,6 @@ class RasterScatQtPlot(QDialog):
         self.pltItem.addItem(self.vLine, ignoreBounds=True)
         self.pltItem.addItem(self.hLine, ignoreBounds=True)
 
-        #### Create histogram parameter input panel
         # Choose raster layer
         raster_label = QLabel('Raster Layer')
         self.raster_selection_box = QgsMapLayerComboBox(self)
@@ -72,56 +83,126 @@ class RasterScatQtPlot(QDialog):
         self.raster_band2_input.setLayer(self.raster_selection_box.currentLayer())
         self.raster_selection_box.layerChanged.connect(self.raster_band2_input.setLayer)
 
-        # Choose vector layer defining AOI with first feature
-        vector_label = QLabel('Vector Layer')
-        self.vector_selection_box = QgsMapLayerComboBox(self)
-        self.vector_selection_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        self.vector_selection_box.setShowCrs(True)
-        self.vector_selection_box.setFixedWidth(300)
-        self.vector_selection_box.setAllowEmptyLayer(True)
-        self.vector_selection_box.setCurrentIndex(0)
+        # Options for choosing the data extent 
+        roi_label = QLabel('ROI Options')
+        self.roi_selection_box = QComboBox(self)
+        self.roi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry', 'Rectangle', 'Polygon'])
 
-        aoi_label = QLabel('AOI Options')
-        self.aoi_selection_box = QComboBox(self)
-        self.aoi_selection_box.setFixedWidth(300)
-        self.aoi_selection_box.addItems(['Canvas', 'Full Raster', 'Use Vectory Layer Geometry',
-                                             'Rectangle', 'Polygon'])
+        # The Non-plot part of the layout
+        # This will hold the static widgets on top and the updatable widgets below
+        self.inputsLayout = QVBoxLayout()
 
-        # Buttons to draw area
-        self.drawRectButton = QPushButton()
-        self.drawRectButton.setText('Draw Rectangle')
-        self.drawRectButton.clicked.connect(self.drawRect)
-        self.drawPolyButton = QPushButton()
-        self.drawPolyButton.setText('Draw Polygon')
-        self.drawPolyButton.clicked.connect(self.drawPoly)
-
-        # Button to create histogram
-        self.run_hist_btn = QPushButton()
-        self.run_hist_btn.setText('Generate Plot')
-        self.run_hist_btn.clicked.connect(self.do_plot)
-
-        # Text box to display statistics
-        self.text_box = QTextEdit()
-        self.text_box.setReadOnly(True)
-
-        # Create for input panel
+        # Use a form to gather the essential inputs that are needed for all extent selection options
         self.layer_select_layout = QFormLayout()
         self.layer_select_layout.addRow(raster_label, self.raster_selection_box)
         self.layer_select_layout.addRow(band_label, self.raster_band_input)
         self.layer_select_layout.addRow(band2_label, self.raster_band2_input)
-        self.layer_select_layout.addRow(aoi_label, self.aoi_selection_box)
-        self.layer_select_layout.addRow(vector_label, self.vector_selection_box)
-        self.layer_select_layout.addWidget(self.drawRectButton)
-        self.layer_select_layout.addWidget(self.drawPolyButton)
-        self.layer_select_layout.addWidget(self.run_hist_btn)
-        self.layer_select_layout.addWidget(self.text_box)
-        ####
+        self.layer_select_layout.addRow(roi_label, self.roi_selection_box)
 
-        # Populate dialog layout
+        self.inputsLayout.addLayout(self.layer_select_layout)
+
+        # This is the layout that will be created and deleted at each changed action of the roi selection
+        self.updatableLayout = QVBoxLayout()
+        self.inputsLayout.addLayout(self.updatableLayout)
+
+        # Use Grid Layout to combine the plot side with the inputs+textbox side
         self.layout = QGridLayout(self)
         self.layout.addWidget(self.plot_widget, 0, 0)
-        self.layout.addLayout(self.layer_select_layout, 0, 1)
+        self.layout.addLayout(self.inputsLayout, 0, 1)
         self.setLayout(self.layout)
+        self.updateGui()
+
+    def updateGui(self):
+        self.removeGui_widgets()
+        if self.roi_selection_box.currentIndex() == 0:
+            self.initCanvasGui()
+        elif self.roi_selection_box.currentIndex() == 1:
+            self.initFullGui()
+        elif self.roi_selection_box.currentIndex() == 2:
+            self.initVectorGui()
+        elif self.roi_selection_box.currentIndex() == 3:
+            self.initRectGui()
+        else:
+            self.initPolyGui()
+
+    def removeGui_widgets(self):
+        while self.updatableLayout.count():
+            child = self.updatableLayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+    def initRectGui(self):
+        self.drawRectButton = QPushButton()
+        self.drawRectButton.setText('Draw Rectangle')
+        self.drawRectButton.clicked.connect(self.drawRect)
+
+        self.run_rect_btn = QPushButton()
+        self.run_rect_btn.setText('Generate Plot From \n Rectangle Extent')
+        self.run_rect_btn.clicked.connect(self.do_plot)
+
+        self.text_box = QTextEdit()
+        self.text_box.setReadOnly(True)
+
+        self.updatableLayout.addWidget(self.drawRectButton)
+        self.updatableLayout.addWidget(self.run_rect_btn)
+        self.updatableLayout.addWidget(self.text_box)
+
+    def initPolyGui(self):
+        self.drawPolyButton = QPushButton()
+        self.drawPolyButton.setText('Draw Polygon')
+        self.drawPolyButton.clicked.connect(self.drawPoly)
+
+        self.run_poly_btn = QPushButton()
+        self.run_poly_btn.setText('Generate Plot From \n Polygon Extent')
+        self.run_poly_btn.clicked.connect(self.do_plot)
+
+        self.text_box = QTextEdit()
+        self.text_box.setReadOnly(True)
+
+        self.updatableLayout.addWidget(self.drawPolyButton)
+        self.updatableLayout.addWidget(self.run_poly_btn)
+        self.updatableLayout.addWidget(self.text_box)
+
+    def initCanvasGui(self):
+        self.run_canvas_btn = QPushButton()
+        self.run_canvas_btn.setText('Generate Plot From Canvas Extent')
+        self.run_canvas_btn.clicked.connect(self.do_plot)
+
+        self.text_box = QTextEdit()
+        self.text_box.setReadOnly(True)
+
+        self.updatableLayout.addWidget(self.run_canvas_btn)
+        self.updatableLayout.addWidget(self.text_box)
+
+    def initFullGui(self):
+        self.run_full_btn = QPushButton()
+        self.run_full_btn.setText('Generate Plot \n From Full Raster')
+        self.run_full_btn.clicked.connect(self.do_plot)
+
+        self.text_box = QTextEdit()
+        self.text_box.setReadOnly(True)
+
+        self.updatableLayout.addWidget(self.run_full_btn)
+        self.updatableLayout.addWidget(self.text_box)
+
+    def initVectorGui(self):
+        self.vector_selection_box = QgsMapLayerComboBox(self)
+        self.vector_selection_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.vector_selection_box.setShowCrs(True)
+        self.vector_selection_box.setAllowEmptyLayer(True)
+        self.vector_selection_box.setPlaceholderText("Choose a Polygon Layer")
+        self.vector_selection_box.setCurrentIndex(-1)
+
+        self.run_vec_btn = QPushButton()
+        self.run_vec_btn.setText('Generate Plot \n From Selected Feature')
+        self.run_vec_btn.clicked.connect(self.do_plot)
+
+        self.text_box = QTextEdit()
+        self.text_box.setReadOnly(True)
+
+        self.updatableLayout.addWidget(self.vector_selection_box)
+        self.updatableLayout.addWidget(self.run_vec_btn)
+        self.updatableLayout.addWidget(self.text_box)
 
     def drawRect(self):
         self.c = self.parent.canvas
@@ -146,14 +227,15 @@ class RasterScatQtPlot(QDialog):
             msgBox.exec()
             return
 
-        if self.aoi_selection_box.currentIndex() == 2:
+        if self.roi_selection_box.currentIndex() == 2:
             if self.vector_selection_box.currentLayer() is None:
                 msgBox = QMessageBox()
-                msgBox.setText("You must select a valid vector / polygon layer to provide an AOI for the histogram")
+                msgBox.setText("You must select a valid vector / polygon layer to provide an roi")
                 msgBox.exec()
                 return
 
-            if self.vector_selection_box.currentLayer.selectedFeatures()[0] is None:
+            cl = self.vector_selection_box.currentLayer()
+            if len(cl.selectedFeatures()) < 1:
                 msgBox = QMessageBox()
                 msgBox.setText("You must select a feature from the vector layer")
                 msgBox.exec()
@@ -161,43 +243,42 @@ class RasterScatQtPlot(QDialog):
 
     def pass_ROI_checks(self):
 
-        if self.aoi_selection_box.currentIndex() == 3:
+        if self.roi_selection_box.currentIndex() == 3:
             try:
                 r = self.RectTool.rectangle()
             except AttributeError:
                 msgBox = QMessageBox()
-                msgBox.setText("You must first draw a rectangle to provide an AOI of which to sample data")
+                msgBox.setText("You must first draw a rectangle to provide an roi of which to sample data")
                 msgBox.exec()
                 return
 
-        if self.aoi_selection_box.currentIndex() == 4:
+        if self.roi_selection_box.currentIndex() == 4:
             try:
                 r = self.PolyTool.geometry()
             except AttributeError:
                 msgBox = QMessageBox()
-                msgBox.setText("You must first draw a polygon to provide an AOI of which to sample data")
+                msgBox.setText("You must first draw a polygon to provide an roi of which to sample data")
                 msgBox.exec()
             return
 
     def do_plot(self):
         self.pass_valid_Checks()
         self.parse_plot_params()
-        if self.aoi_selection_box.currentIndex() == 4:
-            self.sample_from_polygon()
+        if self.roi_selection_box.currentIndex() == 4:
+            datX, datY = self.sample_from_poly()
 
-        if self.aoi_selection_box.currentIndex() == 3:
-            self.sample_from_rectangle()
+        if self.roi_selection_box.currentIndex() == 3:
+            datX, datY = self.sample_from_rect()
 
-        if self.aoi_selection_box.currentIndex() == 2:
-            self.sample_from_vector()
+        if self.roi_selection_box.currentIndex() == 2:
+            datX, datY = self.sample_from_vector()
 
-        if self.aoi_selection_box.currentIndex() == 1:
-            self.sample_full_raster()
+        if self.roi_selection_box.currentIndex() == 1:
+            datX, datY = self.sample_full_raster()
 
-        if self.aoi_selection_box.currentIndex() == 0:
+        if self.roi_selection_box.currentIndex() == 0:
             datX, datY = self.sample_from_canvas()
 
-        self.pass_ROI_checks()
 
         self.make_plot(datX, datY, self.nodata, self.raster.name())
 
@@ -235,8 +316,8 @@ class RasterScatQtPlot(QDialog):
 
     def sample_from_vector(self):
 
-        poly_crs = self.aoi_vector.crs().authid()
-        poly = self.aoi_vector.selectedFeatures()[0].geometry()
+        poly_crs = self.roi_vector.crs().authid()
+        poly = self.roi_vector.selectedFeatures()[0].geometry()
         raster_crs = self.raster.crs().authid()
         poly_gdf = qgis_poly_to_gdf(poly, poly_crs, raster_crs)
         with rio.open(self.raster_path) as ds:
@@ -248,6 +329,7 @@ class RasterScatQtPlot(QDialog):
         return datX, datY
 
     def sample_from_rect(self):
+        self.pass_ROI_checks()
         bb = self.RectTool.rectangle()
         raster_crs = self.raster.crs().authid()
         crs_epsg = self.parent.canvas.mapSettings().destinationCrs().authid()
@@ -264,8 +346,9 @@ class RasterScatQtPlot(QDialog):
         return datX, datY
 
     def sample_from_poly(self):
+        self.pass_ROI_checks()
         poly = self.PolyTool.geometry()
-        raster_crs = self.crs().authid()
+        raster_crs = self.raster.crs().authid()
         crs_epsg = self.parent.canvas.mapSettings().destinationCrs().authid()
         wkt = poly.asWkt()
         shapely_geom = loads(wkt)
@@ -288,9 +371,8 @@ class RasterScatQtPlot(QDialog):
         self.raster_path = Path(self.raster.source())
         self.nodata = rio.open(self.raster_path).nodata
 
-        if self.aoi_selection_box.currentIndex() == 3:
-            self.aoi_vector = self.vector_selection_box.currentLayer()
-
+        if self.roi_selection_box.currentIndex() == 2:
+            self.roi_vector = self.vector_selection_box.currentLayer()
 
     def make_plot(self, dataX, dataY, nodata, Name):
         dataX = np.ravel(dataX)
@@ -328,12 +410,3 @@ class RasterScatQtPlot(QDialog):
         #                       f'Mean = {np.nanmean(band_data)}\n'
         #                       f'Median = {np.nanmedian(band_data)}\n'
         #                       f'Var = {np.nanvar(band_data)}')
-
-    def updateEnabled(self):
-        # Todo: Figure out making the different elements visible depending on the selection in aoi_selection_box
-        # Todo: Make Draw Rect and Draw Polygon just one button "Draw shape on canvas"
-        # Todo: Add Help doc explaining draw Rect is click, hold, pull, release and Polygon is left click to create vert
-        # and right click to finish object
-        pass
-
-
