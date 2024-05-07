@@ -74,6 +74,7 @@ class AWSTab(TabBase):
         self.addLayerList = addListWidget(layerListFrame)
         self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.addLayerList.setSelectionMode(QListWidget.ExtendedSelection)
+        self.addLayerList.setToolTip("Select files to download")
 
         downloadFormLayout = QtWidgets.QFormLayout()
         self.folder = QgsFileWidget()
@@ -84,7 +85,7 @@ class AWSTab(TabBase):
 
         self.downloadLayersButton = addButton(layerListFrame, "Download Layers From Bucket", self.download_layers)
         self.downloadLayersButton.setToolTip(
-            'Download all files currently displayed in search results box')
+            'Download selected files')
 
         addToParentLayout(layerListFrame)
 
@@ -104,7 +105,7 @@ class AWSTab(TabBase):
 
         addWidgetFromLayoutAndAddToParent(uploadFormLayout, uploadFrame)
 
-        self.uploadButton = addButton(uploadFrame, "Upload Files to Bucket", self.upload_file)
+        self.uploadButton = addButton(uploadFrame, "Upload File to Bucket", self.upload_file)
 
         addToParentLayout(uploadFrame)
 
