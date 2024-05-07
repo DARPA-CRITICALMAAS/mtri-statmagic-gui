@@ -35,4 +35,5 @@ class AWS_PopUp_Menu(QDialog):
         secret_key = self.secretKey.text()
         os.environ['AWS_ACCESS_KEY_ID_'+self.profile] = access_key
         os.environ['AWS_SECRET_ACCESS_KEY_'+self.profile] = secret_key
+        self.reject()
         pass
