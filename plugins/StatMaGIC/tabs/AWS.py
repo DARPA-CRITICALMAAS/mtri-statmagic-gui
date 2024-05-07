@@ -9,7 +9,7 @@ from ..popups.AWSconfig_dialog import AWS_PopUp_Menu
 import logging
 logger = logging.getLogger("statmagic_gui")
 
-from PyQt5.QtWidgets import QPushButton, QFileDialog
+from PyQt5.QtWidgets import QPushButton, QMessageBox
 
 class AWSTab(TabBase):
     def __init__(self, parent, tabWidget, isEnabled=True):
@@ -116,8 +116,11 @@ class AWSTab(TabBase):
         recursive = self.recursive.isChecked()
         self.updateKeyVars(profile)
         files = ls(profile, endpoint, bucket, path, pattern, recursive)
-        for file in files:
-            self.addLayerList.addItem(file)
+        if files is None:
+            self.noCredentialsMessage(profile)
+        else:
+            for file in files:
+                self.addLayerList.addItem(file)
 
     def upload_file(self):
         filename = self.uploadFile.filePath()
@@ -131,6 +134,8 @@ class AWSTab(TabBase):
             obj_name = Path(filename).name
         self.updateKeyVars(profile)
         upload_successful = upload(profile, endpoint, filename, bucket, object_name=obj_name)
+        if upload_successful is None:
+            self.noCredentialsMessage(profile)
         pass
 
     def download_layers(self):
@@ -168,3 +173,8 @@ class AWSTab(TabBase):
             os.environ['AWS_ACCESS_KEY_ID'] = ''
             os.environ['AWS_SECRET_ACCESS_KEY'] = ''
         pass
+
+    def noCredentialsMessage(self, profile):
+        msgBox = QMessageBox()
+        msgBox.setText("Unable to find AWS credentials for " + profile)
+        msgBox.exec()
