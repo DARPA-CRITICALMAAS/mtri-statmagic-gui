@@ -2,6 +2,8 @@
 import os
 from statmagic_backend.dev.aws_cli import *
 
+from qgis.core import Qgis
+
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..popups.AWSconfig_dialog import AWS_PopUp_Menu
@@ -9,7 +11,7 @@ from ..popups.AWSconfig_dialog import AWS_PopUp_Menu
 import logging
 logger = logging.getLogger("statmagic_gui")
 
-from PyQt5.QtWidgets import QPushButton, QMessageBox
+from PyQt5.QtWidgets import QPushButton, QMessageBox, QListWidget
 
 class AWSTab(TabBase):
     def __init__(self, parent, tabWidget, isEnabled=True):
@@ -71,6 +73,7 @@ class AWSTab(TabBase):
 
         self.addLayerList = addListWidget(layerListFrame)
         self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        self.addLayerList.setSelectionMode(QListWidget.ExtendedSelection)
 
         downloadFormLayout = QtWidgets.QFormLayout()
         self.folder = QgsFileWidget()
@@ -136,23 +139,32 @@ class AWSTab(TabBase):
         upload_successful = upload(profile, endpoint, filename, bucket, object_name=obj_name)
         if upload_successful is None:
             self.noCredentialsMessage(profile)
+        elif upload_successful:
+            self.iface.messageBar().pushMessage(f"Uploaded {obj_name}", level=Qgis.Info)
         pass
 
     def download_layers(self):
         layers = extractListWidgetItems(self.addLayerList)
+        items = []
+        for x in range(self.addLayerList.count()):
+            items.append(self.addLayerList.item(x))
         download_folder = self.folder.filePath()
         subdirs = self.make_subdirs.isChecked()
         bucket = self.bucket.currentText()
         profile = self.profiles[bucket]
         endpoint = self.endpoints[profile]
         self.updateKeyVars(profile)
-        for layer in layers:
+        for i, layer in enumerate(layers):
+            if not items[i].isSelected():
+                continue
             if subdirs:
                 filepath = Path(download_folder).joinpath(Path(layer))
                 filepath.parent.mkdir(parents=True, exist_ok=True)
             else:
                 filepath = Path(download_folder).joinpath(Path(layer).name)
             download_successful = download(profile, endpoint, bucket, layer, str(filepath))
+            if download_successful:
+                self.iface.messageBar().pushMessage(f"Downloaded {layer}", level=Qgis.Info)
         pass
 
     def cfgMTRI(self):
