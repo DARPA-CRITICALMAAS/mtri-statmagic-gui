@@ -4,6 +4,7 @@ from statmagic_backend.dev.aws_cli import *
 
 from .TabBase import TabBase
 from ..gui_helpers import *
+from ..popups.AWSconfig_dialog import AWS_PopUp_Menu
 
 import logging
 logger = logging.getLogger("statmagic_gui")
@@ -21,24 +22,26 @@ class AWSTab(TabBase):
         self.endpoints = {"macrostrat": "https://s3.macrostrat.chtc.io", "mtri": ""}
 
         ##### CONFIGURE AWS CREDENTIALS FRAME #####
-        '''
         cfgFrame, cfgLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
 
         cfgFrameLabel = addLabel(cfgLayout, "Enter AWS Credentials:  ")
 
         self.cfgButtonMacrostrat = QPushButton()
         self.cfgButtonMacrostrat.setText("Macrostrat")
-        #self.cfgButtonMacrostrat.clicked.connect(self.cfgMacrostrat)
+        self.cfgButtonMacrostrat.clicked.connect(self.cfgMacrostrat)
+        self.cfgButtonMacrostrat.setToolTip(
+            'Opens a popup window to enter AWS credentials for Macrostrat (to access ta4-shared and map-inbox buckets)')
 
         self.cfgButtonMTRI = QPushButton()
         self.cfgButtonMTRI.setText("MTRI")
-        #self.cfgButtonMTRI.clicked.connect(self.cfgMTRI)
+        self.cfgButtonMTRI.clicked.connect(self.cfgMTRI)
+        self.cfgButtonMTRI.setToolTip(
+            'Opens a popup window to enter AWS credentials for MTRI (to access statmagic bucket)')
 
         cfgLayout.addWidget(self.cfgButtonMacrostrat)
         cfgLayout.addWidget(self.cfgButtonMTRI)
         
         addToParentLayout(cfgFrame)
-        # '''
 
         ##### SEARCH BUCKET FRAME #####
 
@@ -50,12 +53,11 @@ class AWSTab(TabBase):
         searchFormLayout = QtWidgets.QFormLayout()
 
         self.bucket = addComboBoxToForm(searchFormLayout, "Bucket to Search:", buckets)
-
+        self.subFolder = addLineEditToForm(searchFormLayout, "Limit to Subdirectory:")
         self.filePattern = addLineEditToForm(searchFormLayout, "File Pattern:")
         self.filePattern.setToolTip(
             'Search for files containing the entered text (case-sensitive)')
-        self.subFolder = addLineEditToForm(searchFormLayout, "Limit to Subdirectory:")
-        self.recursive = addCheckboxToForm(searchFormLayout, "Recursive")
+        self.recursive = addCheckboxToForm(searchFormLayout, "Recursive", isChecked=True)
 
         self.lsButton = addButtonToForm(searchFormLayout, "Search AWS Bucket", self.run_ls)
 
@@ -78,6 +80,8 @@ class AWSTab(TabBase):
         addWidgetFromLayoutAndAddToParent(downloadFormLayout, layerListFrame)
 
         self.downloadLayersButton = addButton(layerListFrame, "Download Layers From Bucket", self.download_layers)
+        self.downloadLayersButton.setToolTip(
+            'Download all files currently displayed in search results box')
 
         addToParentLayout(layerListFrame)
 
@@ -110,6 +114,7 @@ class AWSTab(TabBase):
         path = self.subFolder.text()
         pattern = self.filePattern.text()
         recursive = self.recursive.isChecked()
+        self.updateKeyVars(profile)
         files = ls(profile, endpoint, bucket, path, pattern, recursive)
         for file in files:
             self.addLayerList.addItem(file)
@@ -124,6 +129,7 @@ class AWSTab(TabBase):
             obj_name = str(Path(path).joinpath(Path(filename).name))
         else:
             obj_name = Path(filename).name
+        self.updateKeyVars(profile)
         upload_successful = upload(profile, endpoint, filename, bucket, object_name=obj_name)
         pass
 
@@ -134,6 +140,7 @@ class AWSTab(TabBase):
         bucket = self.bucket.currentText()
         profile = self.profiles[bucket]
         endpoint = self.endpoints[profile]
+        self.updateKeyVars(profile)
         for layer in layers:
             if subdirs:
                 filepath = Path(download_folder).joinpath(Path(layer))
@@ -141,4 +148,23 @@ class AWSTab(TabBase):
             else:
                 filepath = Path(download_folder).joinpath(Path(layer).name)
             download_successful = download(profile, endpoint, bucket, layer, str(filepath))
+        pass
+
+    def cfgMTRI(self):
+        popup = AWS_PopUp_Menu(self.parent, "MTRI")
+        self.cfg_menu = popup.show()
+
+    def cfgMacrostrat(self):
+        popup = AWS_PopUp_Menu(self.parent, "Macrostrat")
+        self.cfg_menu = popup.show()
+
+    def updateKeyVars(self, profile):
+        profile_access = os.getenv('AWS_ACCESS_KEY_ID_' + profile.upper())
+        profile_secret = os.getenv('AWS_SECRET_ACCESS_KEY_' + profile.upper())
+        if profile_access and profile_secret:
+            os.environ['AWS_ACCESS_KEY_ID'] = profile_access
+            os.environ['AWS_SECRET_ACCESS_KEY'] = profile_secret
+        else:
+            os.environ['AWS_ACCESS_KEY_ID'] = ''
+            os.environ['AWS_SECRET_ACCESS_KEY'] = ''
         pass
