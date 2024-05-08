@@ -3,14 +3,18 @@ import tempfile
 from osgeo import gdal
 
 from PyQt5 import QtWidgets
-from qgis.core import QgsProject
+from qgis.core import QgsProject, QgsRasterLayer
+from PyQt5.QtWidgets import QFileDialog, QPushButton
 
 from statmagic_backend.dev.threshold_inference import threshold_inference
+from statmagic_backend.dev.restack_feature_attribution_layers import restack_matched_layers
 
 from .TabBase import TabBase
 from ..fileops import gdalSave1
 from ..gui_helpers import *
 from ..layerops import addGreyScaleLayer, addVectorLayer
+from ..popups.plotting.feature_attribution_point_plot import featAttPlot
+
 
 import logging
 logger = logging.getLogger("statmagic_gui")
@@ -40,7 +44,43 @@ class PredictionsTab(TabBase):
         self.to_poly_check = addCheckboxToForm(formLayout, "Convert to Polygon Layer", isChecked=True)
         self.threshold_inference_button = addButtonToForm(formLayout, "Generate Filtered Layer", self.threshold_inference)
 
+
+        self.choose_files_button = QPushButton(self)
+        self.choose_files_button.setText('Compile Feature Attribution Layers')
+        self.choose_files_button.clicked.connect(self.choose_files)
+        self.choose_files_button.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
+
+        self.inspect_attributions_button = QPushButton(self)
+        self.inspect_attributions_button.setText('Inspect/Plot Feature Attribution Scores')
+        self.inspect_attributions_button.clicked.connect(self.launch_attribution_plot)
+        self.inspect_attributions_button.setToolTip('Opens Plotting GUI. Click on points to generate plot')
+
+
         alignLayoutAndAddToParent(formLayout, self, "Left")
+
+        topLayout.addWidget(self.choose_files_button)
+
+    def choose_files(self):
+        rasterFilePaths, _ = QFileDialog.getOpenFileNames(self, "Select Raster Files", "", "GeoTIFFs (*.tif *.tiff)")
+        output_path, _ = QFileDialog.getSaveFileName(self, "Select Output File", "", "GeoTIFFs (*.tif)")
+        # Force the extension to be .tif
+        if output_path[-4:] != '.tif':
+            output_path += '.tif'
+
+        self.stack_files(rasterFilePaths, output_path)
+
+    def stack_files(self, file_list, output_path):
+        restack_matched_layers(file_list, output_path)
+        # Then add output_path to the project
+        message = f"File saved to: {output_path}"
+        qgs_data_raster = QgsRasterLayer(output_path, 'Feature Attributions')
+        QgsProject.instance().addMapLayer(qgs_data_raster)
+        self.iface.messageBar().pushMessage(message)
+
+    def launch_attribution_plot(self):
+        popup = featAttPlot(self.parent)
+        self.featAttplot = popup.show()
+
 
     def threshold_inference(self):
         # Get inputs from GUI
