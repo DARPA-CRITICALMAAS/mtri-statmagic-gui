@@ -218,6 +218,9 @@ class RasterScatQtPlot(QDialog):
 
     def drawPoly(self):
         self.c = self.parent.canvas
+        # clear any previous rectangle before enabling new rectangle selection
+        if hasattr(self, "PolyTool") and self.PolyTool.isActive():
+            self.PolyTool.deactivate()
         self.PolyTool = PolygonMapTool(self.c)
         self.c.setMapTool(self.PolyTool)
 
