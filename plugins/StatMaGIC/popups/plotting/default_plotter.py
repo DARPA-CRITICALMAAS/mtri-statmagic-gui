@@ -428,3 +428,14 @@ class RasterScatQtPlot(QDialog):
         #                       f'Mean = {np.nanmean(band_data)}\n'
         #                       f'Median = {np.nanmedian(band_data)}\n'
         #                       f'Var = {np.nanvar(band_data)}')
+
+    def done(self, a0):
+        if hasattr(self, "RectTool"):
+            self.RectTool.deactivate()
+            self.c.unsetMapTool(self.RectTool)
+
+        if hasattr(self, "PolyTool"):
+            self.PolyTool.deactivate()
+            self.c.unsetMapTool(self.PolyTool)
+
+        super(RasterScatQtPlot, self).done(a0)
