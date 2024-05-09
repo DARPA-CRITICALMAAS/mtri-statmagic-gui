@@ -2,13 +2,14 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QPushButton, QLabel, QMessageBox, QTextEdit, QComboBox, QTableView, QCheckBox, QVBoxLayout, QHBoxLayout, QFrame, QFormLayout, QSpacerItem, QGridLayout
 from PyQt5.QtCore import Qt, QAbstractTableModel
 from PyQt5.QtGui import QPalette, QColor
-from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform
+from qgis.core import QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayerProxyModel, QgsPoint, QgsCoordinateTransform, QgsProviderRegistry
 
 from .TabBase import TabBase
 from ..gui_helpers import *
 from ..widgets.collapsible_box import CollapsibleBox
 from ..popups.sparql_queries.ore_grades_cutoffs import OreGradeCutoffQueryBuilder
 from ..popups.sparql_queries.colocated_coms import ColocatedCommoditiesQueryBuilder
+from ..popups.sparql_queries.mineral_sites import MineralSitesQueryBuilder
 from statmagic_backend.sparql import sparql_utils
 import statmagic_backend.sparql.sparql_utils
 import pandas as pd
@@ -59,7 +60,7 @@ class SparqlTab(TabBase):
                            ("Deposit Types", self.clicked_get_deposit_types_btn, "Get a list of all the Deposit Types in the MinMod knowledge graph"),
                            ("Ore Grades", self.clicked_get_ore_grades_btn, "Get selected ore values, grades, and cutoffs from all inventories in the MinMod knowledge graph"),
                            ("Colocated Coms", self.clicked_get_colocated_coms_btn, "Get commodities that appear in the same mineral inventories as a given commodity"),
-                           ("btn5", self.clicked_btn5, "Placeholder"),
+                           ("Mineral Sites", self.clicked_get_mineral_sites_btn, "Get mineral sites containing a given commodity within an AOI"),
                            ("btn6", self.clicked_btn6, "Placeholder"),
                            ("btn7", self.clicked_btn7, "Placeholder"),
                            ("btn8", self.clicked_btn8, "Placeholder"),
@@ -135,8 +136,13 @@ class SparqlTab(TabBase):
         self.has_location_checkbox = QCheckBox()
         self.has_location_checkbox.setChecked(False)
         self.has_location_checkbox.stateChanged.connect(self.has_location_checkbox_state_changed)
-        self.location_feature_combo_box_label = QLabel('Response Location Feature')
-        self.location_feature_combo_box = QComboBox()
+        self.location_feature_combo_box_label = QLabel('AOI')
+        self.location_feature_combo_box = QgsMapLayerComboBox()
+        self.location_feature_combo_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.location_feature_combo_box.setShowCrs(True)
+        self.location_feature_combo_box.setFixedWidth(300)
+        self.location_feature_combo_box.setAllowEmptyLayer(True)
+        self.location_feature_combo_box.setCurrentIndex(0)
         self.output_file_label = QLabel('Output File')
         self.output_file_text_box = QgsFileWidget()
         self.output_file_text_box.setStorageMode(QgsFileWidget.StorageMode.SaveFile)
@@ -159,8 +165,11 @@ class SparqlTab(TabBase):
     def has_location_checkbox_state_changed(self, state):
         if state == Qt.Checked:
             self.output_file_text_box.setFilter('GeoJSON (*.geojson)')
+            if self.last_response is not None:
+                self.location_feature_combo_box.addItems(list(self.last_response.keys()))
         else:
             self.output_file_text_box.setFilter('CSV (*.csv)')
+            self.location_feature_combo_box.clear()
 
     def save_response_to_file(self):
         if self.last_response is None:
@@ -189,19 +198,28 @@ class SparqlTab(TabBase):
     def save_response_to_gis_file(self, location_feature):
         logger.info("Saving path as GeoJSON")
         resp_file_path = Path(self.output_file_text_box.filePath())
-        loc_feature = self.location_feature_combo_box.currentText()
-        logger.debug("Location feature: ", loc_feature)
 
         # You will probably need to add code here to convert one of the columns of the response into shapely points,
-        # and use that as the geometry column when creating the GeoDataFrame
+        # and use that as the geometry column when creating the GeoDataFrame.  Note that we assume that location info
+        # is stored in a column called 'loc_wkt.value', which is a convention that we follow in our sparkl queries
         df = self.last_response
         logger.info("Loading location feature to WKT")
-        df['loc_wkt'] = df[loc_feature].apply(self.safe_wkt_load)
+        df['loc_wkt'] = df['loc_wkt.value'].apply(statmagic_backend.sparql.sparql_utils.safe_wkt_load)
         logger.info("Creating GeoDataFrame")
         logger.debug(df.head())
         gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
         logger.info("Dropping column loc_wkt")
         gdf.drop(columns=['loc_wkt'], inplace=True)
+
+        # Filter results to our AOI, if desired
+        if not self.location_feature_combo_box.currentIndex() == 0:
+            aoi_layer = self.location_feature_combo_box.currentLayer()
+            uri_components = QgsProviderRegistry.instance().decodeUri(aoi_layer.dataProvider().name(), aoi_layer.publicSource())
+            print(uri_components)
+            aoi_df = gpd.read_file(uri_components['path'])
+            aoi_df.to_crs('EPSG:4326', inplace=True)
+            gdf = gpd.sjoin(gdf, aoi_df, how='inner', predicate='within')
+
         logger.info("Saving to file")
         gdf.to_file(resp_file_path, driver="GeoJSON")
 
@@ -265,6 +283,15 @@ class SparqlTab(TabBase):
             self.query_edit_text_box.setText(popup.query)
         else:
             logger.info("Colocated commodities popup closed without setting query")
+
+    def clicked_get_mineral_sites_btn(self):
+        popup = MineralSitesQueryBuilder(self)
+        if popup.exec_():
+            self.query_edit_text_box.setText(popup.query)
+            self.has_location_checkbox.setChecked(True)
+            self.location_feature_combo_box.setLayer(popup.aoi_layer)
+        else:
+            logger.info("Mineral Sites popup closed without setting query")
 
     def run_query(self):
         self.response_description_label.setText("No Response Available")

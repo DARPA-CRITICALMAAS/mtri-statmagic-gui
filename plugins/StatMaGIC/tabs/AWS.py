@@ -58,8 +58,8 @@ class AWSTab(TabBase):
         self.subFolder = addLineEditToForm(searchFormLayout, "Limit to Subdirectory:")
         self.filePattern = addLineEditToForm(searchFormLayout, "File Pattern:")
         self.filePattern.setToolTip(
-            'Search for files containing the entered text (case-sensitive)')
-        self.recursive = addCheckboxToForm(searchFormLayout, "Recursive", isChecked=True)
+            'Search for files containing the entered text (case-sensitive, does not accept wildcards)')
+        #self.recursive = addCheckboxToForm(searchFormLayout, "Recursive", isChecked=True) # this parameter was not being used at all
 
         self.lsButton = addButtonToForm(searchFormLayout, "Search AWS Bucket", self.run_ls)
 
@@ -74,6 +74,7 @@ class AWSTab(TabBase):
         self.addLayerList = addListWidget(layerListFrame)
         self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.addLayerList.setSelectionMode(QListWidget.ExtendedSelection)
+        self.addLayerList.setToolTip("Select files to download")
 
         downloadFormLayout = QtWidgets.QFormLayout()
         self.folder = QgsFileWidget()
@@ -84,7 +85,7 @@ class AWSTab(TabBase):
 
         self.downloadLayersButton = addButton(layerListFrame, "Download Layers From Bucket", self.download_layers)
         self.downloadLayersButton.setToolTip(
-            'Download all files currently displayed in search results box')
+            'Download selected files')
 
         addToParentLayout(layerListFrame)
 
@@ -104,7 +105,7 @@ class AWSTab(TabBase):
 
         addWidgetFromLayoutAndAddToParent(uploadFormLayout, uploadFrame)
 
-        self.uploadButton = addButton(uploadFrame, "Upload Files to Bucket", self.upload_file)
+        self.uploadButton = addButton(uploadFrame, "Upload File to Bucket", self.upload_file)
 
         addToParentLayout(uploadFrame)
 
@@ -116,11 +117,15 @@ class AWSTab(TabBase):
         endpoint = self.endpoints[profile]
         path = self.subFolder.text()
         pattern = self.filePattern.text()
-        recursive = self.recursive.isChecked()
+        #recursive = self.recursive.isChecked()
         self.updateKeyVars(profile)
-        files = ls(profile, endpoint, bucket, path, pattern, recursive)
+        files = ls(profile, endpoint, bucket, path, pattern)#, recursive)
         if files is None:
             self.noCredentialsMessage(profile)
+        elif len(files)==0:
+            msgBox = QMessageBox()
+            msgBox.setText("No files found for this search")
+            msgBox.exec()
         else:
             for file in files:
                 self.addLayerList.addItem(file)
