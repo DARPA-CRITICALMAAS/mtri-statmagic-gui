@@ -107,7 +107,7 @@ class SparqlTab(TabBase):
         self.tabLayout.addWidget(self.runFrame)
 
         ## See the response from the query
-        query_response_label = QLabel("Query Response")
+        query_response_label = QLabel("Last Query Response")
         query_response_label.setFont(self.section_title_font)
         self.tabLayout.addWidget(query_response_label)
 
@@ -124,6 +124,31 @@ class SparqlTab(TabBase):
         self.response_description_label = QLabel("No Response Available")
         self.tableLayout.addWidget(self.response_description_label)
 
+        ## Apply spatial filter to data
+        filter_response_label = QLabel("Spatially Filter Response")
+        filter_response_label.setFont(self.section_title_font)
+        self.tabLayout.addWidget(filter_response_label)
+
+        self.filterFrame = QFrame()
+        self.filterLayout = QFormLayout()
+
+        self.aoi_combo_box_label = QLabel('AOI')
+        self.aoi_combo_box = QgsMapLayerComboBox()
+        self.aoi_combo_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.aoi_combo_box.setShowCrs(True)
+        self.aoi_combo_box.setFixedWidth(300)
+        self.aoi_combo_box.setAllowEmptyLayer(True)
+        self.aoi_combo_box.setCurrentIndex(0)
+
+        self.apply_filter_btn = QPushButton()
+        self.apply_filter_btn.setText("Apply Filter")
+        self.apply_filter_btn.clicked.connect(self.spatial_filter_last_response)
+
+        self.filterLayout.addRow(self.aoi_combo_box_label, self.aoi_combo_box)
+        self.filterLayout.addWidget(self.apply_filter_btn)
+        self.filterFrame.setLayout(self.filterLayout)
+        self.tabLayout.addWidget(self.filterFrame)
+
         ## Convert response to a GIS layer or CSV
         save_response_label = QLabel("Save Response to File")
         save_response_label.setFont(self.section_title_font)
@@ -136,13 +161,7 @@ class SparqlTab(TabBase):
         self.has_location_checkbox = QCheckBox()
         self.has_location_checkbox.setChecked(False)
         self.has_location_checkbox.stateChanged.connect(self.has_location_checkbox_state_changed)
-        self.location_feature_combo_box_label = QLabel('AOI')
-        self.location_feature_combo_box = QgsMapLayerComboBox()
-        self.location_feature_combo_box.setFilters(QgsMapLayerProxyModel.PolygonLayer)
-        self.location_feature_combo_box.setShowCrs(True)
-        self.location_feature_combo_box.setFixedWidth(300)
-        self.location_feature_combo_box.setAllowEmptyLayer(True)
-        self.location_feature_combo_box.setCurrentIndex(0)
+
         self.output_file_label = QLabel('Output File')
         self.output_file_text_box = QgsFileWidget()
         self.output_file_text_box.setStorageMode(QgsFileWidget.StorageMode.SaveFile)
@@ -152,7 +171,6 @@ class SparqlTab(TabBase):
         self.save_response_btn.clicked.connect(self.save_response_to_file)
 
         self.convertLayout.addRow(self.has_location_label, self.has_location_checkbox)
-        self.convertLayout.addRow(self.location_feature_combo_box_label, self.location_feature_combo_box)
         self.convertLayout.addRow(self.output_file_label, self.output_file_text_box)
         self.convertLayout.addWidget(self.save_response_btn)
         self.convertFrame.setLayout(self.convertLayout)
@@ -161,15 +179,13 @@ class SparqlTab(TabBase):
         self.tabLayout.addStretch(1)
 
         self.last_response = None
+        self.last_response_filter = None
 
     def has_location_checkbox_state_changed(self, state):
         if state == Qt.Checked:
             self.output_file_text_box.setFilter('GeoJSON (*.geojson)')
-            if self.last_response is not None:
-                self.location_feature_combo_box.addItems(list(self.last_response.keys()))
         else:
             self.output_file_text_box.setFilter('CSV (*.csv)')
-            self.location_feature_combo_box.clear()
 
     def save_response_to_file(self):
         if self.last_response is None:
@@ -179,14 +195,14 @@ class SparqlTab(TabBase):
             return
 
         if self.has_location_checkbox.isChecked():
-            location_feature = self.location_feature_combo_box.currentText()
-            if location_feature == "":
+            aoi_layer = self.aoi_combo_box.currentText()
+            if aoi_layer == "":
                 msgBox = QMessageBox()
-                msgBox.setText("No location feature selected")
+                msgBox.setText("No AOI layer selected")
                 msgBox.exec()
                 return
             else:
-                self.save_response_to_gis_file(location_feature)
+                self.save_response_to_gis_file(aoi_layer)
         else:
             self.save_response_to_csv_file()
 
@@ -195,14 +211,13 @@ class SparqlTab(TabBase):
         file_path = self.output_file_text_box.filePath()
         self.last_response.to_csv(file_path, index=False)
 
-    def save_response_to_gis_file(self, location_feature):
-        logger.info("Saving path as GeoJSON")
-        resp_file_path = Path(self.output_file_text_box.filePath())
+    def convert_pandas2geopandas(self, df):
+        if df is None or not 'loc_wkt.value' in df.columns:
+            msgBox = QMessageBox()
+            msgBox.setText("Cannot convert input pandas dataframe to geopandas, does not contain 'loc_wkt.value' column")
+            msgBox.exec()
+            return None
 
-        # You will probably need to add code here to convert one of the columns of the response into shapely points,
-        # and use that as the geometry column when creating the GeoDataFrame.  Note that we assume that location info
-        # is stored in a column called 'loc_wkt.value', which is a convention that we follow in our sparkl queries
-        df = self.last_response
         logger.info("Loading location feature to WKT")
         df['loc_wkt'] = df['loc_wkt.value'].apply(statmagic_backend.sparql.sparql_utils.safe_wkt_load)
         logger.info("Creating GeoDataFrame")
@@ -210,15 +225,71 @@ class SparqlTab(TabBase):
         gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
         logger.info("Dropping column loc_wkt")
         gdf.drop(columns=['loc_wkt'], inplace=True)
+        return gdf
+
+    def spatial_filter_last_response(self):
+        # df = self.last_response
+        #
+        #
+        #
+        # logger.info("Loading location feature to WKT")
+        # df['loc_wkt'] = df['loc_wkt.value'].apply(statmagic_backend.sparql.sparql_utils.safe_wkt_load)
+        # logger.info("Creating GeoDataFrame")
+        # logger.debug(df.head())
+        # gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
+        # logger.info("Dropping column loc_wkt")
+        # gdf.drop(columns=['loc_wkt'], inplace=True)
+        gdf = self.convert_pandas2geopandas(self.last_response)
+        if gdf is None:
+            msgBox = QMessageBox()
+            msgBox.setText("Cannot spatially filter the current query response.\n Either not response data exists or the last response does not contain 'loc_wkt.value' column")
+            msgBox.exec()
+            return None
 
         # Filter results to our AOI, if desired
-        if not self.location_feature_combo_box.currentIndex() == 0:
-            aoi_layer = self.location_feature_combo_box.currentLayer()
-            uri_components = QgsProviderRegistry.instance().decodeUri(aoi_layer.dataProvider().name(), aoi_layer.publicSource())
+        if not self.aoi_combo_box.currentIndex() == 0:
+            aoi_layer = self.aoi_combo_box.currentLayer()
+            uri_components = QgsProviderRegistry.instance().decodeUri(aoi_layer.dataProvider().name(),
+                                                                      aoi_layer.publicSource())
             print(uri_components)
             aoi_df = gpd.read_file(uri_components['path'])
             aoi_df.to_crs('EPSG:4326', inplace=True)
             gdf = gpd.sjoin(gdf, aoi_df, how='inner', predicate='within')
+        self.last_response_filter = gdf
+        model = pandasModel(self.last_response_filter)
+        self.resp_view.setModel(model)
+
+        self.response_description_label.setText("Number of Response Records in AOI = " + str(len(self.last_response_filter)) + " (out of "+str(len(self.last_response))+")")
+
+    def save_response_to_gis_file(self, location_feature):
+        logger.info("Saving path as GeoJSON")
+        resp_file_path = Path(self.output_file_text_box.filePath())
+
+        # You will probably need to add code here to convert one of the columns of the response into shapely points,
+        # and use that as the geometry column when creating the GeoDataFrame.  Note that we assume that location info
+        # is stored in a column called 'loc_wkt.value', which is a convention that we follow in our sparkl queries
+        # df = self.last_response
+        # logger.info("Loading location feature to WKT")
+        # df['loc_wkt'] = df['loc_wkt.value'].apply(statmagic_backend.sparql.sparql_utils.safe_wkt_load)
+        # logger.info("Creating GeoDataFrame")
+        # logger.debug(df.head())
+        # gdf = gpd.GeoDataFrame(df, geometry=df['loc_wkt'], crs="EPSG:4326")
+        # logger.info("Dropping column loc_wkt")
+        # gdf.drop(columns=['loc_wkt'], inplace=True)
+        #
+        # # Filter results to our AOI, if desired
+        # if not self.location_feature_combo_box.currentIndex() == 0:
+        #     aoi_layer = self.location_feature_combo_box.currentLayer()
+        #     uri_components = QgsProviderRegistry.instance().decodeUri(aoi_layer.dataProvider().name(), aoi_layer.publicSource())
+        #     print(uri_components)
+        #     aoi_df = gpd.read_file(uri_components['path'])
+        #     aoi_df.to_crs('EPSG:4326', inplace=True)
+        #     gdf = gpd.sjoin(gdf, aoi_df, how='inner', predicate='within')
+
+        if self.last_response_filter is not None:
+            gdf = self.last_response_filter
+        else:
+            gdf = self.convert_pandas2geopandas(self.last_response)
 
         logger.info("Saving to file")
         gdf.to_file(resp_file_path, driver="GeoJSON")
@@ -289,11 +360,15 @@ class SparqlTab(TabBase):
         if popup.exec_():
             self.query_edit_text_box.setText(popup.query)
             self.has_location_checkbox.setChecked(True)
-            self.location_feature_combo_box.setLayer(popup.aoi_layer)
+            #self.aoi_combo_box.setLayer(popup.aoi_layer)
         else:
             logger.info("Mineral Sites popup closed without setting query")
 
     def run_query(self):
+        self.last_response = None
+        self.last_response_filter = None
+        self.resp_view.setModel(None)
+        self.has_location_checkbox.setChecked(False)
         self.response_description_label.setText("No Response Available")
         query = self.query_edit_text_box.toPlainText()
         if self.query_type_selection_box.currentText() == 'MinMod':
@@ -312,6 +387,9 @@ class SparqlTab(TabBase):
         self.response_description_label.setText("Number of Response Records = "+str(len(self.last_response)))
         model = pandasModel(res_df)
         self.resp_view.setModel(model)
+
+        if 'loc_wkt.value' in self.last_response.columns:
+            self.has_location_checkbox.setChecked(True)
 
     def run_minmod_query(self, query):
         logger.debug("Run MindMod Query")
