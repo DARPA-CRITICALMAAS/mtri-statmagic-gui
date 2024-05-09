@@ -4,14 +4,14 @@ from osgeo import gdal
 
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsRasterLayer
-from PyQt5.QtWidgets import QFileDialog, QPushButton
-
+from PyQt5.QtWidgets import QFileDialog, QPushButton, QFormLayout, QLabel, QVBoxLayout, QGridLayout, QHBoxLayout
 from statmagic_backend.dev.threshold_inference import threshold_inference
 from statmagic_backend.dev.restack_feature_attribution_layers import restack_matched_layers
 
 from .TabBase import TabBase
 from ..fileops import gdalSave1
 from ..gui_helpers import *
+from ..widgets.collapsible_box import CollapsibleBox
 from ..layerops import addGreyScaleLayer, addVectorLayer
 from ..popups.plotting.feature_attribution_point_plot import featAttPlot
 
@@ -25,6 +25,19 @@ class PredictionsTab(TabBase):
         super().__init__(parent, tabWidget, "Predictions", isEnabled)
 
         self.parent = parent
+
+        # self.mainLayout = QVBoxLayout()
+
+        # self.compile_layout = QHBoxLayout()
+        # self.compile_box = CollapsibleBox("Compile Attribute Layers")
+        # self.choose_files_button = QPushButton(self)
+        # self.choose_files_button.setText('Compile Feature Attribution Layers')
+        # self.choose_files_button.clicked.connect(self.choose_files)
+        # self.choose_files_button.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
+        #
+        #
+        # self.tabLayout.addWidget(self.compile_box)
+        #
 
         topFrame, topLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
 
