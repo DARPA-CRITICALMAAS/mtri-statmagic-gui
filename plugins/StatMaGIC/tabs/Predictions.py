@@ -2,9 +2,11 @@ import tempfile
 
 from osgeo import gdal
 
-from PyQt5 import QtWidgets
-from qgis.core import QgsProject, QgsRasterLayer
-from PyQt5.QtWidgets import QFileDialog, QPushButton, QFormLayout, QLabel, QVBoxLayout, QGridLayout, QHBoxLayout
+from qgis.core import QgsProject, QgsRasterLayer, QgsMapLayerProxyModel
+from PyQt5.QtWidgets import QFileDialog, QPushButton, QFormLayout, QLabel, QVBoxLayout, QGridLayout, QHBoxLayout,  QDoubleSpinBox, QCheckBox
+from qgis.gui import QgsFieldComboBox, QgsMapLayerComboBox, QgsFileWidget
+
+
 from statmagic_backend.dev.threshold_inference import threshold_inference
 from statmagic_backend.dev.restack_feature_attribution_layers import restack_matched_layers
 
@@ -26,52 +28,90 @@ class PredictionsTab(TabBase):
 
         self.parent = parent
 
-        # self.mainLayout = QVBoxLayout()
+        self.compile_box = CollapsibleBox("Compile Output Layers")
+        self.compile_layout = QHBoxLayout()
 
-        # self.compile_layout = QHBoxLayout()
-        # self.compile_box = CollapsibleBox("Compile Attribute Layers")
-        # self.choose_files_button = QPushButton(self)
-        # self.choose_files_button.setText('Compile Feature Attribution Layers')
-        # self.choose_files_button.clicked.connect(self.choose_files)
-        # self.choose_files_button.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
-        #
-        #
-        # self.tabLayout.addWidget(self.compile_box)
-        #
+        self.choose_attr_files = QPushButton()
+        self.choose_attr_files.setText('Compile Feature Attribution Layers')
+        self.choose_attr_files.clicked.connect(self.choose_files)
+        self.choose_attr_files.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
 
-        topFrame, topLayout = addFrame(self, "HBox", "NoFrame", "Plain", 3)
+        self.choose_pred_unc_files = QPushButton()
+        self.choose_pred_unc_files.setText('Compile Feature Attribution Layers')
+        self.choose_pred_unc_files.clicked.connect(self.choose_files)
+        self.choose_pred_unc_files.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
+        self.choose_pred_unc_files.setEnabled(False)
 
-        self.prob_layer_box = addQgsMapLayerComboBox(topFrame, "Probability Layer")
-        self.uncert_layer_box = addQgsMapLayerComboBox(topFrame, "Uncertainty Layer")
+        self.compile_layout.addWidget(self.choose_attr_files)
+        self.compile_layout.addWidget(self.choose_pred_unc_files)
 
-        addToParentLayout(topFrame)
-
-        formLayout = QtWidgets.QFormLayout()
+        self.compile_box.setContentLayout(self.compile_layout)
+        self.tabLayout.addWidget(self.compile_box)
 
 
-        self.probability_thresh_box = addSpinBoxToForm(formLayout, "Probability Threshold",
-                                                       dtype=float, value=0.5, max=1, step=0.05)
-        self.uncert_thresh_box = addSpinBoxToForm(formLayout, "Uncertainty Threshold",
-                                                  dtype=float, value=0.5, max=1, step=0.05)
-        self.remove_hanging_check = addCheckboxToForm(formLayout, "Remove Hanging Pixels", isChecked=True)
-        self.to_poly_check = addCheckboxToForm(formLayout, "Convert to Polygon Layer", isChecked=True)
-        self.threshold_inference_button = addButtonToForm(formLayout, "Generate Filtered Layer", self.threshold_inference)
+        self.threshold_outputs_box = CollapsibleBox("Threshold Outputs")
+        self.threshold_grouping_layout = QVBoxLayout()
 
+        self.layer_selection_layout = QGridLayout()
 
-        self.choose_files_button = QPushButton(self)
-        self.choose_files_button.setText('Compile Feature Attribution Layers')
-        self.choose_files_button.clicked.connect(self.choose_files)
-        self.choose_files_button.setToolTip('Opens dialog to choose layers to combine to facilitate plotting')
+        prob_layer_label = QLabel('Prediction Likelihood Layer')
+        self.prob_layer_select = QgsMapLayerComboBox()
+        self.prob_layer_select.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
-        self.inspect_attributions_button = QPushButton(self)
+        uncert_layer_label = QLabel('Prediction Uncertainty Layer')
+        self.uncert_layer_select = QgsMapLayerComboBox()
+        self.uncert_layer_select.setFilters(QgsMapLayerProxyModel.RasterLayer)
+
+        self.prob_layer_box = QDoubleSpinBox()
+        self.prob_layer_box.setValue(0.50)
+        self.prob_layer_box.setRange(0.00, 1.00)
+        self.prob_layer_box.setSingleStep(0.05)
+
+        self.uncert_layer_box = QDoubleSpinBox
+        self.uncert_layer_box = QDoubleSpinBox()
+        self.uncert_layer_box.setValue(0.50)
+        self.uncert_layer_box.setRange(0.00, 1.00)
+        self.uncert_layer_box.setSingleStep(0.05)
+
+        self.layer_selection_layout.addWidget(prob_layer_label, 0, 0)
+        self.layer_selection_layout.addWidget(uncert_layer_label, 0, 1)
+        self.layer_selection_layout.addWidget(self.prob_layer_select, 1, 0)
+        self.layer_selection_layout.addWidget(self.uncert_layer_select, 1, 1)
+        self.layer_selection_layout.addWidget(self.prob_layer_box, 2, 0)
+        self.layer_selection_layout.addWidget(self.uncert_layer_box, 2, 1)
+
+        self.threshold_grouping_layout.addLayout(self.layer_selection_layout)
+
+        self.remove_hanging_check = QCheckBox()
+        self.remove_hanging_check.setText('Remove Hanging Pixels')
+        self.remove_hanging_check.setChecked(True)
+
+        self.to_poly_check = QCheckBox()
+        self.to_poly_check.setText('Convert to Polygon Layer')
+        self.to_poly_check.setChecked(True)
+
+        self.threshold_inference_button = QPushButton()
+        self.threshold_inference_button.setText('Generate Thresholded Layer')
+        self.threshold_inference_button.clicked.connect(self.threshold_inference)
+
+        self.threshold_grouping_layout.addWidget(self.remove_hanging_check)
+        self.threshold_grouping_layout.addWidget(self.to_poly_check)
+        self.threshold_grouping_layout.addWidget(self.threshold_inference_button)
+
+        self.threshold_outputs_box.setContentLayout(self.threshold_grouping_layout)
+        self.tabLayout.addWidget(self.threshold_outputs_box)
+
+        self.plotting_box = CollapsibleBox('Plotting Tools')
+        self.plotting_layout = QVBoxLayout()
+
+        self.inspect_attributions_button = QPushButton()
         self.inspect_attributions_button.setText('Inspect/Plot Feature Attribution Scores')
         self.inspect_attributions_button.clicked.connect(self.launch_attribution_plot)
         self.inspect_attributions_button.setToolTip('Opens Plotting GUI. Click on points to generate plot')
 
-
-        alignLayoutAndAddToParent(formLayout, self, "Left")
-
-        topLayout.addWidget(self.choose_files_button)
+        self.plotting_layout.addWidget(self.inspect_attributions_button)
+        self.plotting_box.setContentLayout(self.plotting_layout)
+        self.tabLayout.addWidget(self.plotting_box)
 
     def choose_files(self):
         rasterFilePaths, _ = QFileDialog.getOpenFileNames(self, "Select Raster Files", "", "GeoTIFFs (*.tif *.tiff)")

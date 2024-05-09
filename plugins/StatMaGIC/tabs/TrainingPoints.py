@@ -189,7 +189,6 @@ class TrainingPointsTab(TabBase):
         #
         # labelFrame, label_layout = addFrame(self, "Grid", "Panel", "Sunken", 3)
 
-
     # def populate_comboboxes(self):
     #     self.training_layer_combo_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
     #     training_layer = self.training_layer_combo_box.currentLayer()
