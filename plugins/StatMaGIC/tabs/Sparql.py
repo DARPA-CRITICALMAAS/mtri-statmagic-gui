@@ -259,7 +259,7 @@ class SparqlTab(TabBase):
         model = pandasModel(self.last_response_filter)
         self.resp_view.setModel(model)
 
-        self.response_description_label.setText("Number of Response Records in AOI = " + str(len(self.last_response_filter)) + "(out of "+str(len(self.last_response_filter))+")")
+        self.response_description_label.setText("Number of Response Records in AOI = " + str(len(self.last_response_filter)) + " (out of "+str(len(self.last_response))+")")
 
     def save_response_to_gis_file(self, location_feature):
         logger.info("Saving path as GeoJSON")
