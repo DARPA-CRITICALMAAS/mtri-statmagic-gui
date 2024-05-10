@@ -9,7 +9,8 @@ from sklearn.ensemble import IsolationForest
 
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsMapLayerProxyModel, QgsFieldProxyModel
-from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton, QDoubleSpinBox, QFormLayout
+from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton, \
+    QDoubleSpinBox, QFormLayout, QMessageBox
 
 from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
 from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, getCanvasRasterDict, getFullRasterDict
@@ -230,6 +231,13 @@ class TrainingPointsTab(TabBase):
         contaim = self.iso_contamination_spin.value()
         n_job = self.iso_njob_spin.value()
 
+        if not hasattr(self, "training_df"):
+            msgBox = QMessageBox()
+            msgBox.setText("You must sample your datacube with training geometry "
+                           "before training with Isolation Forest.")
+            msgBox.exec()
+            return
+
         x_train = self.training_df.to_numpy()
         isofor = IsolationForest(n_estimators=n_estimators, contamination=contaim, n_jobs=n_job)
         isofor.fit(x_train)
@@ -251,6 +259,13 @@ class TrainingPointsTab(TabBase):
             raster_dict = getCanvasRasterDict(full_dict, self.parent.canvas.extent())
             raster_array = r_ds.ReadAsArray(raster_dict['Xoffset'], raster_dict['Yoffset'],
                                             raster_dict['sizeX'], raster_dict['sizeY'])
+
+        if raster_array is None:
+            msgBox = QMessageBox()
+            msgBox.setText(f"{data_ras.name()} appears to be an empty raster. "
+                           f"Please select a different raster layer.")
+            msgBox.exec()
+            return
 
         classout = apply_model_to_array(self.iso_forest, raster_array, raster_dict)
 
