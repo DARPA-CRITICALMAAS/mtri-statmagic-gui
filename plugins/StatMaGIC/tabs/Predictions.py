@@ -62,23 +62,23 @@ class PredictionsTab(TabBase):
         self.uncert_layer_select = QgsMapLayerComboBox()
         self.uncert_layer_select.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
-        self.prob_layer_box = QDoubleSpinBox()
-        self.prob_layer_box.setValue(0.50)
-        self.prob_layer_box.setRange(0.00, 1.00)
-        self.prob_layer_box.setSingleStep(0.05)
+        self.probability_thresh_box = QDoubleSpinBox()
+        self.probability_thresh_box.setValue(0.50)
+        self.probability_thresh_box.setRange(0.00, 1.00)
+        self.probability_thresh_box.setSingleStep(0.05)
 
-        self.uncert_layer_box = QDoubleSpinBox
-        self.uncert_layer_box = QDoubleSpinBox()
-        self.uncert_layer_box.setValue(0.50)
-        self.uncert_layer_box.setRange(0.00, 1.00)
-        self.uncert_layer_box.setSingleStep(0.05)
+        self.uncert_thresh_box = QDoubleSpinBox
+        self.uncert_thresh_box = QDoubleSpinBox()
+        self.uncert_thresh_box.setValue(0.50)
+        self.uncert_thresh_box.setRange(0.00, 1.00)
+        self.uncert_thresh_box.setSingleStep(0.05)
 
         self.layer_selection_layout.addWidget(prob_layer_label, 0, 0)
         self.layer_selection_layout.addWidget(uncert_layer_label, 0, 1)
         self.layer_selection_layout.addWidget(self.prob_layer_select, 1, 0)
         self.layer_selection_layout.addWidget(self.uncert_layer_select, 1, 1)
-        self.layer_selection_layout.addWidget(self.prob_layer_box, 2, 0)
-        self.layer_selection_layout.addWidget(self.uncert_layer_box, 2, 1)
+        self.layer_selection_layout.addWidget(self.probability_thresh_box, 2, 0)
+        self.layer_selection_layout.addWidget(self.uncert_thresh_box, 2, 1)
 
         self.threshold_grouping_layout.addLayout(self.layer_selection_layout)
 
@@ -115,10 +115,11 @@ class PredictionsTab(TabBase):
 
     def choose_files(self):
         rasterFilePaths, _ = QFileDialog.getOpenFileNames(self, "Select Raster Files", "", "GeoTIFFs (*.tif *.tiff)")
+        if len(rasterFilePaths) == 0:
+            return
         output_path, _ = QFileDialog.getSaveFileName(self, "Select Output File", "", "GeoTIFFs (*.tif)")
-        # Force the extension to be .tif
-        if output_path[-4:] != '.tif':
-            output_path += '.tif'
+        if len(output_path) == 0:
+            return
 
         self.stack_files(rasterFilePaths, output_path)
 
@@ -137,8 +138,8 @@ class PredictionsTab(TabBase):
 
     def threshold_inference(self):
         # Get inputs from GUI
-        prob_path = self.prob_layer_box.currentLayer().source()
-        uncert_path = self.uncert_layer_box.currentLayer().source()
+        prob_path = self.prob_layer_select.currentLayer().source()
+        uncert_path = self.uncert_layer_select.currentLayer().source()
         prob_cut = self.probability_thresh_box.value()
         cert_cut = self.uncert_thresh_box.value()
         remove_hanging = self.remove_hanging_check.isChecked()
