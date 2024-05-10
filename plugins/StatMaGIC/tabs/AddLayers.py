@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import geopandas as gpd
+from PyQt5.QtCore import QPersistentModelIndex
 from shapely import box
 
 from statmagic_backend.geo.transform import get_tiles_for_ll_bounds, download_tiles, process_tiles, \
@@ -13,7 +14,8 @@ logger = logging.getLogger("statmagic_gui")
 
 
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer
-from PyQt5.QtWidgets import QPushButton, QListWidget, QTableWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QHeaderView, QTableWidgetItem
+from PyQt5.QtWidgets import QPushButton, QListWidget, QTableWidget, QComboBox, QLabel, QVBoxLayout, QGridLayout, \
+    QSpinBox, QHBoxLayout, QSpacerItem, QSizePolicy, QFileDialog, QHeaderView, QTableWidgetItem, QAction, QMenu
 from qgis.gui import QgsFileWidget
 
 from .TabBase import TabBase
@@ -106,24 +108,11 @@ class AddLayersTab(TabBase):
         AddLayerButtonsLayout.addWidget(self.addfromCloudButton, 0, 1)
         AddLayerButtonsLayout.addWidget(self.addfromCurrentButton, 0, 2)
 
-        bottomFormLayout = QVBoxLayout()
-
-        # Add Layer Button
-        # self.addLayerButton = QPushButton()
-        # self.addLayerButton.setText('Open Add Layer Dialog And Add To List')
-        # self.addLayerButton.clicked.connect(self.addLayerDialog)
-        # self.addLayerButton.setToolTip('Opens up a new window with options to add existing layers to the DataCube')
+        tableFrame, tableLayout = addFrame(self, "VBox", "NoFrame", "Plain", 3, spacing=(0,0))
 
         # Layer table
         self.layer_table = QTableWidget(0, 4)
         self.layer_table.setAlternatingRowColors(True)
-        # Looking at the cloudfront for how to have a mouse right click drop row
-        # Will need to grab the event filter method and select_all as example to complete
-        # self.context_menu = QMenu(self)
-        # self.action_check_all = QAction('Select All', self)
-        # self.action_check_all.triggered.connect(self.select_all)
-        # self.action_uncheck_all = QAction('De-select All', self)
-        # self.action_uncheck_all.triggered.connect(self.deselect_all)
 
 
         # self.layer_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -135,9 +124,13 @@ class AddLayersTab(TabBase):
         self.layer_table.setColumnWidth(2, 75)
         self.layer_table.setColumnWidth(3, 75)
 
-        # Layer List
-        # self.addLayerList = QListWidget()
-        # self.addLayerList.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        deleteFrame, deleteLayout = addFrame(tableFrame, "HBox", "NoFrame", "Plain", 3, spacing=(5,5))
+
+        self.deleteRowButton = addButton(deleteFrame, "Delete Selected Rows", self.deleteRowsFromTable)
+        self.clearTableButton = addButton(deleteFrame, "Clear Table", self.clearTable)
+
+        self.deleteRowButton.setToolTip("Removes selected rows from the table of layers to add.")
+        self.clearTableButton.setToolTip("Empties the entire table of layers to add.")
 
         # Process List Button
         self.processAddLayerButton = QPushButton()
@@ -145,10 +138,9 @@ class AddLayersTab(TabBase):
         self.processAddLayerButton.clicked.connect(self.process_add_raster_list)
         self.processAddLayerButton.setToolTip('Executes backend functions to resample and add layers in the list \nto the datacube')
 
-        # bottomFormLayout.addWidget(self.addLayerButton)
-        # bottomFormLayout.addWidget(self.addLayerList)
-        bottomFormLayout.addWidget(self.layer_table)
-        bottomFormLayout.addWidget(self.processAddLayerButton)
+        tableLayout.addWidget(self.layer_table)
+        tableLayout.addWidget(deleteFrame)
+        tableLayout.addWidget(self.processAddLayerButton)
 
         # Core Count Selection
         self.num_core_label = QLabel('Number of Cores for Processing:')
@@ -166,7 +158,7 @@ class AddLayersTab(TabBase):
         veryBottomFormLayout.addWidget(self.num_threads_resamp_spinBox)
 
         addWidgetFromLayoutAndAddToParent(AddLayerButtonsLayout, bottomFrame)
-        addWidgetFromLayoutAndAddToParent(bottomFormLayout, bottomFrame)
+        addWidgetFromLayoutAndAddToParent(tableLayout, bottomFrame)
         addWidgetFromLayoutAndAddToParent(veryBottomFormLayout, bottomFrame)
         addToParentLayout(bottomFrame)
 
@@ -176,6 +168,23 @@ class AddLayersTab(TabBase):
         self.methodlist = []
         self.desclist = []
         self.refreshTable()
+
+    def deleteRowsFromTable(self):
+        selectedRows = self.layer_table.selectionModel().selectedRows()
+        rowsToRemove = [QPersistentModelIndex(row) for row in selectedRows]
+        for row in rowsToRemove:
+            rowIndex = row.row()
+            self.layer_table.removeRow(rowIndex)
+            self.desclist.pop(rowIndex)
+            self.pathlist.pop(rowIndex)
+            self.sourcelist.pop(rowIndex)
+
+    def clearTable(self):
+        self.layer_table.clearContents()
+        self.layer_table.model().removeRows(0, self.layer_table.rowCount())
+        self.desclist.clear()
+        self.pathlist.clear()
+        self.sourcelist.clear()
 
     def openDataLayerTable(self):
         # Todo: This functionality should be exposed at the SRI and BEAK tabs and
@@ -202,7 +211,7 @@ class AddLayersTab(TabBase):
             self.refreshTable()
 
     def chooseLayersFromCubeDialog(self):
-        rasterFilePath, _ = QFileDialog.getOpenFileName(self, "Select Raster", "/home/jagraham/Documents/Local_work/statMagic/hack6_data/", "GeoTIFFs (*.tif *.tiff)")
+        rasterFilePath, _ = QFileDialog.getOpenFileName(self, "Select Raster", str(Path.home()), "GeoTIFFs (*.tif *.tiff)")
         if os.path.exists(rasterFilePath):
             popup = RasterBandSelectionDialog(self.parent, rasterFilePath)
             if popup.exec_():
