@@ -197,10 +197,7 @@ class SparqlTab(TabBase):
         if self.has_location_checkbox.isChecked():
             aoi_layer = self.aoi_combo_box.currentText()
             if aoi_layer == "":
-                msgBox = QMessageBox()
-                msgBox.setText("No AOI layer selected")
-                msgBox.exec()
-                return
+                self.save_response_to_gis_file()
             else:
                 self.save_response_to_gis_file(aoi_layer)
         else:
@@ -261,7 +258,7 @@ class SparqlTab(TabBase):
 
         self.response_description_label.setText("Number of Response Records in AOI = " + str(len(self.last_response_filter)) + " (out of "+str(len(self.last_response))+")")
 
-    def save_response_to_gis_file(self, location_feature):
+    def save_response_to_gis_file(self, location_feature=None):
         logger.info("Saving path as GeoJSON")
         resp_file_path = Path(self.output_file_text_box.filePath())
 
@@ -285,6 +282,7 @@ class SparqlTab(TabBase):
         #     aoi_df = gpd.read_file(uri_components['path'])
         #     aoi_df.to_crs('EPSG:4326', inplace=True)
         #     gdf = gpd.sjoin(gdf, aoi_df, how='inner', predicate='within')
+        # TODO: if location is not None, clip to layer
 
         if self.last_response_filter is not None:
             gdf = self.last_response_filter
