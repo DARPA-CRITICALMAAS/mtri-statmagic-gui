@@ -6,15 +6,24 @@ import pandas as pd
 import rasterio as rio
 from sklearn import svm
 from sklearn.ensemble import IsolationForest
+import tempfile
+from rasterio import features
+import numpy as np
+from shapely.geometry import shape
+from ..layerops import addVectorLayer
 
 from PyQt5 import QtWidgets
 from qgis.core import QgsProject, QgsMapLayerProxyModel, QgsFieldProxyModel
 from PyQt5.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QVBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton, \
     QDoubleSpinBox, QFormLayout, QMessageBox
 
+from qgis.core import QgsProject, QgsVectorLayer
+
+
 from statmagic_backend.dev.rasterize_training_data import training_vector_rasterize
 from statmagic_backend.extract.raster import extractBands, extractBandsInBounds, getCanvasRasterDict, getFullRasterDict
 from statmagic_backend.geo.transform import boundingBoxToOffsets, geotFromOffsets
+from ..widgets.collapsible_box import CollapsibleBox
 
 from .TabBase import TabBase
 from ..fileops import gdalSave, parse_vector_source
@@ -183,20 +192,83 @@ class TrainingPointsTab(TabBase):
 
         addToParentLayout(ta3Frame)
 
-        # ---------- Trying to add buttons for label classes dynamically ------
-        # self.add_label_button = QPushButton()
-        # self.add_label_button.setText("Add Label to grid")
-        # self.add_label_button.clicked.connect(self.add_label_to_grid)
-        #
-        # labelFrame, label_layout = addFrame(self, "Grid", "Panel", "Sunken", 3)
+        self.threshold_outputs_box = CollapsibleBox("Create Negative Labels")
+        self.negatives_layout = QGridLayout()
 
-    # def populate_comboboxes(self):
-    #     self.training_layer_combo_box.setFilters(QgsMapLayerProxyModel.VectorLayer)
-    #     training_layer = self.training_layer_combo_box.currentLayer()
-    #     if training_layer:
-    #         self.training_layer_combo_box.layerChanged.connect(self.trainingFieldComboBox.setLayer)
-    #         self.trainingFieldComboBox.setLayer(training_layer)
-    #         self.trainingFieldComboBox.setFilters(QgsFieldProxyModel.Numeric)
+
+        train_layer_label = QLabel('Training Points Layer')
+        self.train_layer_select = QgsMapLayerComboBox()
+        self.train_layer_select.setFilters(QgsMapLayerProxyModel.VectorLayer)
+
+        prox_layer_label = QLabel('Proximity Layer')
+        self.prox_layer_select = QgsMapLayerComboBox()
+        self.prox_layer_select.setFilters(QgsMapLayerProxyModel.RasterLayer)
+
+        self.num_samples = QSpinBox()
+        self.num_samples.setValue(100)
+        self.num_samples.setRange(0, 200000)
+        self.num_samples.setSingleStep(25)
+
+        self.neg_label_button = QPushButton()
+        self.neg_label_button.setText('Generate Random Negative Labels')
+        self.neg_label_button.clicked.connect(self.make_negative_label)
+
+        self.negatives_layout.addWidget(train_layer_label, 0, 0)
+        self.negatives_layout.addWidget(prox_layer_label, 0, 1)
+        self.negatives_layout.addWidget(self.train_layer_select, 1, 0)
+        self.negatives_layout.addWidget(self.prox_layer_select, 1, 1)
+        self.negatives_layout.addWidget(self.num_samples, 2, 0)
+        self.negatives_layout.addWidget(self.neg_label_button, 2, 1)
+
+
+        self.threshold_outputs_box.setContentLayout(self.negatives_layout)
+        self.tabLayout.addWidget(self.threshold_outputs_box)
+
+    def make_negative_label(self):
+        prox_path = self.prox_layer_select.currentLayer().source()
+        num_samples = self.num_samples.value()
+
+        # Create an output path
+        tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
+        tfile1 = tempfile.mkstemp(dir=tfol, suffix='.gpkg', prefix='negative_labels')
+        tfile2 = tempfile.mkstemp(dir=tfol, suffix='.tif', prefix='negative_labels')
+        vector_output_file_path = tfile1[1]
+        raster_output_file_path = tfile2[1]
+        print(vector_output_file_path)
+
+        # Todo: Make a backend function
+        raster = rio.open(prox_path)
+        arr = raster.read()
+
+        a1 = arr.ravel()
+        b = np.arange(0, len(a1))
+        probs = a1 / a1.sum(axis=0, keepdims=1)
+        samples = np.random.choice(b, size=num_samples, replace=False, p=probs)
+        idxs = np.isin(b, samples)
+
+        labels = np.reshape(idxs, arr.shape).astype('uint8')
+        labels_prof = raster.profile.copy()
+        labels_prof.update({'dtype': 'uint8', 'nodata': 255})
+
+        label_raster = rio.open(raster_output_file_path, 'w', **labels_prof)
+        label_raster.write(labels)
+        label_raster.close()
+
+        with rio.open(raster_output_file_path) as src:
+            shapes = list(rio.features.shapes(src.read(1), transform=src.transform))
+
+            slist = []
+            for s, v in shapes:
+                if v == 1:
+                    slist.append(shape(s))
+
+        points = [s.centroid for s in slist]
+        gdf = gpd.GeoDataFrame(geometry=points, crs=src.crs)
+        gdf.to_file(vector_output_file_path, driver='GPKG')
+
+        vlayer = QgsVectorLayer(vector_output_file_path, 'Negative Labels', "ogr")
+        QgsProject.instance().addMapLayer(vlayer, False)
+
 
     def sample_raster_with_training_layer(self):
         data_ras = self.data_raster_box.currentLayer()
