@@ -16,7 +16,9 @@ Last Updated: 2/14/2024
 3. [Opening StatMaGIC in QGIS](#openinginqgis)
    1. [Opening QGIS](#openqgis)
    2. [Opening StatMaGIC once in QGIS](#onceopen)
-
+4. [StatMaGIC Plugin Tool Usage Guides](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/wiki/StatMaGIC-Plugin-Tool-Usage-Guides)
+   1. [Feature Attribution Plots](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/wiki/Feature-Attribution-Plots)
+      
 # Software Needs
 
 To run the StatMaGIC plugin, users will need to have the following software downloaded onto their machine or alternatively have access to a remote computer server (such as AWS) that has these software installed. Some software may be contingent on users operating system.
