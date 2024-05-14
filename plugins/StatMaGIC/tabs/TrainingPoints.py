@@ -7,6 +7,7 @@ import rasterio as rio
 from sklearn import svm
 from sklearn.ensemble import IsolationForest
 import tempfile
+from pathlib import Path
 from rasterio import features
 import numpy as np
 from shapely.geometry import shape
@@ -230,11 +231,17 @@ class TrainingPointsTab(TabBase):
 
         # Create an output path
         tfol = tempfile.mkdtemp()  # maybe this should be done globally at the init??
-        tfile1 = tempfile.mkstemp(dir=tfol, suffix='.gpkg', prefix='negative_labels')
-        tfile2 = tempfile.mkstemp(dir=tfol, suffix='.tif', prefix='negative_labels')
+        # Todo: for some reason the writing as geojson wasn't fully writing out the file.
+        # Changed to GPKG
+        # tfile1 = tempfile.mkstemp(dir=tfol, suffix='.json', prefix='negative_labels_')
+        tfile1 = tempfile.mkstemp(dir=tfol, suffix='.gpkg', prefix='negative_labels_')
+        tfile2 = tempfile.mkstemp(dir=tfol, suffix='.tif', prefix='negative_labels_')
         vector_output_file_path = tfile1[1]
         raster_output_file_path = tfile2[1]
-        print(vector_output_file_path)
+        # todo: this seems non ideal. Creating the file just to get the path then delete?
+        # I couldn't find a method in tempfile to create just a filename without creating the file
+        Path.unlink(vector_output_file_path)
+        Path.unlink(raster_output_file_path)
 
         # Todo: Make a backend function
         raster = rio.open(prox_path)
@@ -264,10 +271,12 @@ class TrainingPointsTab(TabBase):
 
         points = [s.centroid for s in slist]
         gdf = gpd.GeoDataFrame(geometry=points, crs=src.crs)
+        # gdf.to_file(vector_output_file_path, driver='GeoJSON')
         gdf.to_file(vector_output_file_path, driver='GPKG')
+        print(vector_output_file_path)
 
         vlayer = QgsVectorLayer(vector_output_file_path, 'Negative Labels', "ogr")
-        QgsProject.instance().addMapLayer(vlayer, False)
+        QgsProject.instance().addMapLayer(vlayer)
 
 
     def sample_raster_with_training_layer(self):
