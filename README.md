@@ -4,7 +4,7 @@ The QGIS plugin front end for [StatMaGIC](https://github.com/DARPA-CRITICALMAAS/
 
 This user guide is intended to assist in the installation, set-up, and use of the StatMaGIC QGIS Plug-In developed under the DARPA CriticalMAAS for USGS end users.
 
-Last Updated: 2/14/2024
+Last Updated: 5/14/2024
 
 # Table Of Contents
 
@@ -57,6 +57,8 @@ source $HOME/mambaforge/bin/activate
 
 ### Mamba
 1. Download the mamba installer: https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
+
+   - If downloading through the browser is blocked by Windows Defender, you can use Git Bash to download it instead. Inside Git Bash, run `curl https://mitre.zoomgov.com/j/1607848016?pwd=ZTd5Y0tOdFZMSnNjZ0dsWGpMckhhdz09`.
 2. Run the installation wizard by double clicking `Mambaforge-Windows-x86_64.exe`.
 
    - Select "Just me" and install in the default location, e.g. `C:\Users\djleisma\AppData\Local\mambaforge`
@@ -87,14 +89,14 @@ A controlled working environment has been created to to ensure that the StatMaGI
 <summary><b>Ubuntu users</b></summary>
 
 ```
-mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph somoclu seaborn rioxarray boto3
+mamba create --name statmagic --channel conda-forge python=3.11.7 qgis=3.34 scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph seaborn rioxarray boto3 pooch requests requests-mock progress pytest charset-normalizer somoclu
 ```
 </details>
 <details>
 <summary><b>Windows users</b></summary>
 
 ```
-mamba create --name statmagic qgis scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph seaborn rioxarray boto3
+mamba create --name statmagic --channel conda-forge python=3.11.7 qgis=3.34 scipy scikit-learn pandas gdal numpy matplotlib scikit-image pydantic pygraphviz poetry jsonschema2md erdantic progress awscli rasterio geopandas shapely mapbox-vector-tile mercantile pyqtgraph seaborn rioxarray boto3 pooch requests requests-mock progress pytest charset-normalizer
 ```
 </details>
 
@@ -124,6 +126,7 @@ Using the same terminal from before:
 mkdir statmagic; cd statmagic
 git clone https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui.git
 git clone https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-backend.git
+git clone https://github.com/DOI-USGS/sciencebasepy.git
 ```
 
 If you intend to use the Beak or SRI workflows, their software is also necessary:
@@ -145,9 +148,10 @@ Without the necessary code present, the respective `Beak` or `SRI` tabs will not
 5. Type `git clone` and then right click to paste the copied URL from GitHub ![Git Clone image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/97324ee9-bf35-4ba4-a82e-ac0de21c8a1c)
 6. Hit Enter
 7. Repeat steps 2-5 with the GitHub `mtri-statmagic-gui` repository: https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui
-8. If you wish to use Beak's workflow, repeat steps 2-5 using https://github.com/DARPA-CRITICALMAAS/beak-ta3 . The `Beak` tab will not function without Beak's software.
-9. If you wish to use SRI's workflow, repeat steps 2-5 using https://github.com/DARPA-CRITICALMAAS/sri-ta3 . The `SRI` tab will not function without SRI's software.
-10. Helpful commands:
+8. Repeat steps 2-5 with the GitHub `sciencebasepy` respository: https://github.com/DOI-USGS/sciencebasepy
+9. If you wish to use Beak's workflow, repeat steps 2-5 using https://github.com/DARPA-CRITICALMAAS/beak-ta3 . The `Beak` tab will not function without Beak's software.
+10. If you wish to use SRI's workflow, repeat steps 2-5 using https://github.com/DARPA-CRITICALMAAS/sri-ta3 . The `SRI` tab will not function without SRI's software.
+11. Helpful commands:
    * To view the files within a folder use the directory command `dir`
    * To go back a directory use `cd ..`
    * Use the `Tab` key to auto populate path names once you start typing.
@@ -164,7 +168,7 @@ Navigate to the `statmagic_backend` directory
 <details><summary><b>Windows Users</b></summary>
 
 1. Open Miniforge prompt
-2. `cd dev\statmagic_backend`
+2. `cd dev\mtri_statmagic_backend`
 
 </details>
 
@@ -196,8 +200,8 @@ If you intend to use the `SRI` tab, `cd ../sri-ta3` then run `pip install -e .`.
 
 1. Open Miniforge Prompt
 2. Activate the StatMaGIC environment with `mamba activate statmagic`
-3. Navigate to the `statmagic_gui` repository (e.g. `cd dev\statmagic_gui`) _Note once you start typing you can hit the `Tab` key to fill out the rest of the path._
-4. Run the `aws_launch_qgis.bat` script from within `statmagic_gui` ![aws_launch_qgis image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/ae0d4fa2-c76a-4bc8-b7ad-56dacd049363)
+3. Navigate to the `mtri-statmagic-gui` repository (e.g. `cd dev\mtri-statmagic-gui`) _Note once you start typing you can hit the `Tab` key to fill out the rest of the path._
+4. Run the `aws_launch_qgis.bat` script from within `mtri-statmagic-gui` ![aws_launch_qgis image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/ae0d4fa2-c76a-4bc8-b7ad-56dacd049363)
 5. This will prompt a series of commands to open up QGIS.
 
 </details>
@@ -207,8 +211,8 @@ If you intend to use the `SRI` tab, `cd ../sri-ta3` then run `pip install -e .`.
 
 1. Open terminal
 2. Activate the StatMaGIC environment with `mamba activate statmagic`
-3. Navigate to the `statmagic_gui` directory (e.g. `cd dev/statmagic_gui`) _Note once you start typing you can hit the `Tab` key to fill out the rest of the path._
-4. Run the `launch_qgis.sh` script from within `statmagic_gui`
+3. Navigate to the `mtri-statmagic-gui` directory (e.g. `cd dev/mtri-statmagic-gui`) _Note once you start typing you can hit the `Tab` key to fill out the rest of the path._
+4. Run the `launch_qgis.sh` script from within `mtri-statmagic-gui`
 5. This will prompt a series of commands to open up QGIS.
 
 </details>
