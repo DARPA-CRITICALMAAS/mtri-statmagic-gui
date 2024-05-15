@@ -114,6 +114,7 @@ conda config --set auto_activate_base false
 ```
 mamba activate statmagic
 ```
+**Note that the above command must be run every time you open a terminal / miniforge prompt in order to use our software.**
 
 ## 2\. Cloning Repositories
 
@@ -134,7 +135,7 @@ If you intend to use the Beak or SRI workflows, their software is also necessary
 git clone https://github.com/DARPA-CRITICALMAAS/beak-ta3.git
 git clone https://github.com/DARPA-CRITICALMAAS/sri-ta3.git
 ```
-Without the necessary code present, the respective `Beak` or `SRI` tabs will not work.
+Without the necessary code present, the respective `Beak` or `SRI` popups will not work.
 
 </details>
 
@@ -163,12 +164,12 @@ Without the necessary code present, the respective `Beak` or `SRI` tabs will not
 
 ## 0\. First Time Setup
 
-Navigate to the `statmagic_backend` directory
+Navigate to the `mtri-statmagic-backend` directory
 
 <details><summary><b>Windows Users</b></summary>
 
 1. Open Miniforge prompt
-2. `cd dev\mtri_statmagic_backend`
+2. `cd dev\mtri-statmagic-backend`
 
 </details>
 
@@ -176,7 +177,7 @@ Navigate to the `statmagic_backend` directory
 <summary><b>Ubuntu Users</b></summary>
 
 1. Use the same terminal from before.
-2. `cd statmagic_backend`
+2. `cd mtri-statmagic-backend`
 
 </details>
 
@@ -184,14 +185,15 @@ If your terminal doesn't say `(statmagic)` at the beginning, you may need to typ
 
 Run the following command **(required for the plugin to function)**:
 ```
-pip install -e .
+pip install -e . --no-deps
 ```
 ![pip install image](https://github.com/DARPA-CRITICALMAAS/mtri-statmagic-gui/assets/114172102/5efd611a-ff08-4f1c-9135-f865bcb28786)
 
+If you intend to use the `Sciencebase` tab, `cd ../sciencebasepy` then run `pip install -e . --no-deps`.
 
-If you intend to use the `Beak` tab, `cd ../beak-ta3` then run `pip install -e .`.
+If you intend to use the `Beak` popup, `cd ../beak-ta3` then run `pip install -e . --no-deps`.
 
-If you intend to use the `SRI` tab, `cd ../sri-ta3` then run `pip install -e .`.
+If you intend to use the `SRI` popup, `cd ../sri-ta3` then run `pip install -e . --no-deps`.
 
 ## 1\. Starting QGIS
 
