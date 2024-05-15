@@ -58,7 +58,7 @@ source $HOME/mambaforge/bin/activate
 ### Mamba
 1. Download the mamba installer: https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe
 
-   - If downloading through the browser is blocked by Windows Defender, you can use Git Bash to download it instead. Inside Git Bash, run `curl https://mitre.zoomgov.com/j/1607848016?pwd=ZTd5Y0tOdFZMSnNjZ0dsWGpMckhhdz09`.
+   - If downloading through the browser is blocked by Windows Defender, you can use Git Bash to download it instead. Inside Git Bash, run `curl https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Windows-x86_64.exe`.
 2. Run the installation wizard by double clicking `Mambaforge-Windows-x86_64.exe`.
 
    - Select "Just me" and install in the default location, e.g. `C:\Users\djleisma\AppData\Local\mambaforge`
